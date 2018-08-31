@@ -127,7 +127,7 @@ namespace ns
         
         BackgroundComponent::BackgroundComponent(std::string path)
         {
-            if (image.loadFromFile(resourcePath() + path))
+            if (image.loadFromFile(resourcePath() + "Data/Images/" + path))
             {
                 imagePath = path;
                 if (texture.loadFromImage(image))

@@ -52,9 +52,4 @@
 
         return rpath;
     }
-#elif
-    std::string resourcePath(void)
-    {
-        return "";
-    }
 #endif

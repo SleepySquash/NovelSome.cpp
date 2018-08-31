@@ -47,11 +47,11 @@ int main(int, char const**)
     ns::GlobalSettings::height = 800;
 
     sf::Image icon;
-    if (icon.loadFromFile(resourcePath() + "macos@2x.png"))
+    if (icon.loadFromFile(resourcePath() + "Data/Images/macos@2x.png"))
         window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 
     sf::Music music;
-    if (music.openFromFile(resourcePath() + "nice_music.ogg"))
+    if (music.openFromFile(resourcePath() + "Data/Sounds/nice_music.ogg"))
         music.play();
     
     window.setFramerateLimit(120);
@@ -59,27 +59,27 @@ int main(int, char const**)
 
     ns::EntitySystem system;
     
-    ////////////////////////////////////////////////////////////
+    ///----------------------------------------------------------
     /// \brief Entity to hold essential components
     ///
     /// Entity holds components like always-on debug UI layer, system's components and other essential stuff.
     /// It also may hold components like NovelComponent that runs the novel, cuz it has to be essential component.
     ///
-    ////////////////////////////////////////////////////////////
+    ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::TestComponents::BackgroundComponent>("cute_image.jpg");
+        //Shimakaze->AddComponent<ns::TestComponents::BackgroundComponent>("cute_image.jpg");
         
-        ns::TestComponents::TestComponent* testComponent = Shimakaze->AddComponent<ns::TestComponents::TestComponent>("String yay!");
+        /*ns::TestComponents::TestComponent* testComponent = Shimakaze->AddComponent<ns::TestComponents::TestComponent>("String yay!");
         testComponent->SetFont(ns::FontCollector::GetFont("sansation.ttf"));
         testComponent->SetSize(60);
         testComponent->SetPosition(500, 500);
         
-        Shimakaze->AddComponent<ns::TestComponents::EntityListComponent>(system);
+        Shimakaze->AddComponent<ns::TestComponents::EntityListComponent>(system);*/
         //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"Я люблю Юлю 💕"));
         //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"私は食品を食べる"));
         
-        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>(sf::String(L"scen.nsdat"));
+        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>(sf::String(L"Novels/Bundle/scen.nsdat"));
         
         Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
     }

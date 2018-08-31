@@ -39,5 +39,7 @@
 ///
 ////////////////////////////////////////////////////////////
 std::string resourcePath(void);
+//std::string resourceFontsPath(void);
+//std::string resourceNovelsPath(void);
 
 #endif

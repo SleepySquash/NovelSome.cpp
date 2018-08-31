@@ -12,17 +12,30 @@ namespace ns
 {
     namespace NovelComponents
     {
-        BackgroundComponent::BackgroundComponent(std::string path)
+        void BackgroundComponent::LoadImage(sf::String path)
         {
-            if (image.loadFromFile(resourcePath() + path))
+            spriteLoaded = false;
+            if (novel != nullptr)
             {
-                imagePath = path;
-                if (texture.loadFromImage(image))
+                if (image.loadFromFile(resourcePath() + novel->GetFolderPath().toAnsiString() + path.toAnsiString()))
                 {
-                    spriteLoaded = true;
-                    sprite.setTexture(texture);
+                    imagePath = path;
+                    if (texture.loadFromImage(image))
+                    {
+                        spriteLoaded = true;
+                        texture.setSmooth(true);
+                        sprite.setTexture(texture);
+                        
+                        Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                    }
                 }
+                
+                if (!spriteLoaded)
+                    if (sendMessageBack != noMessage)
+                        novel->UnHold();
             }
+            else
+                cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
         }
         void BackgroundComponent::Resize(unsigned int width, unsigned int height)
         {
@@ -40,7 +53,11 @@ namespace ns
                     {
                         alpha = maxAlpha;
                         currentTime = 0.f;
-                        mode = existing;
+                        mode = afterAppearSwitchTo;
+                        
+                        if (novel != nullptr)
+                            if (sendMessageBack == atAppearance)
+                                novel->UnHold();
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
@@ -56,6 +73,10 @@ namespace ns
                         alpha = 0;
                         currentTime = 0.f;
                         mode = deprecated;
+                        
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDeprecated)
+                                novel->UnHold();
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / appearTime)));
@@ -117,8 +138,9 @@ namespace ns
                         currentTime = 0.f;
                         mode = afterAppearSwitchTo;
                         
-                        if (sendMessageBack == atAppearance)
-                            novel->UnHold();
+                        if (novel != nullptr)
+                            if (sendMessageBack == atAppearance)
+                                novel->UnHold();
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
@@ -137,8 +159,9 @@ namespace ns
                         currentTime = 0.f;
                         mode = deprecated;
                         
-                        if (sendMessageBack == atDeprecated)
-                            novel->UnHold();
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDeprecated)
+                                novel->UnHold();
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
@@ -160,8 +183,9 @@ namespace ns
                         currentTime = 0.f;
                         mode = disappearing;
                         
-                        if (sendMessageBack == atDisappearing)
-                            novel->UnHold();
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDisappearing)
+                                novel->UnHold();
                     }
                     break;
                     
@@ -180,8 +204,9 @@ namespace ns
                     {
                         event = sf::Event();
                         
-                        if (sendMessageBack == atDisappearing)
-                            novel->UnHold();
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDisappearing)
+                                novel->UnHold();
                     }
                 }
         }

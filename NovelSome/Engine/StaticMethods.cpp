@@ -17,7 +17,7 @@ namespace ns
         else
         {
             sf::Font* font = new sf::Font();
-            if (font->loadFromFile(resourcePath() + fontName))
+            if (font->loadFromFile(resourcePath() + "Data/Fonts/" + fontName))
             {
                 fonts.emplace(fontName, font);
                 return *font;

@@ -31,6 +31,8 @@ namespace ns
         static void FreeFonts();
     };
     
+    
+    
     class GlobalSettings
     {
     public:

@@ -20,9 +20,10 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "List.hpp"
+#include "../Engine/List.hpp"
 #include "../Engine/EntitySystem.hpp"
 #include "../Engine/StaticMethods.hpp"
+#include "../Engine/NovelSomeScript.hpp"
 
 using std::cin;
 using std::cout;
@@ -43,28 +44,35 @@ namespace ns
             NovelComponent* novel;
             std::string imagePath;
             
-            bool spriteLoaded = false;
-            
+            bool spriteLoaded{ false };
             sf::Int8 alpha{ 0 };
-            int maxAlpha = 255;
-            
-            enum modeEnum {appearing, existing, disappearing, deprecated};
-            modeEnum mode{ appearing };
-            
             float currentTime{ 0.f };
+            
+        public:
+            enum modeEnum {appearing, existing, disappearing, deprecated};
+        private:
+            modeEnum mode{ appearing };
+        public:
+            enum sendMessageBackEnum {noMessage, atAppearance, atDeprecated};
+            sendMessageBackEnum sendMessageBack{ atAppearance };
+            modeEnum afterAppearSwitchTo{ existing };
+            
+            int maxAlpha{ 255 };
+            
             float appearTime{ 0.6f };
             float disappearTime{ 0.6f };
             
-        public:
-            bool visible = true;
+            bool visible{ true };
             
-            BackgroundComponent(std::string path);
+            void LoadImage(sf::String path);
             void Resize(unsigned int width, unsigned int height) override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void SetNovel(NovelComponent* novel);
             void CalculateScale(unsigned int width, unsigned int height);
         };
+        
+        
         
         class DialogueComponent : public ns::Component
         {
@@ -83,9 +91,8 @@ namespace ns
             
         public:
             enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
-            
-            modeEnum afterAppearSwitchTo{ waitingForInput };
             sendMessageBackEnum sendMessageBack{ atDisappearing };
+            modeEnum afterAppearSwitchTo{ waitingForInput };
             
             int maxAlpha = 255;
             bool forcePressInsideDialogue{ true };
@@ -112,7 +119,9 @@ namespace ns
         private:
             EntitySystem system;
             Entity* entity;
-            sf::String nsdataPath = "";
+            sf::String nsdataPath{ "" };
+            sf::String folderPath{ "" };
+            nss::CommandSettings command;
             
             bool eof{ false };
             bool onHold{ false };
@@ -124,9 +133,14 @@ namespace ns
         public:
             NovelComponent(sf::String path) : nsdataPath(path)
             {
+                folderPath = nss::GetFolderPath(path);
                 entity = system.AddEntity();
                 
+#ifdef _WIN32
+                wif.open(sf::String(resourcePath() + path).toWideString());
+#else
                 wif.open(resourcePath() + path);
+#endif
                 wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
                 
                 if (!(fileOpened = wif.is_open()))
@@ -147,12 +161,14 @@ namespace ns
                     if (!wif.eof())
                     {
                         std::getline(wif, line);
+                        command.Command(line);
                         
-                        if (line[0] == L'"')
+                        if (nss::Command(command, L"\""))
                         {
+                            std::wstring dialogueLine = nss::ParseUntil(command, '"');
                             onHold = true;
                             
-                            auto* component = entity->AddComponent<ns::NovelComponents::DialogueComponent>(line);
+                            auto* component = entity->AddComponent<ns::NovelComponents::DialogueComponent>(dialogueLine);
                             component->SetNovel(this);
                             component->fontName = "Arial Unicode.ttf";
                             component->characterSize = 40;
@@ -160,10 +176,17 @@ namespace ns
                             component->afterAppearSwitchTo = component->waitingForInput;
                             component->sendMessageBack = component->atDisappearing;
                         }
-                        /*else if (line[0] == L"background ")
+                        else if (nss::Command(command, L"background "))
                         {
+                            nss::ParseUntil(command, '"');
+                            std::wstring filePath = nss::ParseUntil(command, '"');
                             
-                        }*/
+                            onHold = true;
+                            
+                            auto* component = entity->AddComponent<ns::NovelComponents::BackgroundComponent>();
+                            component->SetNovel(this);
+                            component->LoadImage(filePath);
+                        }
                         
                         std::cout << "LINE: " << sf::String(line).toAnsiString() << std::endl;
                     }
@@ -192,6 +215,10 @@ namespace ns
             void UnHold()
             {
                 onHold = false;
+            }
+            sf::String GetFolderPath()
+            {
+                return folderPath;
             }
         };
         

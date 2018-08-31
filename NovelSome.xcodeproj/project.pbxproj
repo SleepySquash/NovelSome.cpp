@@ -7,37 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DD849AEB2136ECFF00FAFD15 /* novel.nsdata in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEA2136ECFE00FAFD15 /* novel.nsdata */; };
-		DD849AED213766EA00FAFD15 /* NotoSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEC213766EA00FAFD15 /* NotoSans-Regular.ttf */; };
-		DD849AF0213807EE00FAFD15 /* Arial Unicode.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEE213807EE00FAFD15 /* Arial Unicode.ttf */; };
-		DD849AF1213807EE00FAFD15 /* Arial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEF213807EE00FAFD15 /* Arial.ttf */; };
+		DD573E102139C32900F9FFF5 /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DD573E0E2139C32900F9FFF5 /* Novels */; };
+		DD573E112139C32900F9FFF5 /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD573E0F2139C32900F9FFF5 /* Data */; };
 		DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */; };
-		DD849AF621393C8500FAFD15 /* scen.nsdat in Resources */ = {isa = PBXBuildFile; fileRef = DD849AF521393C8500FAFD15 /* scen.nsdat */; };
 		DD849AFA2139452100FAFD15 /* Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF82139452100FAFD15 /* Base.cpp */; };
+		DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */; };
+		DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */; };
+		DD849B122139959800FAFD15 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD849B112139959800FAFD15 /* Images.xcassets */; };
 		DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */; };
 		DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAC2132AA1F000A23A6 /* TestComponents.cpp */; };
 		DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */; };
-		DDC61FB421334A07000A23A6 /* arial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DDC61FB221334A07000A23A6 /* arial.ttf */; };
-		DDC61FB521334A07000A23A6 /* pacifica.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DDC61FB321334A07000A23A6 /* pacifica.ttf */; };
-		DDC61FBA2134135E000A23A6 /* macos@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = DDC61FB92134135E000A23A6 /* macos@2x.png */; };
 		DDD09888212A1FCD00E58C1F /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DDD09887212A1FCD00E58C1F /* ResourcePath.mm */; };
 		DDD0988B212A1FCD00E58C1F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD0988A212A1FCD00E58C1F /* main.cpp */; };
-		DDD0988E212A1FCD00E58C1F /* cute_image.jpg in Resources */ = {isa = PBXBuildFile; fileRef = DDD0988D212A1FCD00E58C1F /* cute_image.jpg */; };
-		DDD09890212A1FCD00E58C1F /* nice_music.ogg in Resources */ = {isa = PBXBuildFile; fileRef = DDD0988F212A1FCD00E58C1F /* nice_music.ogg */; };
-		DDD09892212A1FCD00E58C1F /* sansation.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DDD09891212A1FCD00E58C1F /* sansation.ttf */; };
-		DDD09894212A1FCD00E58C1F /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = DDD09893212A1FCD00E58C1F /* icon.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		DD849AEA2136ECFE00FAFD15 /* novel.nsdata */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = novel.nsdata; sourceTree = "<group>"; };
-		DD849AEC213766EA00FAFD15 /* NotoSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSans-Regular.ttf"; sourceTree = "<group>"; };
-		DD849AEE213807EE00FAFD15 /* Arial Unicode.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Arial Unicode.ttf"; sourceTree = "<group>"; };
-		DD849AEF213807EE00FAFD15 /* Arial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Arial.ttf; path = ../../../../../../../Library/Fonts/Arial.ttf; sourceTree = "<group>"; };
+		DD573E0E2139C32900F9FFF5 /* Novels */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Novels; path = Resources/Novels; sourceTree = "<group>"; };
+		DD573E0F2139C32900F9FFF5 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = Resources/Data; sourceTree = "<group>"; };
 		DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelComponents.cpp; sourceTree = "<group>"; };
 		DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelComponents.hpp; sourceTree = "<group>"; };
-		DD849AF521393C8500FAFD15 /* scen.nsdat */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scen.nsdat; sourceTree = "<group>"; };
 		DD849AF82139452100FAFD15 /* Base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Base.cpp; sourceTree = "<group>"; };
 		DD849AF92139452100FAFD15 /* Base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Base.hpp; sourceTree = "<group>"; };
+		DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ResourcePath.cpp; sourceTree = "<group>"; };
+		DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelSomeScript.cpp; sourceTree = "<group>"; };
+		DD849B0F2139725C00FAFD15 /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
+		DD849B112139959800FAFD15 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DDC61FA72132A5E4000A23A6 /* EntitySystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EntitySystem.hpp; sourceTree = "<group>"; };
 		DDC61FAA2132A60D000A23A6 /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -45,18 +39,11 @@
 		DDC61FAD2132AA1F000A23A6 /* TestComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TestComponents.hpp; sourceTree = "<group>"; };
 		DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StaticMethods.cpp; sourceTree = "<group>"; };
 		DDC61FB0213347B6000A23A6 /* StaticMethods.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = StaticMethods.hpp; sourceTree = "<group>"; };
-		DDC61FB221334A07000A23A6 /* arial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = arial.ttf; sourceTree = "<group>"; };
-		DDC61FB321334A07000A23A6 /* pacifica.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = pacifica.ttf; sourceTree = "<group>"; };
-		DDC61FB92134135E000A23A6 /* macos@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "macos@2x.png"; sourceTree = "<group>"; };
 		DDD09882212A1FCD00E58C1F /* NovelSome.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NovelSome.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDD09886212A1FCD00E58C1F /* NovelSome-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NovelSome-Info.plist"; sourceTree = "<group>"; };
 		DDD09887212A1FCD00E58C1F /* ResourcePath.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ResourcePath.mm; sourceTree = "<group>"; };
 		DDD09889212A1FCD00E58C1F /* ResourcePath.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ResourcePath.hpp; sourceTree = "<group>"; };
 		DDD0988A212A1FCD00E58C1F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		DDD0988D212A1FCD00E58C1F /* cute_image.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cute_image.jpg; sourceTree = "<group>"; };
-		DDD0988F212A1FCD00E58C1F /* nice_music.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = nice_music.ogg; sourceTree = "<group>"; };
-		DDD09891212A1FCD00E58C1F /* sansation.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = sansation.ttf; sourceTree = "<group>"; };
-		DDD09893212A1FCD00E58C1F /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,10 +57,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD573E0D2139C2DC00F9FFF5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DDD0988C212A1FCD00E58C1F /* Resources */,
+				DD849B112139959800FAFD15 /* Images.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		DD849AF72139450C00FAFD15 /* Essentials */ = {
 			isa = PBXGroup;
 			children = (
 				DDD09887212A1FCD00E58C1F /* ResourcePath.mm */,
+				DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */,
 				DDD09889212A1FCD00E58C1F /* ResourcePath.hpp */,
 				DD849AF82139452100FAFD15 /* Base.cpp */,
 				DD849AF92139452100FAFD15 /* Base.hpp */,
@@ -89,6 +86,8 @@
 				DDC61FAA2132A60D000A23A6 /* List.hpp */,
 				DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */,
 				DDC61FB0213347B6000A23A6 /* StaticMethods.hpp */,
+				DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */,
+				DD849B0F2139725C00FAFD15 /* NovelSomeScript.hpp */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -102,19 +101,6 @@
 				DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */,
 			);
 			path = Components;
-			sourceTree = "<group>";
-		};
-		DDC61FB821334AF9000A23A6 /* Fonts */ = {
-			isa = PBXGroup;
-			children = (
-				DDC61FB221334A07000A23A6 /* arial.ttf */,
-				DD849AEE213807EE00FAFD15 /* Arial Unicode.ttf */,
-				DD849AEF213807EE00FAFD15 /* Arial.ttf */,
-				DDC61FB321334A07000A23A6 /* pacifica.ttf */,
-				DDD09891212A1FCD00E58C1F /* sansation.ttf */,
-				DD849AEC213766EA00FAFD15 /* NotoSans-Regular.ttf */,
-			);
-			name = Fonts;
 			sourceTree = "<group>";
 		};
 		DDD09878212A1FCD00E58C1F = {
@@ -141,7 +127,7 @@
 				DDC61FA42132A56A000A23A6 /* Engine */,
 				DDC61FA52132A591000A23A6 /* Components */,
 				DDD09885212A1FCD00E58C1F /* Supporting Files */,
-				DDD0988C212A1FCD00E58C1F /* Resources */,
+				DD573E0D2139C2DC00F9FFF5 /* Resources */,
 			);
 			path = NovelSome;
 			sourceTree = "<group>";
@@ -157,15 +143,11 @@
 		DDD0988C212A1FCD00E58C1F /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				DD849AEA2136ECFE00FAFD15 /* novel.nsdata */,
-				DDC61FB821334AF9000A23A6 /* Fonts */,
-				DDD0988D212A1FCD00E58C1F /* cute_image.jpg */,
-				DDD0988F212A1FCD00E58C1F /* nice_music.ogg */,
-				DD849AF521393C8500FAFD15 /* scen.nsdat */,
-				DDC61FB92134135E000A23A6 /* macos@2x.png */,
-				DDD09893212A1FCD00E58C1F /* icon.png */,
+				DD573E0F2139C32900F9FFF5 /* Data */,
+				DD573E0E2139C32900F9FFF5 /* Novels */,
 			);
 			name = Resources;
+			path = ..;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -225,18 +207,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD849AF1213807EE00FAFD15 /* Arial.ttf in Resources */,
-				DD849AED213766EA00FAFD15 /* NotoSans-Regular.ttf in Resources */,
-				DDC61FBA2134135E000A23A6 /* macos@2x.png in Resources */,
-				DD849AEB2136ECFF00FAFD15 /* novel.nsdata in Resources */,
-				DDC61FB521334A07000A23A6 /* pacifica.ttf in Resources */,
-				DDD09894212A1FCD00E58C1F /* icon.png in Resources */,
-				DDC61FB421334A07000A23A6 /* arial.ttf in Resources */,
-				DDD09892212A1FCD00E58C1F /* sansation.ttf in Resources */,
-				DDD09890212A1FCD00E58C1F /* nice_music.ogg in Resources */,
-				DDD0988E212A1FCD00E58C1F /* cute_image.jpg in Resources */,
-				DD849AF0213807EE00FAFD15 /* Arial Unicode.ttf in Resources */,
-				DD849AF621393C8500FAFD15 /* scen.nsdat in Resources */,
+				DD849B122139959800FAFD15 /* Images.xcassets in Resources */,
+				DD573E102139C32900F9FFF5 /* Novels in Resources */,
+				DD573E112139C32900F9FFF5 /* Data in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,10 +242,12 @@
 			files = (
 				DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */,
 				DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */,
+				DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */,
 				DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */,
 				DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */,
 				DDD0988B212A1FCD00E58C1F /* main.cpp in Sources */,
 				DDD09888212A1FCD00E58C1F /* ResourcePath.mm in Sources */,
+				DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */,
 				DD849AFA2139452100FAFD15 /* Base.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -371,6 +346,7 @@
 		DDD09898212A1FCD00E58C1F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
 				INFOPLIST_FILE = "NovelSome/NovelSome-Info.plist";
@@ -382,6 +358,7 @@
 		DDD09899212A1FCD00E58C1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
 				INFOPLIST_FILE = "NovelSome/NovelSome-Info.plist";
