@@ -32,8 +32,6 @@ namespace ns
 {
     namespace TestComponents
     {
-        
-        
         class TestComponent : public ns::Component
         {
         private:
@@ -151,74 +149,35 @@ namespace ns
         };
         
         
-        
-        class NovelComponent : public Component
+        /*NovelComponent(sf::String path) : nsdataPath(path)
         {
-        private:
-            EntitySystem system;
-            sf::String nsdataPath = "";
+            entity = system.AddEntity();
             
-            bool onHold{ false };
-            bool fileOpened{ false };
-            std::wstring line;
+            wif.open(resourcePath() + path);
+            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
-            std::wifstream wif;
-            
-        public:
-            NovelComponent(sf::String path) : nsdataPath(path)
+            if (wif.is_open())
             {
-                wif.open(resourcePath() + path);
-                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                
-                if (wif.is_open())
+                ns::Entity* entity = system.AddEntity();
+                fileOpened = true;
+
+                while (wif.good())
                 {
-                    ns::Entity* entity = system.AddEntity();
-                    fileOpened = true;
-                    
-                    while (wif.good())
+                    std::getline(wif, line);
+                    if (!wif.eof())
                     {
-                        std::getline(wif, line);
-                        if (!wif.eof())
-                        {
-                            if (line[0] == L'"')
-                                entity->AddComponent<ns::TestComponents::DialogueComponent>(line);
-                            std::cout << sf::String(line).toAnsiString() << std::endl;
-                        }
+                        if (line[0] == L'"')
+                        entity->AddComponent<ns::TestComponents::DialogueComponent>(line);
+                        std::cout << sf::String(line).toAnsiString() << std::endl;
                     }
                 }
-                else
-                    cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
-                
-                if (!wif.is_open())
-                    cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
             }
-            ~NovelComponent()
-            {
-                wif.close();
-            }
-            void Update(const sf::Time& elapsedTime) override
-            {
-                if (fileOpened)
-                    system.Update(elapsedTime);
-            }
-            void Draw(sf::RenderWindow* window) override
-            {
-                if (fileOpened)
-                    system.Draw(window);
-            }
-            void Resize(unsigned int width, unsigned int height) override
-            {
-                if (fileOpened)
-                    system.Resize(width, height);
-            }
-            void PollEvent(sf::Event& event) override
-            {
-                if (fileOpened)
-                    system.PollEvent(event);
-            }
-        };
-        
-        
+            else
+                cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
+            
+            if (!(fileOpened = wif.is_open()))
+                cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
+        }*/
     }
 }
 

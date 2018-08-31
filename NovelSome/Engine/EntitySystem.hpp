@@ -36,6 +36,7 @@ namespace ns
         virtual void Draw(sf::RenderWindow*);
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void PollEvent(sf::Event& event);
+        virtual void Destroy();
         void SetEntity(Entity* entity);
         Entity* GetEntity();
     };
@@ -56,6 +57,7 @@ namespace ns
         void Resize(unsigned int width, unsigned int height);
         void PollEvent(sf::Event& event);
         void PopComponent(Component* component);
+        void Destroy();
         void SetEntitySystem(EntitySystem* system);
         
         //for some reason putting this code in .cpp crashes the linker, so it has to remain in definition's .hpp file
@@ -99,6 +101,7 @@ namespace ns
         void PollEvent(sf::Event& event);
         Entity* AddEntity();
         void PopEntity(Entity* entity);
+        void Destroy();
         int GetEntityCount();
         List<Entity>* GetEntitiesListHead();
         

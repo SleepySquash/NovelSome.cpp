@@ -11,6 +11,9 @@
 		DD849AED213766EA00FAFD15 /* NotoSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEC213766EA00FAFD15 /* NotoSans-Regular.ttf */; };
 		DD849AF0213807EE00FAFD15 /* Arial Unicode.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEE213807EE00FAFD15 /* Arial Unicode.ttf */; };
 		DD849AF1213807EE00FAFD15 /* Arial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD849AEF213807EE00FAFD15 /* Arial.ttf */; };
+		DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */; };
+		DD849AF621393C8500FAFD15 /* scen.nsdat in Resources */ = {isa = PBXBuildFile; fileRef = DD849AF521393C8500FAFD15 /* scen.nsdat */; };
+		DD849AFA2139452100FAFD15 /* Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF82139452100FAFD15 /* Base.cpp */; };
 		DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */; };
 		DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAC2132AA1F000A23A6 /* TestComponents.cpp */; };
 		DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */; };
@@ -30,6 +33,11 @@
 		DD849AEC213766EA00FAFD15 /* NotoSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSans-Regular.ttf"; sourceTree = "<group>"; };
 		DD849AEE213807EE00FAFD15 /* Arial Unicode.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Arial Unicode.ttf"; sourceTree = "<group>"; };
 		DD849AEF213807EE00FAFD15 /* Arial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Arial.ttf; path = ../../../../../../../Library/Fonts/Arial.ttf; sourceTree = "<group>"; };
+		DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelComponents.cpp; sourceTree = "<group>"; };
+		DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelComponents.hpp; sourceTree = "<group>"; };
+		DD849AF521393C8500FAFD15 /* scen.nsdat */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scen.nsdat; sourceTree = "<group>"; };
+		DD849AF82139452100FAFD15 /* Base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Base.cpp; sourceTree = "<group>"; };
+		DD849AF92139452100FAFD15 /* Base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Base.hpp; sourceTree = "<group>"; };
 		DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DDC61FA72132A5E4000A23A6 /* EntitySystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EntitySystem.hpp; sourceTree = "<group>"; };
 		DDC61FAA2132A60D000A23A6 /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -62,6 +70,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD849AF72139450C00FAFD15 /* Essentials */ = {
+			isa = PBXGroup;
+			children = (
+				DDD09887212A1FCD00E58C1F /* ResourcePath.mm */,
+				DDD09889212A1FCD00E58C1F /* ResourcePath.hpp */,
+				DD849AF82139452100FAFD15 /* Base.cpp */,
+				DD849AF92139452100FAFD15 /* Base.hpp */,
+			);
+			path = Essentials;
+			sourceTree = "<group>";
+		};
 		DDC61FA42132A56A000A23A6 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
@@ -79,6 +98,8 @@
 			children = (
 				DDC61FAC2132AA1F000A23A6 /* TestComponents.cpp */,
 				DDC61FAD2132AA1F000A23A6 /* TestComponents.hpp */,
+				DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */,
+				DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -115,9 +136,8 @@
 		DDD09884212A1FCD00E58C1F /* NovelSome */ = {
 			isa = PBXGroup;
 			children = (
-				DDD09887212A1FCD00E58C1F /* ResourcePath.mm */,
-				DDD09889212A1FCD00E58C1F /* ResourcePath.hpp */,
 				DDD0988A212A1FCD00E58C1F /* main.cpp */,
+				DD849AF72139450C00FAFD15 /* Essentials */,
 				DDC61FA42132A56A000A23A6 /* Engine */,
 				DDC61FA52132A591000A23A6 /* Components */,
 				DDD09885212A1FCD00E58C1F /* Supporting Files */,
@@ -141,6 +161,7 @@
 				DDC61FB821334AF9000A23A6 /* Fonts */,
 				DDD0988D212A1FCD00E58C1F /* cute_image.jpg */,
 				DDD0988F212A1FCD00E58C1F /* nice_music.ogg */,
+				DD849AF521393C8500FAFD15 /* scen.nsdat */,
 				DDC61FB92134135E000A23A6 /* macos@2x.png */,
 				DDD09893212A1FCD00E58C1F /* icon.png */,
 			);
@@ -215,6 +236,7 @@
 				DDD09890212A1FCD00E58C1F /* nice_music.ogg in Resources */,
 				DDD0988E212A1FCD00E58C1F /* cute_image.jpg in Resources */,
 				DD849AF0213807EE00FAFD15 /* Arial Unicode.ttf in Resources */,
+				DD849AF621393C8500FAFD15 /* scen.nsdat in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,9 +269,11 @@
 			files = (
 				DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */,
 				DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */,
+				DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */,
 				DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */,
 				DDD0988B212A1FCD00E58C1F /* main.cpp in Sources */,
 				DDD09888212A1FCD00E58C1F /* ResourcePath.mm in Sources */,
+				DD849AFA2139452100FAFD15 /* Base.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,6 +16,7 @@ namespace ns
     void Component::Draw(sf::RenderWindow*) { }
     void Component::Resize(unsigned int, unsigned int) { }
     void Component::PollEvent(sf::Event&) { }
+    void Component::Destroy() { }
     void Component::SetEntity(Entity* entity)
     {
         this->entity = entity;
@@ -122,6 +123,20 @@ namespace ns
             free(current->data);
             free(current);
         }
+    }
+    
+    void Entity::Destroy()
+    {
+        List<Component>* next = nullptr;
+        if (components != nullptr)
+            for (auto* list = components; list != nullptr; list = next)
+            {
+                next = list->next;
+                
+                list->data->Destroy();
+                delete list->data;
+                delete list;
+            }
     }
 
     void Entity::SetEntitySystem(EntitySystem* system)
@@ -252,11 +267,23 @@ namespace ns
                     lastEntity = before;
             }
             
-            free(current->data);
-            free(current);
+            current->data->Destroy();
+            delete current->data;
+            delete current;
         }
     }
 
+    void EntitySystem::Destroy()
+    {
+        List<Entity>* next = nullptr;
+        if (entities != nullptr)
+            for (auto* list = entities; list != nullptr; list = next)
+            {
+                next = list->next;
+                list->data->Destroy();
+            }
+    }
+    
     int EntitySystem::GetEntityCount()
     {
         List<Entity>* list = entities;

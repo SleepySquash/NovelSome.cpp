@@ -28,12 +28,13 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "ResourcePath.hpp"
+#include "Essentials/ResourcePath.hpp"
 #include "Engine/List.hpp"
 #include "Engine/EntitySystem.hpp"
 #include "Engine/StaticMethods.hpp"
 
 #include "Components/TestComponents.hpp"
+#include "Components/NovelComponents.hpp"
 
 using std::cin;
 using std::cout;
@@ -61,7 +62,7 @@ int main(int, char const**)
     ////////////////////////////////////////////////////////////
     /// \brief Entity to hold essential components
     ///
-    /// Entityt holds components like always-on debug UI layer, system's components and other essential stuff.
+    /// Entity holds components like always-on debug UI layer, system's components and other essential stuff.
     /// It also may hold components like NovelComponent that runs the novel, cuz it has to be essential component.
     ///
     ////////////////////////////////////////////////////////////
@@ -78,7 +79,7 @@ int main(int, char const**)
         //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"Я люблю Юлю 💕"));
         //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"私は食品を食べる"));
         
-        Shimakaze->AddComponent<ns::TestComponents::NovelComponent>(sf::String(L"novel.nsdata"));
+        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>(sf::String(L"scen.nsdat"));
         
         Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
     }
@@ -149,6 +150,8 @@ int main(int, char const**)
         system.Draw(&window);
         window.display();
     }
+    
+    system.Destroy();
 
     return EXIT_SUCCESS;
 }
