@@ -1,0 +1,9 @@
+-Reorganized the whole structure of the project.
+-Added NovelSomeScript's basic functionality:
+nss::Command, CommandSettings, some utility scripts~
+
+-Now NovelComponent can progress through a scenario file.
+-Added status of the novel progression: on hold if there's some component that needs action to be taken.
+-NovelComponent now supports commands:
+"Text blahblah" - dialogue with all Unicode possible (displaying of Unicode depends only on the font used in the dialogue)
+background "filename.jpg" - backgrounds with fading in/out.
