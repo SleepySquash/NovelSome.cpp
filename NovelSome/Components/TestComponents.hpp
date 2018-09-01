@@ -57,6 +57,7 @@ namespace ns
         private:
             sf::Text text;
             ns::EntitySystem system;
+            bool fontLoaded{ false };
             
         public:
             EntityListComponent(ns::EntitySystem system);
@@ -73,6 +74,7 @@ namespace ns
             sf::Text performanceText;
             sf::Text projectText;
             sf::Text buildText;
+            bool fontLoaded{ false };
             
         public:
             DebugComponent();

@@ -202,7 +202,8 @@ namespace ns
         void DialogueComponent::Draw(sf::RenderWindow* window)
         {
             window->draw(shape);
-            window->draw(text);
+			if (fontLoaded)
+				window->draw(text);
         }
         void DialogueComponent::Resize(unsigned int width, unsigned int height)
         {
@@ -218,6 +219,7 @@ namespace ns
         {
             text.setString(dialogue);
             text.setFont(ns::FontCollector::GetFont(fontName));
+            fontLoaded = (text.getFont() != nullptr);
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
             shape.setFillColor(sf::Color(0,0,0,150));

@@ -1,4 +1,4 @@
-//
+﻿//
 //  NovelSomeScript.hpp
 //  NovelSome
 //

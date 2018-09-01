@@ -1,4 +1,4 @@
-//
+﻿//
 //  EntitySystem.cpp
 //  NovelSome
 //

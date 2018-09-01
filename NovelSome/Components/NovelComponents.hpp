@@ -81,6 +81,7 @@ namespace ns
             sf::Text text;
             NovelComponent* novel;
             
+            bool fontLoaded{ false };
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
             

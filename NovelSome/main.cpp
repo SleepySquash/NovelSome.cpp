@@ -40,7 +40,7 @@ using std::cin;
 using std::cout;
 using std::endl;
 
-int main(int, char const**)
+int main()
 {
     sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
     ns::GlobalSettings::width = 1280;

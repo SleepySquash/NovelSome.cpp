@@ -59,6 +59,7 @@ namespace ns
         void EntityListComponent::Init()
         {
             text.setFont(ns::FontCollector::GetFont("Sansation.ttf"));
+            fontLoaded = (text.getFont() != nullptr);
             text.setCharacterSize(50);
             text.setFillColor(sf::Color::Black);
         }
@@ -70,7 +71,8 @@ namespace ns
                 std::string string = "Entity №" + std::to_string(i) + " with Components: " + std::to_string(entity->data->GetComponentsCount());
                 text.setPosition(0, yy);
                 text.setString(string);
-                window->draw(text);
+                if (fontLoaded)
+                    window->draw(text);
                 
                 i++;
                 yy += text.getLocalBounds().height + 10;
@@ -88,6 +90,7 @@ namespace ns
             buildText.setOutlineThickness(1.f);
             buildText.setCharacterSize(16);
             buildText.setFont(ns::FontCollector::GetFont("Pacifica.ttf"));
+            fontLoaded = (buildText.getFont() != nullptr);
             
             projectText.setString("NovelSome by SlSq");
             projectText.setFillColor(sf::Color::White);
@@ -109,9 +112,12 @@ namespace ns
         }
         void DebugComponent::Draw(sf::RenderWindow* window)
         {
-            window->draw(buildText);
-            window->draw(projectText);
-            window->draw(performanceText);
+            if (fontLoaded)
+            {
+                window->draw(buildText);
+                window->draw(projectText);
+                window->draw(performanceText);
+            }
         }
         void DebugComponent::Resize(unsigned int width, unsigned int height)
         {

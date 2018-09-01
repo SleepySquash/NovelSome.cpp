@@ -1,4 +1,4 @@
-//
+﻿//
 //  StaticMethods.cpp
 //  NovelSome
 //
