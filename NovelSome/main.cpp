@@ -49,10 +49,6 @@ int main(int, char const**)
     sf::Image icon;
     if (icon.loadFromFile(resourcePath() + "Data/Images/macos@2x.png"))
         window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
-
-    sf::Music music;
-    if (music.openFromFile(resourcePath() + "Data/Sounds/nice_music.ogg"))
-        music.play();
     
     window.setFramerateLimit(120);
     window.setVerticalSyncEnabled(true);
@@ -68,19 +64,7 @@ int main(int, char const**)
     ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        //Shimakaze->AddComponent<ns::TestComponents::BackgroundComponent>("cute_image.jpg");
-        
-        /*ns::TestComponents::TestComponent* testComponent = Shimakaze->AddComponent<ns::TestComponents::TestComponent>("String yay!");
-        testComponent->SetFont(ns::FontCollector::GetFont("sansation.ttf"));
-        testComponent->SetSize(60);
-        testComponent->SetPosition(500, 500);
-        
-        Shimakaze->AddComponent<ns::TestComponents::EntityListComponent>(system);*/
-        //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"Я люблю Юлю 💕"));
-        //Shimakaze->AddComponent<ns::TestComponents::DialogueComponent>(sf::String(L"私は食品を食べる"));
-        
-        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>(sf::String(L"Novels/Bundle/scen.nsdat"));
-        
+        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>("Novels/Bundle/scen.nsdat");
         Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
     }
     
@@ -113,9 +97,6 @@ int main(int, char const**)
                     system.PollEvent(event);
                     switch (event.key.code)
                     {
-                        case sf::Keyboard::Escape:
-                            window.close();
-                            break;
                         case sf::Keyboard::Space:
                             system.AddEntity();
                             break;

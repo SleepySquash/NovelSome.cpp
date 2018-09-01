@@ -113,17 +113,6 @@ namespace ns
         
         
         
-        DialogueComponent::DialogueComponent(sf::String dialogue)
-        {
-            text.setString(dialogue);
-        }
-        void DialogueComponent::Init()
-        {
-            text.setFont(ns::FontCollector::GetFont(fontName));
-            text.setCharacterSize(characterSize);
-            text.setFillColor(sf::Color::White);
-            shape.setFillColor(sf::Color(0,0,0,150));
-        }
         void DialogueComponent::Update(const sf::Time& elapsedTime)
         {
             switch (mode)
@@ -224,6 +213,14 @@ namespace ns
         void DialogueComponent::SetNovel(NovelComponent* novel)
         {
             this->novel = novel;
+        }
+        void DialogueComponent::SetDialogue(sf::String dialogue)
+        {
+            text.setString(dialogue);
+            text.setFont(ns::FontCollector::GetFont(fontName));
+            text.setCharacterSize(characterSize);
+            text.setFillColor(sf::Color::White);
+            shape.setFillColor(sf::Color(0,0,0,150));
         }
     }
 }

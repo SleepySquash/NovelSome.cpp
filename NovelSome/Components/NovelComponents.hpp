@@ -103,13 +103,12 @@ namespace ns
             float appearTime{ 0.6f };
             float disappearTime{ 0.6f };
             
-            DialogueComponent(sf::String dialogue);
-            void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void PollEvent(sf::Event& event) override;
             void Draw(sf::RenderWindow* window) override;
             void Resize(unsigned int width, unsigned int height) override;
             void SetNovel(NovelComponent* novel);
+            void SetDialogue(sf::String dialogue);
         };
         
         
@@ -168,15 +167,17 @@ namespace ns
                             std::wstring dialogueLine = nss::ParseUntil(command, '"');
                             onHold = true;
                             
-                            auto* component = entity->AddComponent<ns::NovelComponents::DialogueComponent>(dialogueLine);
+                            auto* component = entity->AddComponent<ns::NovelComponents::DialogueComponent>();
                             component->SetNovel(this);
-                            component->fontName = "Arial Unicode.ttf";
+                            component->fontName = "NotoSansCJK-Regular.ttc";
                             component->characterSize = 40;
                             component->forcePressInsideDialogue = true;
                             component->afterAppearSwitchTo = component->waitingForInput;
                             component->sendMessageBack = component->atDisappearing;
+                            
+                            component->SetDialogue(dialogueLine);
                         }
-                        else if (nss::Command(command, L"background "))
+                        else if (nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                         {
                             nss::ParseUntil(command, '"');
                             std::wstring filePath = nss::ParseUntil(command, '"');
@@ -185,6 +186,7 @@ namespace ns
                             
                             auto* component = entity->AddComponent<ns::NovelComponents::BackgroundComponent>();
                             component->SetNovel(this);
+                            
                             component->LoadImage(filePath);
                         }
                         

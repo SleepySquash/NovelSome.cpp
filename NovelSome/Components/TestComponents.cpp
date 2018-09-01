@@ -58,7 +58,7 @@ namespace ns
         }
         void EntityListComponent::Init()
         {
-            text.setFont(ns::FontCollector::GetFont("sansation.ttf"));
+            text.setFont(ns::FontCollector::GetFont("Sansation.ttf"));
             text.setCharacterSize(50);
             text.setFillColor(sf::Color::Black);
         }
@@ -87,21 +87,21 @@ namespace ns
             buildText.setOutlineColor(sf::Color::Black);
             buildText.setOutlineThickness(1.f);
             buildText.setCharacterSize(16);
-            buildText.setFont(ns::FontCollector::GetFont("pacifica.ttf"));
+            buildText.setFont(ns::FontCollector::GetFont("Pacifica.ttf"));
             
             projectText.setString("NovelSome by SlSq");
             projectText.setFillColor(sf::Color::White);
             projectText.setOutlineColor(sf::Color::Black);
             projectText.setOutlineThickness(1.f);
             projectText.setCharacterSize(24);
-            projectText.setFont(ns::FontCollector::GetFont("pacifica.ttf"));
+            projectText.setFont(ns::FontCollector::GetFont("Pacifica.ttf"));
             
             performanceText.setString("FPS is 999");
             performanceText.setFillColor(sf::Color::White);
             performanceText.setOutlineColor(sf::Color::Black);
             performanceText.setOutlineThickness(1.f);
             performanceText.setCharacterSize(16);
-            performanceText.setFont(ns::FontCollector::GetFont("pacifica.ttf"));
+            performanceText.setFont(ns::FontCollector::GetFont("Pacifica.ttf"));
         }
         void DebugComponent::Update(const sf::Time& elapsedTime)
         {
