@@ -27,7 +27,7 @@ namespace nss
     /// Checks if the parsed string begins with command.
     /// Возвращает истину, если данная строка начинается с указанной команды, иначе - ложь.
     ///
-    /// \param results Structure of type CommandResults that contains specific settings and info.
+    /// \param results Structure of type CommandSettings that contains specific settings and info.
     /// \param command The command to check for.
     ///
     /// \returns true if parsed string starts with specified command, false otherwise.
@@ -36,12 +36,13 @@ namespace nss
     {
         bool ReallyFound{ false };
         
+        SkipSpaces(results);
         if (command.length() <= results.line.length())
         {
             bool Found{ true };
             int i = results.keepTheLastPos ? results.lastPos : 0;
-            for (; Found && i < command.length(); i++)
-                Found = (results.line[i] == command[i]);
+            for (int j = 0; Found && j < command.length(); i++, j++)
+                Found = (results.line[i] == command[j]);
             
             if (Found)
                 results.lastPos = i;
@@ -51,18 +52,6 @@ namespace nss
         
         return ReallyFound;
     }
-    
-    ///----------------------------------------------------------
-    /// \brief Checks if the parsed string begins with command.
-    ///
-    /// Checks if the parsed string begins with command.
-    /// Возвращает истину, если данная строка начинается с указанной команды, иначе - ложь.
-    ///
-    /// \param line    The parsed string to check from.
-    /// \param command The command to check for.
-    ///
-    /// \returns true if parsed string starts with specified command, false otherwise.
-    ///----------------------------------------------------------
     bool Command(const std::wstring& line, const std::wstring& command)
     {
         bool ReallyFound{ false };
@@ -80,17 +69,13 @@ namespace nss
     }
     
     //TODO: Documentation
-    ///----------------------------------------------------------
-    /// \brief Checks if the parsed string begins with command.
-    ///
-    /// Checks if the parsed string begins with command.
-    /// Возвращает истину, если данная строка начинается с указанной команды, иначе - ложь.
-    ///
-    /// \param line    The parsed string to check from.
-    /// \param command The command to check for.
-    ///
-    /// \returns true if parsed string starts with specified command, false otherwise.
-    ///----------------------------------------------------------
+    void SkipSpaces(CommandSettings& results)
+    {
+        while (results.lastPos < results.line.length() && (results.line[results.lastPos] == L' ' || results.line[results.lastPos] == L'\t'))
+            results.lastPos++;
+    }
+    
+    //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until)
     {
         unsigned int pos{ results.lastPos };
@@ -111,17 +96,6 @@ namespace nss
     }
     
     //TODO: Documentation
-    ///----------------------------------------------------------
-    /// \brief Checks if the parsed string begins with command.
-    ///
-    /// Checks if the parsed string begins with command.
-    /// Возвращает истину, если данная строка начинается с указанной команды, иначе - ложь.
-    ///
-    /// \param line    The parsed string to check from.
-    /// \param command The command to check for.
-    ///
-    /// \returns true if parsed string starts with specified command, false otherwise.
-    ///----------------------------------------------------------
     std::wstring GetFromUntil(const std::wstring& line, unsigned int pos, const wchar_t until)
     {
         std::wstring text = L"";
@@ -140,25 +114,15 @@ namespace nss
     }
     
     //TODO: Documentation
-    ///----------------------------------------------------------
-    /// \brief Checks if the parsed string begins with command.
-    ///
-    /// Checks if the parsed string begins with command.
-    /// Возвращает истину, если данная строка начинается с указанной команды, иначе - ложь.
-    ///
-    /// \param line    The parsed string to check from.
-    /// \param command The command to check for.
-    ///
-    /// \returns true if parsed string starts with specified command, false otherwise.
-    ///----------------------------------------------------------
     std::wstring GetFolderPath(std::wstring path)
     {
         std::wstring folder = L"";
         
         int pos{ -1 };
-        for (unsigned int i = path.length() - 1; i >= 0 && pos == -1; i--)
-            if (path[i] == '/' || path[i] == '\\')
-                pos = i;
+        if (path.length() != 0)
+            for (unsigned int i = path.length() - 1; i >= 0 && pos == -1; i--)
+                if (path[i] == '/' || path[i] == '\\')
+                    pos = i;
         
         for (int i = 0; i <= pos; i++)
             folder += path[i];
