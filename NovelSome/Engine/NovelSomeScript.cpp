@@ -1,4 +1,4 @@
-﻿//
+//
 //  NovelSomeScript.cpp
 //  NovelSome
 //
@@ -34,7 +34,6 @@ namespace nss
     ///----------------------------------------------------------
     bool Command(CommandSettings& results, const std::wstring& command)
     {
-		std::wcout << L"Debug: '" << results.line << "'    '" << command << "'" << std::endl;
         bool ReallyFound{ false };
         
         SkipSpaces(results);

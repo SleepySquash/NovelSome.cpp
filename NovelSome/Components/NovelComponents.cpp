@@ -104,10 +104,30 @@ namespace ns
         {
             if (spriteLoaded)
             {
-                float scaleFactorX = (float)width / image.getSize().x;
-                float scaleFactorY = (float)height / image.getSize().y;
-                float scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
-                sprite.setScale(scaleFactor, scaleFactor);
+                float scaleFactorX, scaleFactorY, scaleFactor;
+                scaleFactorX = (float)width / image.getSize().x;
+                scaleFactorY = (float)height / image.getSize().y;
+                switch (fitMode)
+                {
+                    case defaultScaling:
+                        scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
+                        sprite.setScale(scaleFactor, scaleFactor);
+                        break;
+                    
+                    case fillCentre:
+                        scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
+                        sprite.setScale(scaleFactor, scaleFactor);
+                        sprite.setPosition((float)width/2 - sprite.getLocalBounds().width/2*scaleFactor - sprite.getOrigin().x*scaleFactor,
+                                           (float)height/2 - sprite.getLocalBounds().height/2*scaleFactor - sprite.getOrigin().y*scaleFactor);
+                        break;
+                        
+                    case stretch:
+                        sprite.setScale(scaleFactorX, scaleFactorY);
+                        break;
+                        
+                    default:
+                        break;
+                }
             }
         }
         

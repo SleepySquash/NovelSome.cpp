@@ -102,6 +102,16 @@ int main()
                             break;
                         case sf::Keyboard::E:
                             system.PopEntity(Shimakaze);
+                            Shimakaze = nullptr;
+                            break;
+                        case sf::Keyboard::R:
+                            if (Shimakaze != nullptr)
+                                system.PopEntity(Shimakaze);
+                            Shimakaze = system.AddEntity();
+                            {
+                                Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>("Novels/Bundle/scen.nsdat");
+                                Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
+                            }
                             break;
                             
                         default:

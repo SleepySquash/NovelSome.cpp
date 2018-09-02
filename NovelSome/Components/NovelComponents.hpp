@@ -33,6 +33,7 @@ namespace ns
 {
     namespace NovelComponents
     {
+        typedef Entity Group;
         class NovelComponent;
         
         class BackgroundComponent : public Component
@@ -56,6 +57,9 @@ namespace ns
             enum sendMessageBackEnum {noMessage, atAppearance, atDeprecated};
             sendMessageBackEnum sendMessageBack{ atAppearance };
             modeEnum afterAppearSwitchTo{ existing };
+            
+            enum fitModeEnum { noScaling, defaultScaling, fillCentre, stretch };
+            fitModeEnum fitMode { fillCentre };
             
             int maxAlpha{ 255 };
             
@@ -118,7 +122,13 @@ namespace ns
         {
         private:
             EntitySystem system;
-            Entity* entity;
+            
+            Group* backgroundGroup;
+            Group* characterGroup;
+            Group* dialogueGroup;
+            Group* soundGroup;
+            Group* GUIGroup;
+            
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
             nss::CommandSettings command;
@@ -134,7 +144,12 @@ namespace ns
             NovelComponent(sf::String path) : nsdataPath(path)
             {
                 folderPath = nss::GetFolderPath(path);
-                entity = system.AddEntity();
+                
+                backgroundGroup = system.AddEntity();
+                characterGroup = system.AddEntity();
+                dialogueGroup = system.AddEntity();
+                soundGroup = system.AddEntity();
+                GUIGroup = system.AddEntity();
                 
 #ifdef _WIN32
                 wif.open(sf::String(resourcePath() + path).toWideString());
@@ -168,7 +183,7 @@ namespace ns
                             std::wstring dialogueLine = nss::ParseUntil(command, '"');
                             onHold = true;
                             
-                            auto* component = entity->AddComponent<ns::NovelComponents::DialogueComponent>();
+                            auto* component = dialogueGroup->AddComponent<ns::NovelComponents::DialogueComponent>();
                             component->SetNovel(this);
                             component->fontName = "NotoSansCJK-Regular.ttc";
                             component->characterSize = 40;
@@ -185,13 +200,12 @@ namespace ns
                             
                             onHold = true;
                             
-                            auto* component = entity->AddComponent<ns::NovelComponents::BackgroundComponent>();
+                            auto* component = backgroundGroup->AddComponent<ns::NovelComponents::BackgroundComponent>();
                             component->SetNovel(this);
+                            component->fitMode = component->fillCentre;
                             
                             component->LoadImage(filePath);
                         }
-                        
-                        std::cout << "LINE: " << sf::String(line).toAnsiString() << std::endl;
                     }
                     else
                         eof = true;

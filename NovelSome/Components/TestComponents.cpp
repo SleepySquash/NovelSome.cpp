@@ -84,7 +84,7 @@ namespace ns
         DebugComponent::DebugComponent() { }
         void DebugComponent::Init()
         {
-            buildText.setString("Update 0 build 0");
+            buildText.setString("Update 0 build 1");
             buildText.setFillColor(sf::Color::White);
             buildText.setOutlineColor(sf::Color::Black);
             buildText.setOutlineThickness(1.f);
