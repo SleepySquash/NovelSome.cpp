@@ -14,6 +14,7 @@
 		DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */; };
 		DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */; };
 		DD849B122139959800FAFD15 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD849B112139959800FAFD15 /* Images.xcassets */; };
+		DDA8934A213C950E00D8EF7B /* List.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDA89349213C950E00D8EF7B /* List.cpp */; };
 		DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */; };
 		DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAC2132AA1F000A23A6 /* TestComponents.cpp */; };
 		DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */; };
@@ -32,6 +33,7 @@
 		DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelSomeScript.cpp; sourceTree = "<group>"; };
 		DD849B0F2139725C00FAFD15 /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
 		DD849B112139959800FAFD15 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		DDA89349213C950E00D8EF7B /* List.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = List.cpp; sourceTree = "<group>"; };
 		DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DDC61FA72132A5E4000A23A6 /* EntitySystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EntitySystem.hpp; sourceTree = "<group>"; };
 		DDC61FAA2132A60D000A23A6 /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 			children = (
 				DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */,
 				DDC61FA72132A5E4000A23A6 /* EntitySystem.hpp */,
+				DDA89349213C950E00D8EF7B /* List.cpp */,
 				DDC61FAA2132A60D000A23A6 /* List.hpp */,
 				DDC61FAF213347B6000A23A6 /* StaticMethods.cpp */,
 				DDC61FB0213347B6000A23A6 /* StaticMethods.hpp */,
@@ -249,6 +252,7 @@
 				DDD09888212A1FCD00E58C1F /* ResourcePath.mm in Sources */,
 				DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */,
 				DD849AFA2139452100FAFD15 /* Base.cpp in Sources */,
+				DDA8934A213C950E00D8EF7B /* List.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

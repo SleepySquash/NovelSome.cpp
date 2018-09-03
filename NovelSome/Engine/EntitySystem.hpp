@@ -1,4 +1,4 @@
-﻿//
+//
 //  EntitySystem.hpp
 //  NovelSome
 //
@@ -27,9 +27,11 @@ namespace ns
     class Component
     {
     private:
-        Entity* entity = nullptr;
+        Entity* entity{ nullptr };
         
     public:
+        int priority{ 0 };
+        
         virtual ~Component();
         virtual void Init();
         virtual void Update(const sf::Time&);
@@ -37,6 +39,7 @@ namespace ns
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void PollEvent(sf::Event& event);
         virtual void Destroy();
+        void SetPriority(int priority);
         void SetEntity(Entity* entity);
         Entity* GetEntity();
     };
@@ -59,6 +62,7 @@ namespace ns
         void PopComponent(Component* component);
         void Destroy();
         void SetEntitySystem(EntitySystem* system);
+        void SortMe(Component* component);
         
         //for some reason putting this code in .cpp crashes the linker, so it has to remain in definition's .hpp file
         template<typename T, typename ...Args> T* AddComponent(Args... args)
@@ -74,6 +78,54 @@ namespace ns
             else
                 lastComponent->next = element;
             lastComponent = element;
+            
+            component->SetEntity(this);
+            component->Init();
+            component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+            
+            return component;
+        }
+        template<typename T, typename ...Args> T* PrioritizeComponent(int priority, Args... args)
+        {
+            T* component = new T(args...);
+            List<Component>* element = (List<Component>*)malloc(sizeof(List<Component>));
+            element->data = component;
+            element->data->priority = priority;
+            element->next = nullptr;
+            element->prev = nullptr;
+            
+            List<Component>* temp = components;
+            bool Done{ false };
+            while (!Done && temp != nullptr)
+            {
+                if (temp->data->priority > priority)
+                {
+                    if (temp->prev != nullptr)
+                    {
+                        temp->prev->next = element;
+                        element->prev = temp->prev;
+                        element->next = temp;
+                        temp->prev = element;
+                    }
+                    else
+                    {
+                        components->prev = element;
+                        element->next = components;
+                        components = element;
+                    }
+                    Done = true;
+                }
+                temp = temp->next;
+            }
+            if (!Done && temp == nullptr)
+            {
+                element->prev = lastComponent;
+                if (lastComponent == nullptr)
+                    components = element;
+                else
+                    lastComponent->next = element;
+                lastComponent = element;
+            }
             
             component->SetEntity(this);
             component->Init();

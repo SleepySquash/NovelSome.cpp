@@ -33,16 +33,16 @@ namespace ns
 {
     namespace NovelComponents
     {
-        typedef Entity Group;
         class NovelComponent;
         
-        class BackgroundComponent : public Component
+        class Background : public Component
         {
         private:
             sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
-            NovelComponent* novel;
+            NovelComponent* novel{ nullptr };
+            List<Background>* groupPointer{ nullptr };
             std::string imagePath;
             
             bool spriteLoaded{ false };
@@ -58,7 +58,7 @@ namespace ns
             sendMessageBackEnum sendMessageBack{ atAppearance };
             modeEnum afterAppearSwitchTo{ existing };
             
-            enum fitModeEnum { noScaling, defaultScaling, fillCentre, stretch };
+            enum fitModeEnum { noFit, defaultFit, fillCentre, stretch };
             fitModeEnum fitMode { fillCentre };
             
             int maxAlpha{ 255 };
@@ -72,18 +72,22 @@ namespace ns
             void Resize(unsigned int width, unsigned int height) override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
+            void Destroy() override;
             void SetNovel(NovelComponent* novel);
+            void SetGroup(List<Background>* element);
             void CalculateScale(unsigned int width, unsigned int height);
+            void SetStateMode(modeEnum newMode);
         };
         
         
         
-        class DialogueComponent : public ns::Component
+        class Dialogue : public ns::Component
         {
         private:
             sf::RectangleShape shape;
             sf::Text text;
-            NovelComponent* novel;
+            NovelComponent* novel{ nullptr };
+            List<Dialogue>* groupPointer{ nullptr };
             
             bool fontLoaded{ false };
             sf::Int8 alpha{ 0 };
@@ -111,9 +115,33 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void PollEvent(sf::Event& event) override;
             void Draw(sf::RenderWindow* window) override;
+            void Destroy() override;
             void Resize(unsigned int width, unsigned int height) override;
             void SetNovel(NovelComponent* novel);
+            void SetGroup(List<Dialogue>* element);
             void SetDialogue(sf::String dialogue);
+            void SetStateMode(modeEnum newMode);
+        };
+        
+        
+        
+        class Character : Component
+        {
+            
+        };
+        
+        
+        
+        class AudioPlayer : Component
+        {
+            
+        };
+        
+        
+        
+        class GUISystem : Component
+        {
+            
         };
         
         
@@ -122,34 +150,32 @@ namespace ns
         {
         private:
             EntitySystem system;
-            
-            Group* backgroundGroup;
-            Group* characterGroup;
-            Group* dialogueGroup;
-            Group* soundGroup;
-            Group* GUIGroup;
+            Entity* layers;
             
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
             nss::CommandSettings command;
             
             bool eof{ false };
-            bool onHold{ false };
             bool fileOpened{ false };
             std::wstring line;
+            
+            List<Component>* onHold{ nullptr };
+            unsigned int onHoldSize{ 0 };
             
             std::wifstream wif;
             
         public:
+            List<ns::NovelComponents::Background>* backgroundGroup{ nullptr };
+            List<ns::NovelComponents::Character>* characterGroup{ nullptr };
+            List<ns::NovelComponents::Dialogue>* dialogueGroup{ nullptr };
+            List<ns::NovelComponents::AudioPlayer>* audioGroup{ nullptr };
+            List<ns::NovelComponents::GUISystem>* GUIGroup{ nullptr };
+            
             NovelComponent(sf::String path) : nsdataPath(path)
             {
                 folderPath = nss::GetFolderPath(path);
-                
-                backgroundGroup = system.AddEntity();
-                characterGroup = system.AddEntity();
-                dialogueGroup = system.AddEntity();
-                soundGroup = system.AddEntity();
-                GUIGroup = system.AddEntity();
+                layers = system.AddEntity();
                 
 #ifdef _WIN32
                 wif.open(sf::String(resourcePath() + path).toWideString());
@@ -168,7 +194,7 @@ namespace ns
             }
             void Update(const sf::Time& elapsedTime) override
             {
-                while (fileOpened && !eof && !onHold)
+                while (fileOpened && !eof && (onHold == nullptr || onHoldSize == 0))
                 {
                     if (wif.fail() || wif.bad())
                         cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << nsdataPath.toAnsiString() << endl;
@@ -181,9 +207,10 @@ namespace ns
                         if (nss::Command(command, L"\""))
                         {
                             std::wstring dialogueLine = nss::ParseUntil(command, '"');
-                            onHold = true;
                             
-                            auto* component = dialogueGroup->AddComponent<ns::NovelComponents::DialogueComponent>();
+                            auto* component = layers->PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
+                            OnHold(component);
+                            
                             component->SetNovel(this);
                             component->fontName = "NotoSansCJK-Regular.ttc";
                             component->characterSize = 40;
@@ -191,18 +218,45 @@ namespace ns
                             component->afterAppearSwitchTo = component->waitingForInput;
                             component->sendMessageBack = component->atDisappearing;
                             
+                            dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
+                            dialogueGroup->data = component;
+                            component->SetGroup(dialogueGroup);
+                            
                             component->SetDialogue(dialogueLine);
+                        }
+                        else if (nss::Command(command, L"background hide"))
+                        {
+                            if (backgroundGroup != nullptr)
+                            {
+                                List<Background>* temp = backgroundGroup;
+                                while (temp != nullptr)
+                                {
+                                    if (temp->data != nullptr)
+                                    {
+                                        OnHold(temp->data);
+                                        temp->data->sendMessageBack = temp->data->atDeprecated;
+                                        temp->data->SetStateMode(temp->data->disappearing);
+                                    }
+                                    temp = temp->next;
+                                    //TODO: Hold must be an array of queue, so every object removes it's own OnHold
+                                }
+                            }
                         }
                         else if (nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                         {
                             nss::ParseUntil(command, '"');
                             std::wstring filePath = nss::ParseUntil(command, '"');
                             
-                            onHold = true;
+                            auto* component = layers->PrioritizeComponent<ns::NovelComponents::Background>(0);
+                            component->SetPriority(0);
+                            OnHold(component);
                             
-                            auto* component = backgroundGroup->AddComponent<ns::NovelComponents::BackgroundComponent>();
                             component->SetNovel(this);
                             component->fitMode = component->fillCentre;
+                            
+                            backgroundGroup = ns::list::Insert<ns::NovelComponents::Background>(backgroundGroup);
+                            backgroundGroup->data = component;
+                            component->SetGroup(backgroundGroup);
                             
                             component->LoadImage(filePath);
                         }
@@ -229,14 +283,55 @@ namespace ns
                 if (fileOpened)
                     system.PollEvent(event);
             }
-            void UnHold()
+            void OnHold(ns::Component* component)
             {
-                onHold = false;
+                onHold = ns::list::Insert<ns::Component>(onHold);
+                onHold->data = component;
+                
+                onHoldSize++;
+            }
+            void UnHold(ns::Component* component)
+            {
+                List<Component>* temp = onHold;
+                while (temp != nullptr)
+                {
+                    List<Component>* next = temp->next;
+                    if (temp->data == component)
+                    {
+                        if (temp == onHold)
+                            onHold = temp->next;
+                        if (temp->next != nullptr)
+                            temp->next->prev = temp->prev;
+                        if (temp->prev != nullptr)
+                            temp->prev->next = temp->next;
+                        delete temp;
+                        
+                        onHoldSize--;
+                        next = nullptr;
+                    }
+                    
+                    temp = next;
+                }
             }
             sf::String GetFolderPath()
             {
                 return folderPath;
             }
+            template<typename T> void RefreshGroup(List<T>* group)
+            {
+                while (group != nullptr)
+                {
+                    List<T>* next = group->next;
+                    if (group->data == nullptr)
+                        ns::list::Remove<T>(group);
+                    group = next;
+                }
+            }
+            void RemoveFromGroup(List<Background>* groupPointer);
+            void RemoveFromGroup(List<Dialogue>* groupPointer);
+            void RemoveFromGroup(List<Character>* groupPointer);
+            void RemoveFromGroup(List<AudioPlayer>* groupPointer);
+            void RemoveFromGroup(List<GUISystem>* groupPointer);
         };
         
         

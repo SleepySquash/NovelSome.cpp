@@ -12,7 +12,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        void BackgroundComponent::LoadImage(sf::String path)
+        void Background::LoadImage(sf::String path)
         {
             spriteLoaded = false;
             if (novel != nullptr)
@@ -32,16 +32,16 @@ namespace ns
                 
                 if (!spriteLoaded)
                     if (sendMessageBack != noMessage)
-                        novel->UnHold();
+                        novel->UnHold(this);
             }
             else
                 cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
         }
-        void BackgroundComponent::Resize(unsigned int width, unsigned int height)
+        void Background::Resize(unsigned int width, unsigned int height)
         {
             CalculateScale(width, height);
         }
-        void BackgroundComponent::Update(const sf::Time& elapsedTime)
+        void Background::Update(const sf::Time& elapsedTime)
         {
             switch (mode)
             {
@@ -57,7 +57,7 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atAppearance)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
@@ -76,10 +76,10 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atDeprecated)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                     else
-                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / appearTime)));
+                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
@@ -91,16 +91,25 @@ namespace ns
                     break;
             }
         }
-        void BackgroundComponent::Draw(sf::RenderWindow* window)
+        void Background::Draw(sf::RenderWindow* window)
         {
             if (spriteLoaded && visible)
                 window->draw(sprite);
         }
-        void BackgroundComponent::SetNovel(NovelComponent* novel)
+        void Background::Destroy()
+        {
+            if (groupPointer != nullptr && novel != nullptr)
+                novel->RemoveFromGroup(groupPointer);
+        }
+        void Background::SetNovel(NovelComponent* novel)
         {
             this->novel = novel;
         }
-        void BackgroundComponent::CalculateScale(unsigned int width, unsigned int height)
+        void Background::SetGroup(List<Background>* element)
+        {
+            this->groupPointer = element;
+        }
+        void Background::CalculateScale(unsigned int width, unsigned int height)
         {
             if (spriteLoaded)
             {
@@ -109,7 +118,7 @@ namespace ns
                 scaleFactorY = (float)height / image.getSize().y;
                 switch (fitMode)
                 {
-                    case defaultScaling:
+                    case defaultFit:
                         scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
                         sprite.setScale(scaleFactor, scaleFactor);
                         break;
@@ -130,10 +139,18 @@ namespace ns
                 }
             }
         }
+        void Background::SetStateMode(modeEnum newMode)
+        {
+            if (mode != newMode)
+            {
+                currentTime = 0.f;
+                mode = newMode;
+            }
+        }
         
         
         
-        void DialogueComponent::Update(const sf::Time& elapsedTime)
+        void Dialogue::Update(const sf::Time& elapsedTime)
         {
             switch (mode)
             {
@@ -149,7 +166,7 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atAppearance)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
@@ -170,7 +187,7 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atDeprecated)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                     else
                         alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
@@ -194,7 +211,7 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atDisappearing)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                     break;
                     
@@ -202,7 +219,7 @@ namespace ns
                     break;
             }
         }
-        void DialogueComponent::PollEvent(sf::Event& event)
+        void Dialogue::PollEvent(sf::Event& event)
         {
             if (mode == waitingForInput)
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
@@ -215,27 +232,36 @@ namespace ns
                         
                         if (novel != nullptr)
                             if (sendMessageBack == atDisappearing)
-                                novel->UnHold();
+                                novel->UnHold(this);
                     }
                 }
         }
-        void DialogueComponent::Draw(sf::RenderWindow* window)
+        void Dialogue::Draw(sf::RenderWindow* window)
         {
             window->draw(shape);
 			if (fontLoaded)
 				window->draw(text);
         }
-        void DialogueComponent::Resize(unsigned int width, unsigned int height)
+        void Dialogue::Destroy()
+        {
+            if (groupPointer != nullptr && novel != nullptr)
+                novel->RemoveFromGroup(groupPointer);
+        }
+        void Dialogue::Resize(unsigned int width, unsigned int height)
         {
             text.setPosition(30, height - height/5 + 10);
             shape.setPosition(0, height - height/5);
             shape.setSize({static_cast<float>(width), static_cast<float>(height/5)});
         }
-        void DialogueComponent::SetNovel(NovelComponent* novel)
+        void Dialogue::SetNovel(NovelComponent* novel)
         {
             this->novel = novel;
         }
-        void DialogueComponent::SetDialogue(sf::String dialogue)
+        void Dialogue::SetGroup(List<Dialogue>* element)
+        {
+            this->groupPointer = element;
+        }
+        void Dialogue::SetDialogue(sf::String dialogue)
         {
             text.setString(dialogue);
             text.setFont(ns::FontCollector::GetFont(fontName));
@@ -243,6 +269,117 @@ namespace ns
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
             shape.setFillColor(sf::Color(0,0,0,150));
+        }
+        void Dialogue::SetStateMode(modeEnum newMode)
+        {
+            if (mode != newMode)
+            {
+                currentTime = 0.f;
+                mode = newMode;
+            }
+        }
+        
+        
+        
+        void NovelComponent::RemoveFromGroup(List<Background>* groupPointer)
+        {
+            if (groupPointer == backgroundGroup)
+            {
+                backgroundGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void NovelComponent::RemoveFromGroup(List<Dialogue>* groupPointer)
+        {
+            if (groupPointer == dialogueGroup)
+            {
+                dialogueGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void NovelComponent::RemoveFromGroup(List<Character>* groupPointer)
+        {
+            if (groupPointer == characterGroup)
+            {
+                characterGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void NovelComponent::RemoveFromGroup(List<AudioPlayer>* groupPointer)
+        {
+            if (groupPointer == audioGroup)
+            {
+                audioGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void NovelComponent::RemoveFromGroup(List<GUISystem>* groupPointer)
+        {
+            if (groupPointer == GUIGroup)
+            {
+                GUIGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
         }
     }
 }

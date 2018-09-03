@@ -1,4 +1,4 @@
-﻿//
+//
 //  EntitySystem.cpp
 //  NovelSome
 //
@@ -24,6 +24,12 @@ namespace ns
     Entity* Component::GetEntity()
     {
         return entity;
+    }
+    void Component::SetPriority(int priority)
+    {
+        this->priority = priority;
+        if (entity != nullptr)
+            entity->SortMe(this);
     }
     
     
@@ -103,6 +109,8 @@ namespace ns
         
         if (current != nullptr)
         {
+            current->data->Destroy();
+            
             if (before == current)
             {
                 components = current->next;
@@ -161,6 +169,11 @@ namespace ns
     List<Component>* Entity::GetComponentsListHead()
     {
         return components;
+    }
+    
+    void Entity::SortMe(Component* component)
+    {
+        //TODO
     }
 
     
@@ -250,6 +263,8 @@ namespace ns
         
         if (current != nullptr)
         {
+            current->data->Destroy();
+            
             if (before == current)
             {
                 entities = current->next;
@@ -267,7 +282,6 @@ namespace ns
                     lastEntity = before;
             }
             
-            current->data->Destroy();
             delete current->data;
             delete current;
         }

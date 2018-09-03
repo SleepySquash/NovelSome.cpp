@@ -1,6 +1,9 @@
 "..."
 
-задний фон "ItJyTkXF_n4.jpg" with fade:1
+background "ItJyTkXF_n4.jpg" with fade:1 fit:fill
+background "DVa.jpg" with fade:1
+"Я люблю Юлю <3"
+background hide
 "Привет! Йа текст 私は食品を食べる"
 "И я текст! Бла бла бла текст :3"
 
