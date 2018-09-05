@@ -1,4 +1,4 @@
-﻿//
+//
 //  StaticMethods.cpp
 //  NovelSome
 //
@@ -37,4 +37,6 @@ namespace ns
     
     unsigned int GlobalSettings::width = 0;
     unsigned int GlobalSettings::height = 0;
+    bool GlobalSettings::isPauseEnabled = true;
+    bool GlobalSettings::isPause = false;
 }

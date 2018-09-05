@@ -33,7 +33,90 @@ namespace ns
 {
     namespace NovelComponents
     {
-        class NovelComponent;
+        class Novel;
+        
+        
+        class GamePause : public Component
+        {
+        private:
+            sf::RectangleShape shape;
+            Novel* novel{ nullptr };
+            
+            sf::Int8 alpha{ 0 };
+            float currentTime{ 0.f };
+            
+        public:
+            enum modeEnum{ appearing, waiting, disappearing };
+            modeEnum mode{ waiting };
+            
+            int maxAlpha{ 170 };
+            float appearTime{ 0.3f };
+            float disappearTime{ 0.3f };
+            
+            GamePause(Novel* novel)
+            {
+                this->novel = novel;
+                shape.setFillColor(sf::Color(0,0,0,0));
+            }
+            void Update(const sf::Time& elapsedTime) override
+            {
+                switch (mode)
+                {
+                    case appearing:
+                        if (currentTime < appearTime)
+                            currentTime += elapsedTime.asSeconds();
+                        
+                        if (currentTime >= appearTime)
+                        {
+                            alpha = maxAlpha;
+                            currentTime = 0.f;
+                            mode = waiting;
+                        }
+                        else
+                            alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                        shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
+                        break;
+                        
+                    case disappearing:
+                        if (currentTime < disappearTime)
+                            currentTime += elapsedTime.asSeconds();
+                        
+                        if (currentTime >= disappearTime)
+                        {
+                            alpha = 0;
+                            currentTime = 0.f;
+                            mode = waiting;
+                        }
+                        else
+                            alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                        shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
+                        break;
+                        
+                    default:
+                        break;
+                }
+            }
+            void PollEvent(sf::Event& event) override
+            {
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+                {
+                    ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
+                    mode = ns::GlobalSettings::isPause? appearing : disappearing;
+                    currentTime = 0.f;
+                }
+            }
+            void Draw(sf::RenderWindow *window) override
+            {
+                if (alpha != 0)
+                    window->draw(shape);
+            }
+            void Resize(unsigned int width, unsigned int height) override
+            {
+                shape.setSize({(float)width, (float)height});
+            }
+        };
+        
+        
         
         class Background : public Component
         {
@@ -41,7 +124,7 @@ namespace ns
             sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
-            NovelComponent* novel{ nullptr };
+            Novel* novel{ nullptr };
             List<Background>* groupPointer{ nullptr };
             std::string imagePath;
             
@@ -73,7 +156,7 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
-            void SetNovel(NovelComponent* novel);
+            void SetNovel(Novel* novel);
             void SetGroup(List<Background>* element);
             void CalculateScale(unsigned int width, unsigned int height);
             void SetStateMode(modeEnum newMode);
@@ -86,7 +169,7 @@ namespace ns
         private:
             sf::RectangleShape shape;
             sf::Text text;
-            NovelComponent* novel{ nullptr };
+            Novel* novel{ nullptr };
             List<Dialogue>* groupPointer{ nullptr };
             
             bool fontLoaded{ false };
@@ -117,7 +200,7 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void Resize(unsigned int width, unsigned int height) override;
-            void SetNovel(NovelComponent* novel);
+            void SetNovel(Novel* novel);
             void SetGroup(List<Dialogue>* element);
             void SetDialogue(sf::String dialogue);
             void SetStateMode(modeEnum newMode);
@@ -146,11 +229,12 @@ namespace ns
         
         
         
-        class NovelComponent : public Component
+        class Novel : public Component
         {
         private:
             EntitySystem system;
             Entity* layers;
+            Entity* gamePause;
             
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
@@ -172,151 +256,15 @@ namespace ns
             List<ns::NovelComponents::AudioPlayer>* audioGroup{ nullptr };
             List<ns::NovelComponents::GUISystem>* GUIGroup{ nullptr };
             
-            NovelComponent(sf::String path) : nsdataPath(path)
-            {
-                folderPath = nss::GetFolderPath(path);
-                layers = system.AddEntity();
-                
-#ifdef _WIN32
-                wif.open(sf::String(resourcePath() + path).toWideString());
-#else
-                wif.open(resourcePath() + path);
-#endif
-                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                
-                if (!(fileOpened = wif.is_open()))
-                    cout << "Error :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
-            }
-            ~NovelComponent()
-            {
-                wif.close();
-                system.Destroy();
-            }
-            void Update(const sf::Time& elapsedTime) override
-            {
-                while (fileOpened && !eof && (onHold == nullptr || onHoldSize == 0))
-                {
-                    if (wif.fail() || wif.bad())
-                        cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << nsdataPath.toAnsiString() << endl;
-                    
-                    if (!wif.eof())
-                    {
-                        std::getline(wif, line);
-                        command.Command(line);
-                        
-                        if (nss::Command(command, L"\""))
-                        {
-                            std::wstring dialogueLine = nss::ParseUntil(command, '"');
-                            
-                            auto* component = layers->PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
-                            OnHold(component);
-                            
-                            component->SetNovel(this);
-                            component->fontName = "NotoSansCJK-Regular.ttc";
-                            component->characterSize = 40;
-                            component->forcePressInsideDialogue = true;
-                            component->afterAppearSwitchTo = component->waitingForInput;
-                            component->sendMessageBack = component->atDisappearing;
-                            
-                            dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
-                            dialogueGroup->data = component;
-                            component->SetGroup(dialogueGroup);
-                            
-                            component->SetDialogue(dialogueLine);
-                        }
-                        else if (nss::Command(command, L"background hide"))
-                        {
-                            if (backgroundGroup != nullptr)
-                            {
-                                List<Background>* temp = backgroundGroup;
-                                while (temp != nullptr)
-                                {
-                                    if (temp->data != nullptr)
-                                    {
-                                        OnHold(temp->data);
-                                        temp->data->sendMessageBack = temp->data->atDeprecated;
-                                        temp->data->SetStateMode(temp->data->disappearing);
-                                    }
-                                    temp = temp->next;
-                                    //TODO: Hold must be an array of queue, so every object removes it's own OnHold
-                                }
-                            }
-                        }
-                        else if (nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
-                        {
-                            nss::ParseUntil(command, '"');
-                            std::wstring filePath = nss::ParseUntil(command, '"');
-                            
-                            auto* component = layers->PrioritizeComponent<ns::NovelComponents::Background>(0);
-                            component->SetPriority(0);
-                            OnHold(component);
-                            
-                            component->SetNovel(this);
-                            component->fitMode = component->fillCentre;
-                            
-                            backgroundGroup = ns::list::Insert<ns::NovelComponents::Background>(backgroundGroup);
-                            backgroundGroup->data = component;
-                            component->SetGroup(backgroundGroup);
-                            
-                            component->LoadImage(filePath);
-                        }
-                    }
-                    else
-                        eof = true;
-                }
-                
-                if (fileOpened)
-                    system.Update(elapsedTime);
-            }
-            void Draw(sf::RenderWindow* window) override
-            {
-                if (fileOpened)
-                    system.Draw(window);
-            }
-            void Resize(unsigned int width, unsigned int height) override
-            {
-                if (fileOpened)
-                    system.Resize(width, height);
-            }
-            void PollEvent(sf::Event& event) override
-            {
-                if (fileOpened)
-                    system.PollEvent(event);
-            }
-            void OnHold(ns::Component* component)
-            {
-                onHold = ns::list::Insert<ns::Component>(onHold);
-                onHold->data = component;
-                
-                onHoldSize++;
-            }
-            void UnHold(ns::Component* component)
-            {
-                List<Component>* temp = onHold;
-                while (temp != nullptr)
-                {
-                    List<Component>* next = temp->next;
-                    if (temp->data == component)
-                    {
-                        if (temp == onHold)
-                            onHold = temp->next;
-                        if (temp->next != nullptr)
-                            temp->next->prev = temp->prev;
-                        if (temp->prev != nullptr)
-                            temp->prev->next = temp->next;
-                        delete temp;
-                        
-                        onHoldSize--;
-                        next = nullptr;
-                    }
-                    
-                    temp = next;
-                }
-            }
-            sf::String GetFolderPath()
-            {
-                return folderPath;
-            }
+            Novel(sf::String path);
+            ~Novel();
+            void Update(const sf::Time& elapsedTime) override;
+            void Draw(sf::RenderWindow* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            void PollEvent(sf::Event& event) override;
+            void OnHold(ns::Component* component);
+            void UnHold(ns::Component* component);
+            sf::String GetFolderPath();
             template<typename T> void RefreshGroup(List<T>* group)
             {
                 while (group != nullptr)
@@ -325,6 +273,16 @@ namespace ns
                     if (group->data == nullptr)
                         ns::list::Remove<T>(group);
                     group = next;
+                }
+            }
+            template<typename T> void FreeGroup(List<T>* list)
+            {
+                ns::List<T>* next{ nullptr };
+                for (; list != nullptr; list = next)
+                {
+                    next = list->next;
+                    if (list != nullptr)
+                        delete list;
                 }
             }
             void RemoveFromGroup(List<Background>* groupPointer);

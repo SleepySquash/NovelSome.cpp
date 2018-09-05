@@ -77,7 +77,7 @@ namespace ns
             bool fontLoaded{ false };
             
         public:
-            DebugComponent();
+            DebugComponent(sf::String build);
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;

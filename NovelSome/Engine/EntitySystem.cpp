@@ -128,8 +128,8 @@ namespace ns
                     lastComponent = before;
             }
             
-            free(current->data);
-            free(current);
+            delete current->data;
+            delete current;
         }
     }
     

@@ -1,4 +1,4 @@
-﻿//
+//
 //  NovelSomeScript.hpp
 //  NovelSome
 //
@@ -19,6 +19,7 @@ namespace nss
         std::wstring line{ L"" };
         unsigned int lastPos{ 0 };
         bool keepTheLastPos{ true };
+        int option1{ 0 };
         
         void Command(std::wstring line);
         void Step();
@@ -48,7 +49,18 @@ namespace nss
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
     
     //TODO: Documentation
+    std::wstring ParseArgument(CommandSettings& results);
+    wchar_t** ParseArguments(CommandSettings& results);
+    std::wstring ArgumentAsString(CommandSettings& results);
+    float ArgumentAsFloat(CommandSettings& results);
+    int ArgumentAsInt(CommandSettings& results);
+    
+    //TODO: Documentation
     std::wstring GetFolderPath(std::wstring path);
+    
+    int64_t power(int num, int by);
+    //TODO: Documentation
+    float ConvertToFloat(std::wstring str);
 }
 
 #endif /* NovelSomeScript_hpp */

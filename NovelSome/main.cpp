@@ -64,8 +64,8 @@ int main()
     ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>("Novels/Bundle/scen.nsdat");
-        Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
+        Shimakaze->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+        Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 2");
     }
     
     sf::Clock clock;
@@ -109,8 +109,8 @@ int main()
                                 system.PopEntity(Shimakaze);
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<ns::NovelComponents::NovelComponent>("Novels/Bundle/scen.nsdat");
-                                Shimakaze->AddComponent<ns::TestComponents::DebugComponent>();
+                                Shimakaze->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+                                Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 2");
                             }
                             break;
                             

@@ -1,4 +1,4 @@
-﻿//
+//
 //  StaticMethods.hpp
 //  NovelSome
 //
@@ -38,6 +38,8 @@ namespace ns
     public:
         static unsigned int width;
         static unsigned int height;
+        static bool isPauseEnabled;
+        static bool isPause;
     };
 }
 
