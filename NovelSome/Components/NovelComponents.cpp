@@ -12,6 +12,26 @@ namespace ns
 {
     namespace NovelComponents
     {
+        void Waiting::Update(const sf::Time& elapsedTime)
+        {
+            if (novel != nullptr)
+            {
+                if (currentTime < waitingTime)
+                    currentTime += elapsedTime.asSeconds();
+                else
+                {
+                    novel->UnHold(this);
+                    GetEntity()->PopComponent(this);
+                }
+            }
+        }
+        void Waiting::SetNovel(Novel* novel)
+        {
+            this->novel = novel;
+        }
+        
+        
+        
         void Background::LoadImage(sf::String path)
         {
             spriteLoaded = false;
@@ -173,6 +193,11 @@ namespace ns
                     
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
                     shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
+                    if (drawCharacterName)
+                    {
+                        charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+                        charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
+                    }
                     break;
                     
                 case disappearing:
@@ -194,6 +219,11 @@ namespace ns
                     
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
                     shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
+                    if (drawCharacterName)
+                    {
+                        charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+                        charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
+                    }
                     break;
                     
                 case deprecated:
@@ -240,7 +270,14 @@ namespace ns
         {
             window->draw(shape);
 			if (fontLoaded)
+            {
 				window->draw(text);
+                if (drawCharacterName)
+                {
+                    window->draw(charShape);
+                    window->draw(charText);
+                }
+            }
         }
         void Dialogue::Destroy()
         {
@@ -252,10 +289,34 @@ namespace ns
             text.setPosition(30, height - height/5 + 10);
             shape.setPosition(0, height - height/5);
             shape.setSize({static_cast<float>(width), static_cast<float>(height/5)});
+            
+            if (drawCharacterName)
+            {
+                charText.setPosition(35, height - height/5 - 10 - 10 - charText.getLocalBounds().height);
+                charShape.setPosition(30, height - height/5 - 10 - 5 - charText.getLocalBounds().height);
+                charShape.setSize({static_cast<float>(charText.getLocalBounds().width + 15), static_cast<float>(charText.getLocalBounds().height + 10)});
+            }
         }
         void Dialogue::SetNovel(Novel* novel)
         {
             this->novel = novel;
+        }
+        void Dialogue::SetCharacter(sf::String character)
+        {
+            charString = character;
+            drawCharacterName = true;
+            
+            charText.setString(charString);
+            charText.setFont(ns::FontCollector::GetFont(fontName));
+            fontLoaded = (text.getFont() != nullptr);
+            charText.setCharacterSize(characterSize);
+            charText.setFillColor(sf::Color::White);
+            charShape.setFillColor(sf::Color(0,0,0,150));
+            
+            charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+            charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
+            
+            Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
         void Dialogue::SetGroup(List<Dialogue>* element)
         {
@@ -281,12 +342,176 @@ namespace ns
         
         
         
+        NovelLibrary::NovelLibrary(Novel* novel)
+        {
+            this->novel = novel;
+        }
+        NovelLibrary::~NovelLibrary()
+        {
+            FreeData();
+        }
+        void NovelLibrary::FreeData()
+        {
+            for (const auto& key : characterLibrary)
+            {
+                if (key.second != nullptr)
+                    delete key.second;
+            }
+        }
+        void NovelLibrary::ScanForCharacters()
+        {
+            if (novel != nullptr && novel->library != nullptr)
+            {
+                DIR *dir;
+                struct dirent *ent;
+                
+                sf::String novelPath{ executablePath() + novel->GetFolderPath() };
+                
+                List<sf::String>* folders{ nullptr };
+                List<sf::String>* lastFolders{ nullptr };
+                folders = new List<sf::String>();
+                folders->data = new sf::String("");
+                folders->prev = nullptr;
+                folders->next = nullptr;
+                lastFolders = folders;
+                
+                List<sf::String>* currentFolder = folders;
+                while (currentFolder != nullptr)
+                {
+                    sf::String fullpath{ novelPath + *currentFolder->data};
+                    if ((dir = opendir(fullpath.toAnsiString().c_str())) != NULL)
+                    {
+                        while ((ent = readdir(dir)) != NULL)
+                        {
+                            std::wstring entryName{ sf::String(ent->d_name) };
+                            if (entryName != L"." && entryName != L"..")
+                            {
+                                std::wstring extention = ns::base::GetExtentionFromString(entryName);
+                                if (extention == L"")
+                                {
+                                    List<sf::String>* newFolder = new List<sf::String>();
+                                    newFolder->data = new sf::String(entryName);
+                                    newFolder->prev = lastFolders;
+                                    newFolder->next = nullptr;
+                                    lastFolders->next = newFolder;
+                                    lastFolders = newFolder;
+                                }
+                                else if (extention == L".nschar")
+                                {
+                                    std::wifstream wif;
+                                    sf::String filePath = (fullpath + L"/" + entryName);
+#ifdef _WIN32
+                                    wif.open(filePath.toWideString());
+#else
+                                    std::wstring _wpath = filePath;
+                                    std::string _path(_wpath.begin(), _wpath.end());
+                                    wif.open(_path);
+#endif
+                                    wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                                    
+                                    if (!wif.is_open())
+                                        cout << "Warning :: NovelComponent :: File couldn't be opened, path: " << filePath.toAnsiString() << endl;
+                                    else
+                                    {
+                                        bool eof{ false };
+                                        std::wstring line;
+                                        nss::CommandSettings command;
+                                        CharacterData* charData = new CharacterData();
+                                        
+                                        while (!eof)
+                                        {
+                                            if (!wif.eof())
+                                            {
+                                                std::getline(wif, line);
+                                                command.Command(line);
+                                                
+                                                if (nss::Command(command, L"name "))
+                                                {
+                                                    nss::ParseUntil(command, '"');
+                                                    std::wstring nameParsed = nss::ParseUntil(command, '"');
+                                                    charData->name = nameParsed;
+                                                }
+                                                else if (nss::Command(command, L"dname ") || nss::Command(command, L"display "))
+                                                {
+                                                    nss::ParseUntil(command, '"');
+                                                    std::wstring nameParsed = nss::ParseUntil(command, '"');
+                                                    charData->displayName = nameParsed;
+                                                }
+                                                else if (nss::Command(command, L"state "))
+                                                {
+                                                    nss::ParseUntil(command, '"');
+                                                    std::wstring stateName = nss::ParseUntil(command, '"');
+                                                    //TODO: State parsing
+                                                }
+                                            }
+                                            else
+                                                eof = true;
+                                        }
+                                        
+                                        
+                                        if (charData->name == L"")
+                                        {
+                                            std::string entDNameString(ent->d_name);
+                                            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+                                            charData->name = ns::base::GetStringWithNoExtention(converter.from_bytes(entDNameString));
+                                        }
+                                        if (charData->displayName == L"")
+                                            charData->displayName = charData->name;
+                                        
+                                        if (novel->library->characterLibrary.find(charData->name) != novel->library->characterLibrary.end())
+                                        {
+                                            std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Character with following name is already placed: '" << charData->name.toAnsiString() << '\'' << std::endl;
+                                            
+                                            //TODO: replaceCharacterIfExists as static ns::GlobalSettings
+                                            bool replaceCharacterIfExists{ true }; //if not, then to the name should be added "name2" etc
+                                            if (replaceCharacterIfExists)
+                                            {
+                                                delete novel->library->characterLibrary.at(charData->name.toWideString());
+                                                novel->library->characterLibrary.emplace(charData->name.toWideString(), charData);
+                                            }
+                                        }
+                                        else
+                                            novel->library->characterLibrary.emplace(charData->name.toWideString(), charData);
+                                    }
+                                    wif.close();
+                                }
+                            }
+                        }
+                        if (ent != NULL)
+                            free(ent);
+                        ent = NULL;
+                        closedir(dir);
+                    }
+                    else
+                        std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Could not open directory: '" << fullpath.toAnsiString() << '\'' << std::endl;
+                    currentFolder = currentFolder->next;
+                }
+                
+                List<sf::String>* next{ nullptr };
+                for (; folders != nullptr; folders = next)
+                {
+                    next = folders->next;
+                    
+                    delete folders->data;
+                    delete folders;
+                }
+            }
+            else
+                std::cout << "Error :: NovelLibrary :: ScanForCharacters :: Novel or library not set: '" << '\'' << std::endl;
+        }
+        
+        
+        
         Novel::Novel(sf::String path) : nsdataPath(path)
         {
-            folderPath = nss::GetFolderPath(path);
+            folderPath = ns::base::GetFolderPath(path);
             layers = system.AddEntity();
-            gamePause = system.AddEntity();
-            auto* pauseComponent = gamePause->AddComponent<ns::NovelComponents::GamePause>(this);
+            
+            essentials = system.AddEntity();
+            essentials->AddComponent<ns::NovelComponents::GamePause>(this);
+            
+            library = essentials->AddComponent<ns::NovelComponents::NovelLibrary>(this);
+            library->ScanForCharacters();
             
 #ifdef _WIN32
             wif.open(sf::String(resourcePath() + path).toWideString());
@@ -324,6 +549,9 @@ namespace ns
                     std::getline(wif, line);
                     command.Command(line);
                     
+                    ///---------------------------------------DIALOGUE---------------------------------------
+                    ///---------------------------------------DIALOGUE---------------------------------------
+                    ///---------------------------------------DIALOGUE---------------------------------------
                     if (nss::Command(command, L"\""))
                     {
                         std::wstring dialogueLine = nss::ParseUntil(command, '"');
@@ -369,6 +597,28 @@ namespace ns
                         
                         component->SetDialogue(dialogueLine);
                     }
+                    ///----------------------------------------MISC----------------------------------------
+                    ///----------------------------------------MISC----------------------------------------
+                    ///----------------------------------------MISC----------------------------------------
+                    else if (nss::Command(command, L"wait "))
+                    {
+                        nss::SkipSpaces(command);
+                        float amount = ArgumentAsFloat(command);
+                        
+                        if (amount > 0.f)
+                        {
+                            auto* component = layers->AddComponent<ns::NovelComponents::Waiting>();
+                            OnHold(component);
+                            
+                            component->SetNovel(this);
+                            component->waitingTime = amount;
+                        }
+                        else
+                            cout << "Warning :: NovelComponent :: Couldn't init \"wait\" command for " << amount << " seconds." << endl;
+                    }
+                    ///--------------------------------------BACKGROUND--------------------------------------
+                    ///--------------------------------------BACKGROUND--------------------------------------
+                    ///--------------------------------------BACKGROUND--------------------------------------
                     else if (nss::Command(command, L"background hide"))
                     {
                         if (backgroundGroup != nullptr)
@@ -468,6 +718,66 @@ namespace ns
                         
                         component->LoadImage(filePath);
                     }
+                    else
+                    {
+                        //TODO: Parse if character's replic of variable
+                        std::wstring possibleName = nss::ParseUntil(command, ' ');
+                        if (possibleName.length() != 0)
+                        {
+                            nss::ParseUntil(command, '"');
+                            std::wstring possibleDialogue = nss::ParseUntil(command, '"');
+                            if (possibleDialogue.length() != 0)
+                            {
+                                if (library->characterLibrary.find(possibleName) != library->characterLibrary.end())
+                                {
+                                    wchar_t** arguments = nss::ParseArguments(command);
+                                    
+                                    auto* component = layers->PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
+                                    OnHold(component);
+                                    
+                                    component->SetNovel(this);
+                                    component->fontName = "NotoSansCJK-Regular.ttc";
+                                    component->characterSize = 40;
+                                    component->forcePressInsideDialogue = true;
+                                    component->afterAppearSwitchTo = component->waitingForInput;
+                                    component->sendMessageBack = component->atDisappearing;
+                                    
+                                    if (arguments != nullptr)
+                                        for (int i = 0; arguments[i] != nullptr; i++)
+                                        {
+                                            nss::CommandSettings argument;
+                                            argument.Command(arguments[i]);
+                                            
+                                            if (nss::Command(argument, L"fade:"))
+                                            {
+                                                float value = nss::ArgumentAsFloat(argument);
+                                                component->appearTime = value;
+                                                component->disappearTime = value;
+                                            }
+                                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                                component->appearTime = nss::ArgumentAsFloat(argument);
+                                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                                component->maxAlpha = nss::ArgumentAsInt(argument);
+                                            
+                                            delete arguments[i];
+                                        }
+                                    if (arguments != nullptr)
+                                        delete arguments;
+                                    
+                                    dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
+                                    dialogueGroup->data = component;
+                                    component->SetGroup(dialogueGroup);
+                                    
+                                    component->SetCharacter(library->characterLibrary.at(possibleName)->displayName);
+                                    component->SetDialogue(possibleDialogue);
+                                }
+                                else
+                                    cout << "Warning :: NovelComponent :: No character fould in library: '" << sf::String(possibleName).toAnsiString() << "'." << endl;
+                            }
+                        }
+                    }
                 }
                 else
                     eof = true;
@@ -476,7 +786,7 @@ namespace ns
             if (fileOpened && !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
                 system.Update(elapsedTime);
             if (fileOpened && ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled)
-                gamePause->Update(elapsedTime);
+                essentials->Update(elapsedTime);
         }
         void Novel::Draw(sf::RenderWindow* window)
         {
@@ -493,7 +803,7 @@ namespace ns
             if (fileOpened && !(ns::GlobalSettings::isPause))
                 system.PollEvent(event);
             else if (fileOpened && ns::GlobalSettings::isPause)
-                gamePause->PollEvent(event);
+                essentials->PollEvent(event);
         }
         void Novel::OnHold(ns::Component* component)
         {
@@ -631,3 +941,24 @@ namespace ns
         }
     }
 }
+
+/*void NovelLibrary::ScanForCharacters()
+{
+    if (novel != nullptr)
+    {
+        DIR *dir;
+        struct dirent *ent;
+        
+        sf::String path{ executablePath() + novel->GetFolderPath() };
+        if ((dir = opendir(path.toAnsiString().c_str())) != NULL)
+        {
+            while ((ent = readdir (dir)) != NULL)
+                std::cout << "Entry found: " << ent->d_name << std::endl;
+            closedir (dir);
+        }
+        else
+            std::cout << "NovelLibrary :: ScanForCharacters :: Could not open directory: '" << path.toAnsiString() << '\'' << std::endl;
+    }
+    else
+        std::cout << "NovelLibrary :: ScanForCharacters :: Novel not set: '" << '\'' << std::endl;
+}*/

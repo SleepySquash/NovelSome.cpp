@@ -16,10 +16,17 @@
 #include <fstream>
 #include <codecvt>
 
+//CharacterData in NovelLibrary
+#include <unordered_map>
+
+//Folder path
+#include <dirent.h>
+
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
+#include "../Essentials/Base.hpp"
 #include "../Engine/List.hpp"
 #include "../Engine/EntitySystem.hpp"
 #include "../Engine/StaticMethods.hpp"
@@ -118,6 +125,20 @@ namespace ns
         
         
         
+        class Waiting : public Component
+        {
+            float currentTime{ 0.f };
+            Novel* novel{ nullptr };
+            
+        public:
+            float waitingTime{ 1.f };
+            
+            void Update(const sf::Time& elapsedTime) override;
+            void SetNovel(Novel* novel);
+        };
+        
+        
+        
         class Background : public Component
         {
         private:
@@ -172,6 +193,11 @@ namespace ns
             Novel* novel{ nullptr };
             List<Dialogue>* groupPointer{ nullptr };
             
+            sf::RectangleShape charShape;
+            sf::Text charText;
+            sf::String charString{ "" };
+            
+            bool drawCharacterName{ false };
             bool fontLoaded{ false };
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
@@ -202,29 +228,55 @@ namespace ns
             void Resize(unsigned int width, unsigned int height) override;
             void SetNovel(Novel* novel);
             void SetGroup(List<Dialogue>* element);
+            void SetCharacter(sf::String character);
             void SetDialogue(sf::String dialogue);
             void SetStateMode(modeEnum newMode);
         };
         
         
         
-        class Character : Component
+        struct CharacterData : public Component
+        {
+            sf::String name{ "" };
+            sf::String displayName{ "" };
+        };
+        
+        
+        
+        class Character : public Component
         {
             
         };
         
         
         
-        class AudioPlayer : Component
+        class AudioPlayer : public Component
         {
             
         };
         
         
         
-        class GUISystem : Component
+        class GUISystem : public Component
         {
             
+        };
+        
+        
+        
+        class NovelLibrary : public Component
+        {
+        private:
+            Novel* novel{ nullptr };
+            
+        public:
+            List<CharacterData>* charData{ nullptr };
+            std::unordered_map<std::wstring, CharacterData*> characterLibrary;
+            
+            NovelLibrary(Novel* novel);
+            ~NovelLibrary();
+            void FreeData();
+            void ScanForCharacters();
         };
         
         
@@ -234,7 +286,7 @@ namespace ns
         private:
             EntitySystem system;
             Entity* layers;
-            Entity* gamePause;
+            Entity* essentials;
             
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
@@ -255,6 +307,7 @@ namespace ns
             List<ns::NovelComponents::Dialogue>* dialogueGroup{ nullptr };
             List<ns::NovelComponents::AudioPlayer>* audioGroup{ nullptr };
             List<ns::NovelComponents::GUISystem>* GUIGroup{ nullptr };
+            ns::NovelComponents::NovelLibrary* library{ nullptr };
             
             Novel(sf::String path);
             ~Novel();

@@ -102,7 +102,7 @@ namespace nss
         bool Found{ false };
         bool insideQuotes{ false };
         
-        while (!Found && pos+1 < results.line.length())
+        while (!Found && pos < results.line.length())
         {
             if (results.line[pos] == '"')
                 insideQuotes = !insideQuotes;
@@ -170,13 +170,6 @@ namespace nss
         
         return std::atoi(parsingString.c_str());
     }
-    /*std::wstring argument;
-     while (command.lastPos+1 < command.line.length())
-     {
-     SkipSpaces(command);
-     argument = nss::ParseArgument(command);
-     std::cout << "ARGUMENT: '" << sf::String(argument).toAnsiString() << '\'' << std::endl;
-     }*/
     
     //TODO: Documentation
     std::wstring GetFromUntil(const std::wstring& line, unsigned int pos, const wchar_t until)
@@ -194,64 +187,5 @@ namespace nss
         }
         
         return text;
-    }
-    
-    //TODO: Documentation
-    std::wstring GetFolderPath(std::wstring path)
-    {
-        std::wstring folder = L"";
-        
-        int pos{ -1 };
-        if (path.length() != 0)
-            for (unsigned int i = path.length() - 1; i >= 0 && pos == -1; i--)
-                if (path[i] == '/' || path[i] == '\\')
-                    pos = i;
-        
-        for (int i = 0; i <= pos; i++)
-            folder += path[i];
-        
-        return folder;
-    }
-    
-    int64_t power(int num, int by)
-    {
-        if (by == 0)
-            return 1;
-        
-        int64_t res = num;
-        for (int i = 1; i < by; i++)
-            res *= num;
-        return res;
-    }
-    
-    //TODO: Documentation
-    //TODO: Make this function working
-    float ConvertToFloat(std::wstring str)
-    {
-        float value{ 0.f };
-        int pointPos{ -1 };
-        
-        for (int i = 0; str[i] != '\0' && pointPos == -1; i++)
-            if (str[i] == '.')
-                pointPos = i;
-        
-        int startPos = (pointPos == -1) ? str.length()-1 : pointPos-1;
-        for (int i = startPos; i >= 0; i--)
-            if (str[i] >= 48 && str[i] <= 57)
-            {
-                if (startPos - i <= 36)
-                {
-                    std::cout << str[i] - 48 << " " << (startPos - i) << " " << power(10, (startPos - i)) << std::endl;
-                    int64_t i64 = (str[i] - 48) * power(10, (startPos - i));
-                    value += i64;
-                    std::cout << value << std::endl;
-                }
-                else
-                    std::cout << "Warning :: NSS :: ConvertToFloat :: Float can't hold more that 38 decimal digits." << std::endl;
-            }
-        
-        //TODO: parse the after point
-        
-        return value;
     }
 }

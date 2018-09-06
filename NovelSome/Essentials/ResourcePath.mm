@@ -52,4 +52,13 @@
 
         return rpath;
     }
+    
+    std::wstring executablePath(void)
+    {
+        std::string resPath = resourcePath();
+        
+        //TODO: change the way it converts
+        std::wstring exePath(resPath.begin(), resPath.end());
+        return exePath;
+    }
 #endif

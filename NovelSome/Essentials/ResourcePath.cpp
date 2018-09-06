@@ -1,4 +1,4 @@
-﻿////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
 // Copyright (C) 2007-2018 Marco Antognini (antognini.marco@gmail.com),
@@ -29,8 +29,15 @@
 #include "ResourcePath.hpp"
 
 #ifndef __APPLE__
+#include "Base.hpp"
+
 std::string resourcePath(void)
 {
     return "";
+}
+
+std::wstring executablePath(void)
+{
+    return ns::base::GetCurrentWorkingDir();
 }
 #endif

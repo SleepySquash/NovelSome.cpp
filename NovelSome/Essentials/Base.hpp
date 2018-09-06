@@ -1,4 +1,4 @@
-﻿//
+//
 //  Base.hpp
 //  NovelSome
 //
@@ -11,10 +11,6 @@
 
 #include <iostream>
 
-/*Для кроссплатформенности между консолью (cmd.exe) Windows и терминалом (Terminal.app) UNIX*/
-void systempause();
-void systemclear();
-
 //MACROS
 // _WIN32 - both 32-bit and 64-bit
 // _WIN64
@@ -24,8 +20,25 @@ void systemclear();
 // __linux__
 // __unix__
 
-/*Объявляем вспомогательные функции*/
-char* InputString();
-int GetLength(const char*);
+
+namespace ns
+{
+    namespace base
+    {
+        std::wstring GetCurrentWorkingDir();
+        
+        //TODO: Documentation
+        std::wstring GetFolderPath(std::wstring path);
+        std::wstring GetExtentionFromString(std::wstring filename);
+        std::wstring GetStringWithNoExtention(std::wstring filename);
+
+        int64_t power(int num, int by);
+        float ConvertToFloat(std::wstring str);
+
+        /*Объявляем вспомогательные функции*/
+        char* InputString();
+        int GetLength(const char*);
+    }
+}
 
 #endif /* BaseFunctions_hpp */
