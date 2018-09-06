@@ -1,0 +1,9 @@
+name "DVa"
+display "DVa"
+
+fill 255 255 255
+outline 255 255 255
+
+state normal {
+    sprite "img.jpg"
+}

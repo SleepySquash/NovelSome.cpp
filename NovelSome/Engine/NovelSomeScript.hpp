@@ -54,13 +54,6 @@ namespace nss
     std::wstring ArgumentAsString(CommandSettings& results);
     float ArgumentAsFloat(CommandSettings& results);
     int ArgumentAsInt(CommandSettings& results);
-    
-    //TODO: Documentation
-    std::wstring GetFolderPath(std::wstring path);
-    
-    int64_t power(int num, int by);
-    //TODO: Documentation
-    float ConvertToFloat(std::wstring str);
 }
 
 #endif /* NovelSomeScript_hpp */
