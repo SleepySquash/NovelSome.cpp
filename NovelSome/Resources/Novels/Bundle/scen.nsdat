@@ -4,6 +4,7 @@ background "ItJyTkXF_n4.jpg" with appear:0.4 disappear:2.4 fit:fill
 wait 0.9
 background "DVa.jpg" with fit:fill alpha:160
 DVa "Привет, я Дива!"
+Юля "Бля Юля"
 Никита "А я Никитос, йоптабля."
 "Ня <3"
 background hide

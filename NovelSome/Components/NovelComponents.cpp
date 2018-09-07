@@ -531,11 +531,14 @@ namespace ns
             
             library = essentials->AddComponent<ns::NovelComponents::NovelLibrary>(this);
             library->ScanForCharacters();
-            
+         
+            sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
-            wif.open(sf::String(resourcePath() + path).toWideString());
+            wif.open(filePath.toWideString());
 #else
-            wif.open(resourcePath() + path);
+            std::wstring _wpath = filePath;
+            std::string _path(_wpath.begin(), _wpath.end());
+            wif.open(_path);
 #endif
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
