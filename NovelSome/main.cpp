@@ -65,7 +65,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
-        Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 2");
+        Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 3");
     }
     
     sf::Clock clock;
