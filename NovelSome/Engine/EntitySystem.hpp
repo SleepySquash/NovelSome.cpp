@@ -62,7 +62,6 @@ namespace ns
         void PopComponent(Component* component);
         void Destroy();
         void SetEntitySystem(EntitySystem* system);
-        void SortMe(Component* component);
         
         //for some reason putting this code in .cpp crashes the linker, so it has to remain in definition's .hpp file
         template<typename T, typename ...Args> T* AddComponent(Args... args)

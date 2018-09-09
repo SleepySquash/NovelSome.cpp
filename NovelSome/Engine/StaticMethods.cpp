@@ -37,6 +37,11 @@ namespace ns
     
     unsigned int GlobalSettings::width = 0;
     unsigned int GlobalSettings::height = 0;
+#ifdef _WIN32
+    int GlobalSettings::windowPositionOffset = IsWindows8OrGreater() ? GetSystemMetrics(SM_CXSIZEFRAME) : 0;
+#else
+    int GlobalSettings::windowPositionOffset = 0;
+#endif
     bool GlobalSettings::isPauseEnabled = true;
     bool GlobalSettings::isPause = false;
 }

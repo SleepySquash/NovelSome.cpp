@@ -95,6 +95,39 @@ namespace nss
         return text;
     }
     
+    //TODO: Documentation
+    std::wstring ParseAsQuoteString(CommandSettings& results)
+    {
+        SkipSpaces(results);
+        
+        unsigned int pos{ results.lastPos };
+        std::wstring text = L"";
+        bool QuotesInline{ false }, Found{ false };
+        
+        while (!Found && pos < results.line.length())
+        {
+            Found = (results.line[pos] == '"');
+            
+            if (!Found)
+                text += results.line[pos];
+            
+            if (!QuotesInline && Found)
+            {
+                QuotesInline = true;
+                Found = false;
+            }
+            
+            pos++;
+        }
+        if (Found)
+        {
+            results.lastPos = pos;
+            return text;
+        }
+        else
+            return L"";
+    }
+    
     std::wstring ParseArgument(CommandSettings& results)
     {
         unsigned int pos{ results.lastPos };

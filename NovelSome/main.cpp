@@ -21,6 +21,8 @@
 // function `resourcePath()` from ResourcePath.hpp
 //
 
+//TODO: Make nss::Command not case sensetive as an option in nss::CommandSettings
+
 #include <iostream>
 #include <unordered_map>
 
@@ -33,7 +35,7 @@
 #include "Engine/EntitySystem.hpp"
 #include "Engine/StaticMethods.hpp"
 
-#include "Components/TestComponents.hpp"
+#include "Components/EssentialComponents.hpp"
 #include "Components/NovelComponents.hpp"
 
 using std::cin;
@@ -45,6 +47,10 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
     ns::GlobalSettings::width = 1280;
     ns::GlobalSettings::height = 800;
+#ifdef _WIN32
+    if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
+        window.setPosition({- ns::GlobalSettings::windowPositionOffset, window.getPosition().y});
+#endif
 
     sf::Image icon;
     if (icon.loadFromFile(resourcePath() + "Data/Images/macos@2x.png"))
@@ -56,6 +62,18 @@ int main()
     ns::EntitySystem system;
     
     ///----------------------------------------------------------
+    /// \brief Entity to hold novel and stuff it depends on
+    ///
+    /// Entity holds the novel itself in order to have some ierarchy of entities.
+    /// It also may hold some libraries etc that novel depends on.
+    ///
+    ///----------------------------------------------------------
+    ns::Entity* Elizabeth = system.AddEntity();
+    {
+        Elizabeth->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+    }
+    
+    ///----------------------------------------------------------
     /// \brief Entity to hold essential components
     ///
     /// Entity holds components like always-on debug UI layer, system's components and other essential stuff.
@@ -64,8 +82,8 @@ int main()
     ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::NovelComponents::Novel>(u8"Novels/Bundle/сценарий.nsdat");
-        Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 3");
+        Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 4");
     }
     
     sf::Clock clock;
@@ -103,14 +121,22 @@ int main()
                         case sf::Keyboard::E:
                             system.PopEntity(Shimakaze);
                             Shimakaze = nullptr;
+                            system.PopEntity(Elizabeth);
+                            Elizabeth = nullptr;
                             break;
                         case sf::Keyboard::R:
                             if (Shimakaze != nullptr)
                                 system.PopEntity(Shimakaze);
+                            if (Elizabeth != nullptr)
+                                system.PopEntity(Elizabeth);
+                            Elizabeth = system.AddEntity();
+                            {
+                                Elizabeth->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+                            }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/сценарий.nsdat");
-                                Shimakaze->AddComponent<ns::TestComponents::DebugComponent>("Update 0 build 3");
+                                Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 4");
                             }
                             break;
                             

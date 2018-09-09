@@ -17,6 +17,9 @@
 #include <SFML/Graphics.hpp>
 
 #include "../Essentials/ResourcePath.hpp"
+#ifdef _WIN32
+    #include "../Essentials/versionhelpers.h"
+#endif
 
 namespace ns
 {
@@ -38,6 +41,7 @@ namespace ns
     public:
         static unsigned int width;
         static unsigned int height;
+        static int windowPositionOffset;
         static bool isPauseEnabled;
         static bool isPause;
     };

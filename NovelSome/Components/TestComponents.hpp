@@ -68,25 +68,6 @@ namespace ns
         
         
         
-        class DebugComponent : public ns::Component
-        {
-        private:
-            sf::Text performanceText;
-            sf::Text projectText;
-            sf::Text buildText;
-            bool fontLoaded{ false };
-            
-        public:
-            DebugComponent(sf::String build);
-            void Init() override;
-            void Update(const sf::Time& elapsedTime) override;
-            void Draw(sf::RenderWindow* window) override;
-            void Resize(unsigned int width, unsigned int height) override;
-            
-        };
-        
-        
-        
         class BackgroundComponent : public Component
         {
         private:

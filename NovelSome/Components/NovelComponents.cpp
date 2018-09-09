@@ -21,7 +21,7 @@ namespace ns
                 else
                 {
                     novel->UnHold(this);
-                    GetEntity()->PopComponent(this);
+                    GetNovelSystem()->PopComponent(this);
                 }
             }
         }
@@ -37,9 +37,13 @@ namespace ns
             spriteLoaded = false;
             if (novel != nullptr)
             {
-                if (image.loadFromFile(resourcePath() + novel->GetFolderPath().toAnsiString() + path.toAnsiString()))
+                sf::String fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + path;
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                std::string u8str = converter.to_bytes(fullPath.toWideString());
+                
+                if (image.loadFromFile(u8str))
                 {
-                    imagePath = path;
+                    imagePath = sf::String(path);
                     if (texture.loadFromImage(image))
                     {
                         spriteLoaded = true;
@@ -104,7 +108,7 @@ namespace ns
                     break;
                     
                 case deprecated:
-                    this->GetEntity()->PopComponent(this);
+                    this->GetNovelSystem()->PopComponent(this);
                     break;
                     
                 default:
@@ -227,7 +231,7 @@ namespace ns
                     break;
                     
                 case deprecated:
-                    this->GetEntity()->PopComponent(this);
+                    this->GetNovelSystem()->PopComponent(this);
                     break;
                     
                 case waitingForTime:
@@ -342,10 +346,116 @@ namespace ns
         
         
         
-        NovelLibrary::NovelLibrary(Novel* novel)
+        void MusicPlayer::Update(const sf::Time& elapsedTime)
+        {
+            if (audioLoaded)
+            {
+                switch (mode)
+                {
+                    case appearing:
+                        if (currentTime < appearTime)
+                            currentTime += elapsedTime.asSeconds();
+                        
+                        if (currentTime >= appearTime)
+                        {
+                            volume = maxVolume;
+                            currentTime = 0.f;
+                            mode = playing;
+                            
+                            if (novel != nullptr)
+                                if (sendMessageBack == atAppearance)
+                                    novel->UnHold(this);
+                        }
+                        else
+                            volume = (maxVolume * (currentTime / appearTime));
+                        music.setVolume(volume);
+                        break;
+                        
+                    case playing:
+                        if (!loop)
+                            if (music.getPlayingOffset().asSeconds() >= timeToStartDisappearing)
+                                mode = disappearing;
+                        break;
+                        
+                    case disappearing:
+                        if (currentTime < disappearTime)
+                            currentTime += elapsedTime.asSeconds();
+                        
+                        if (currentTime >= disappearTime)
+                        {
+                            volume = 0.f;
+                            currentTime = 0.f;
+                            mode = deprecated;
+                            
+                            if (novel != nullptr)
+                                if (sendMessageBack == atDeprecated)
+                                    novel->UnHold(this);
+                        }
+                        else
+                            volume = (maxVolume - (maxVolume * (currentTime / disappearTime)));
+                        music.setVolume(volume);
+                        break;
+                        
+                    case deprecated:
+                        this->GetNovelSystem()->PopComponent(this);
+                        break;
+                        
+                    default:
+                        break;
+                }
+            }
+        }
+        void MusicPlayer::Destroy()
+        {
+            if (groupPointer != nullptr && novel != nullptr)
+                novel->RemoveFromGroup(groupPointer);
+        }
+        void MusicPlayer::SetNovel(Novel* novel)
         {
             this->novel = novel;
         }
+        void MusicPlayer::SetGroup(List<MusicPlayer>* element)
+        {
+            this->groupPointer = element;
+        }
+        void MusicPlayer::LoadFromFile(sf::String fileName)
+        {
+            audioLoaded = false;
+            if (novel != nullptr)
+            {
+                sf::String fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                std::string u8str = converter.to_bytes(fullPath.toWideString());
+                
+                if ((audioLoaded = (music.openFromFile(u8str))))
+                {
+                    audioPath = fileName;
+                    music.setLoop(loop);
+                    music.setVolume(0);
+                    music.play();
+                    
+                    timeToStartDisappearing = music.getDuration().asSeconds() - disappearTime;
+                    
+                    currentTime = 0.f;
+                }
+                else if (sendMessageBack != noMessage)
+                    novel->UnHold(this);
+            }
+            else
+                cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
+        }
+        void MusicPlayer::SetStateMode(modeEnum newMode)
+        {
+            if (mode != newMode)
+            {
+                currentTime = 0.f;
+                mode = newMode;
+            }
+        }
+        
+        
+        
+        NovelLibrary::NovelLibrary() { }
         NovelLibrary::~NovelLibrary()
         {
             FreeData();
@@ -360,7 +470,7 @@ namespace ns
         }
         void NovelLibrary::ScanForCharacters()
         {
-            if (novel != nullptr && novel->library != nullptr)
+            if (novel != nullptr)
             {
 #ifdef _WIN32
                 _WDIR *dir;
@@ -477,7 +587,7 @@ namespace ns
                                             if (charData->displayName == L"")
                                                 charData->displayName = charData->name;
                                             
-                                            if (novel->library->characterLibrary.find(charData->name) != novel->library->characterLibrary.end())
+                                            if (novel->library.characterLibrary.find(charData->name) != novel->library.characterLibrary.end())
                                             {
                                                 std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Character with following name is already placed: '" << charData->name.toAnsiString() << '\'' << std::endl;
                                                 
@@ -485,12 +595,12 @@ namespace ns
                                                 bool replaceCharacterIfExists{ true }; //if not, then to the name should be added "name2" etc
                                                 if (replaceCharacterIfExists)
                                                 {
-                                                    delete novel->library->characterLibrary.at(charData->name.toWideString());
-                                                    novel->library->characterLibrary.emplace(charData->name.toWideString(), charData);
+                                                    delete novel->library.characterLibrary.at(charData->name.toWideString());
+                                                    novel->library.characterLibrary.emplace(charData->name.toWideString(), charData);
                                                 }
                                             }
                                             else
-                                                novel->library->characterLibrary.emplace(charData->name.toWideString(), charData);
+                                                novel->library.characterLibrary.emplace(charData->name.toWideString(), charData);
                                         }
                                         wif.close();
                                     }
@@ -518,19 +628,19 @@ namespace ns
             else
                 std::cout << "Error :: NovelLibrary :: ScanForCharacters :: Novel or library not set: '" << '\'' << std::endl;
         }
+        void NovelLibrary::SetNovel(Novel* novel)
+        {
+            this->novel = novel;
+        }
         
         
         
         Novel::Novel(sf::String path) : nsdataPath(path)
         {
             folderPath = ns::base::GetFolderPath(path);
-            layers = system.AddEntity();
             
-            essentials = system.AddEntity();
-            essentials->AddComponent<ns::NovelComponents::GamePause>(this);
-            
-            library = essentials->AddComponent<ns::NovelComponents::NovelLibrary>(this);
-            library->ScanForCharacters();
+            library.SetNovel(this);
+            library.ScanForCharacters();
          
             sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
@@ -548,15 +658,16 @@ namespace ns
         Novel::~Novel()
         {
             wif.close();
-            system.Destroy();
+            layers.Destroy();
             
             FreeGroup<Background>(backgroundGroup);
             FreeGroup<Character>(characterGroup);
             FreeGroup<Dialogue>(dialogueGroup);
-            FreeGroup<AudioPlayer>(audioGroup);
+            FreeGroup<SoundPlayer>(soundGroup);
+            FreeGroup<MusicPlayer>(musicGroup);
             FreeGroup<GUISystem>(GUIGroup);
             
-            FreeGroup<Component>(onHold);
+            FreeGroup<NovelObject>(onHold);
         }
         void Novel::Update(const sf::Time& elapsedTime)
         {
@@ -576,10 +687,11 @@ namespace ns
                     ///---------------------------------------DIALOGUE---------------------------------------
                     if (nss::Command(command, L"\""))
                     {
-                        std::wstring dialogueLine = nss::ParseUntil(command, '"');
+                        command.lastPos = command.lastPos - 1;
+                        std::wstring dialogueLine = nss::ParseAsQuoteString(command);
                         wchar_t** arguments = nss::ParseArguments(command);
                         
-                        auto* component = layers->PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
                         OnHold(component);
                         
                         component->SetNovel(this);
@@ -629,7 +741,7 @@ namespace ns
                         
                         if (amount > 0.f)
                         {
-                            auto* component = layers->AddComponent<ns::NovelComponents::Waiting>();
+                            auto* component = layers.PrioritizeComponent<Waiting>(-32000);
                             OnHold(component);
                             
                             component->SetNovel(this);
@@ -681,12 +793,10 @@ namespace ns
                     }
                     else if (nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                     {
-                        nss::ParseUntil(command, '"');
-                        std::wstring filePath = nss::ParseUntil(command, '"');
+                        std::wstring filePath = nss::ParseAsQuoteString(command);
                         wchar_t** arguments = nss::ParseArguments(command);
                         
-                        auto* component = layers->PrioritizeComponent<ns::NovelComponents::Background>(0);
-                        component->SetPriority(0);
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Background>(0);
                         OnHold(component);
                         
                         component->SetNovel(this);
@@ -740,63 +850,134 @@ namespace ns
                         
                         component->LoadImage(filePath);
                     }
+                    else if (nss::Command(command, L"music stop") || nss::Command(command, L"ambient stop"))
+                    {
+                        if (musicGroup != nullptr)
+                        {
+                            List<MusicPlayer>* temp = musicGroup;
+                            wchar_t** arguments = nss::ParseArguments(command);
+                            
+                            float disappearTime{ -1.f };
+                            if (arguments != nullptr)
+                                for (int i = 0; arguments[i] != nullptr; i++)
+                                {
+                                    nss::CommandSettings argument;
+                                    argument.Command(arguments[i]);
+                                    
+                                    if (nss::Command(argument, L"fade:")||
+                                        nss::Command(argument, L"fadeout:") ||
+                                        nss::Command(argument, L"disappear:"))
+                                        disappearTime = nss::ArgumentAsFloat(argument);
+                                    
+                                    free(arguments[i]);
+                                }
+                            if (arguments != nullptr)
+                                free(arguments);
+                            
+                            while (temp != nullptr)
+                            {
+                                if (temp->data != nullptr)
+                                {
+                                    //OnHold(temp->data);
+                                    temp->data->sendMessageBack = temp->data->atDeprecated;
+                                    temp->data->SetStateMode(temp->data->disappearing);
+                                    if (disappearTime >= 0)
+                                        temp->data->disappearTime = disappearTime;
+                                }
+                                temp = temp->next;
+                            }
+                        }
+                    }
+                    else if (nss::Command(command, L"music ") || nss::Command(command, L"ambient "))
+                    {
+                        std::wstring filePath = nss::ParseAsQuoteString(command);
+                        wchar_t** arguments = nss::ParseArguments(command);
+                        
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
+                        component->SetNovel(this);
+                        
+                        if (arguments != nullptr)
+                            for (int i = 0; arguments[i] != nullptr; i++)
+                            {
+                                nss::CommandSettings argument;
+                                argument.Command(arguments[i]);
+                                
+                                if (nss::Command(argument, L"fade:"))
+                                {
+                                    float value = nss::ArgumentAsFloat(argument);
+                                    component->appearTime = value;
+                                    component->disappearTime = value;
+                                }
+                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                    component->appearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                    component->disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
+                                    component->maxVolume = nss::ArgumentAsFloat(argument);
+                                
+                                free(arguments[i]);
+                            }
+                        if (arguments != nullptr)
+                            free(arguments);
+                        
+                        musicGroup = ns::list::Insert<ns::NovelComponents::MusicPlayer>(musicGroup);
+                        musicGroup->data = component;
+                        component->SetGroup(musicGroup);
+                        
+                        component->LoadFromFile(filePath);
+                    }
                     else
                     {
-                        //TODO: Parse if character's replic of variable
+                        //TODO: Parse if character's replic or variable
                         std::wstring possibleName = nss::ParseUntil(command, ' ');
                         if (possibleName.length() != 0)
                         {
-                            nss::ParseUntil(command, '"');
-                            std::wstring possibleDialogue = nss::ParseUntil(command, '"');
+                            std::wstring possibleDialogue = nss::ParseAsQuoteString(command);
                             if (possibleDialogue.length() != 0)
                             {
-                                if (library->characterLibrary.find(possibleName) != library->characterLibrary.end())
-                                {
-                                    wchar_t** arguments = nss::ParseArguments(command);
-                                    
-                                    auto* component = layers->PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
-                                    OnHold(component);
-                                    
-                                    component->SetNovel(this);
-                                    component->fontName = "NotoSansCJK-Regular.ttc";
-                                    component->characterSize = 40;
-                                    component->forcePressInsideDialogue = true;
-                                    component->afterAppearSwitchTo = component->waitingForInput;
-                                    component->sendMessageBack = component->atDisappearing;
-                                    
-                                    if (arguments != nullptr)
-                                        for (int i = 0; arguments[i] != nullptr; i++)
+                                sf::String characterName = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName)->displayName : sf::String(possibleName);
+                                wchar_t** arguments = nss::ParseArguments(command);
+                                
+                                auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
+                                OnHold(component);
+                                
+                                component->SetNovel(this);
+                                component->fontName = "NotoSansCJK-Regular.ttc";
+                                component->characterSize = 40;
+                                component->forcePressInsideDialogue = true;
+                                component->afterAppearSwitchTo = component->waitingForInput;
+                                component->sendMessageBack = component->atDisappearing;
+                                
+                                if (arguments != nullptr)
+                                    for (int i = 0; arguments[i] != nullptr; i++)
+                                    {
+                                        nss::CommandSettings argument;
+                                        argument.Command(arguments[i]);
+                                        
+                                        if (nss::Command(argument, L"fade:"))
                                         {
-                                            nss::CommandSettings argument;
-                                            argument.Command(arguments[i]);
-                                            
-                                            if (nss::Command(argument, L"fade:"))
-                                            {
-                                                float value = nss::ArgumentAsFloat(argument);
-                                                component->appearTime = value;
-                                                component->disappearTime = value;
-                                            }
-                                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                                component->appearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                                component->disappearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                                component->maxAlpha = nss::ArgumentAsInt(argument);
-                                            
-                                            delete arguments[i];
+                                            float value = nss::ArgumentAsFloat(argument);
+                                            component->appearTime = value;
+                                            component->disappearTime = value;
                                         }
-                                    if (arguments != nullptr)
-                                        delete arguments;
-                                    
-                                    dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
-                                    dialogueGroup->data = component;
-                                    component->SetGroup(dialogueGroup);
-                                    
-                                    component->SetCharacter(library->characterLibrary.at(possibleName)->displayName);
-                                    component->SetDialogue(possibleDialogue);
-                                }
-                                else
-                                    cout << "Warning :: NovelComponent :: No character fould in library: '" << sf::String(possibleName).toAnsiString() << "'." << endl;
+                                        else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                            component->appearTime = nss::ArgumentAsFloat(argument);
+                                        else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                            component->disappearTime = nss::ArgumentAsFloat(argument);
+                                        else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                            component->maxAlpha = nss::ArgumentAsInt(argument);
+                                        
+                                        delete arguments[i];
+                                    }
+                                if (arguments != nullptr)
+                                    delete arguments;
+                                
+                                dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
+                                dialogueGroup->data = component;
+                                component->SetGroup(dialogueGroup);
+                                
+                                component->SetCharacter(characterName);
+                                component->SetDialogue(possibleDialogue);
                             }
                         }
                     }
@@ -806,40 +987,36 @@ namespace ns
             }
             
             if (fileOpened && !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
-                system.Update(elapsedTime);
-            if (fileOpened && ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled)
-                essentials->Update(elapsedTime);
+                layers.Update(elapsedTime);
         }
         void Novel::Draw(sf::RenderWindow* window)
         {
             if (fileOpened)
-                system.Draw(window);
+                layers.Draw(window);
         }
         void Novel::Resize(unsigned int width, unsigned int height)
         {
             if (fileOpened)
-                system.Resize(width, height);
+                layers.Resize(width, height);
         }
         void Novel::PollEvent(sf::Event& event)
         {
             if (fileOpened && !(ns::GlobalSettings::isPause))
-                system.PollEvent(event);
-            else if (fileOpened && ns::GlobalSettings::isPause)
-                essentials->PollEvent(event);
+                layers.PollEvent(event);
         }
-        void Novel::OnHold(ns::Component* component)
+        void Novel::OnHold(NovelObject* component)
         {
-            onHold = ns::list::Insert<ns::Component>(onHold);
+            onHold = ns::list::Insert<ns::NovelObject>(onHold);
             onHold->data = component;
             
             onHoldSize++;
         }
-        void Novel::UnHold(ns::Component* component)
+        void Novel::UnHold(NovelObject* component)
         {
-            List<Component>* temp = onHold;
+            List<NovelObject>* temp = onHold;
             while (temp != nullptr)
             {
-                List<Component>* next = temp->next;
+                List<NovelObject>* next = temp->next;
                 if (temp->data == component)
                 {
                     if (temp == onHold)
@@ -921,11 +1098,31 @@ namespace ns
                 delete groupPointer;
             }
         }
-        void Novel::RemoveFromGroup(List<AudioPlayer>* groupPointer)
+        void Novel::RemoveFromGroup(List<SoundPlayer>* groupPointer)
         {
-            if (groupPointer == audioGroup)
+            if (groupPointer == soundGroup)
             {
-                audioGroup = groupPointer->next;
+                soundGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void Novel::RemoveFromGroup(List<MusicPlayer>* groupPointer)
+        {
+            if (groupPointer == musicGroup)
+            {
+                musicGroup = groupPointer->next;
                 if (groupPointer->next != nullptr)
                     groupPointer->next->prev = nullptr;
                 

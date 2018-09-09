@@ -28,8 +28,6 @@ namespace ns
     void Component::SetPriority(int priority)
     {
         this->priority = priority;
-        if (entity != nullptr)
-            entity->SortMe(this);
     }
     
     
@@ -169,11 +167,6 @@ namespace ns
     List<Component>* Entity::GetComponentsListHead()
     {
         return components;
-    }
-    
-    void Entity::SortMe(Component* component)
-    {
-        //TODO
     }
 
     

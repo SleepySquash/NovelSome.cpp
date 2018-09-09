@@ -16,6 +16,12 @@ namespace ns
         T* data = nullptr;
         List<T>* next = nullptr;
         List<T>* prev = nullptr;
+        
+        List() { }
+        List(T* t, List<T>* list) : data(t), next(list)
+        {
+            list->prev = this;
+        }
     };
     
     namespace list

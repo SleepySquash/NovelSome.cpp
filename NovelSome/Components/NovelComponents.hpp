@@ -29,6 +29,7 @@
 #include "../Essentials/Base.hpp"
 #include "../Engine/List.hpp"
 #include "../Engine/EntitySystem.hpp"
+#include "../Engine/NovelSystem.hpp"
 #include "../Engine/StaticMethods.hpp"
 #include "../Engine/NovelSomeScript.hpp"
 
@@ -42,90 +43,7 @@ namespace ns
     {
         class Novel;
         
-        
-        class GamePause : public Component
-        {
-        private:
-            sf::RectangleShape shape;
-            Novel* novel{ nullptr };
-            
-            sf::Int8 alpha{ 0 };
-            float currentTime{ 0.f };
-            
-        public:
-            enum modeEnum{ appearing, waiting, disappearing };
-            modeEnum mode{ waiting };
-            
-            int maxAlpha{ 170 };
-            float appearTime{ 0.3f };
-            float disappearTime{ 0.3f };
-            
-            GamePause(Novel* novel)
-            {
-                this->novel = novel;
-                shape.setFillColor(sf::Color(0,0,0,0));
-            }
-            void Update(const sf::Time& elapsedTime) override
-            {
-                switch (mode)
-                {
-                    case appearing:
-                        if (currentTime < appearTime)
-                            currentTime += elapsedTime.asSeconds();
-                        
-                        if (currentTime >= appearTime)
-                        {
-                            alpha = maxAlpha;
-                            currentTime = 0.f;
-                            mode = waiting;
-                        }
-                        else
-                            alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-                        shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
-                        break;
-                        
-                    case disappearing:
-                        if (currentTime < disappearTime)
-                            currentTime += elapsedTime.asSeconds();
-                        
-                        if (currentTime >= disappearTime)
-                        {
-                            alpha = 0;
-                            currentTime = 0.f;
-                            mode = waiting;
-                        }
-                        else
-                            alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
-                        shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
-                        break;
-                        
-                    default:
-                        break;
-                }
-            }
-            void PollEvent(sf::Event& event) override
-            {
-                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-                {
-                    ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
-                    mode = ns::GlobalSettings::isPause? appearing : disappearing;
-                    currentTime = 0.f;
-                }
-            }
-            void Draw(sf::RenderWindow *window) override
-            {
-                if (alpha != 0)
-                    window->draw(shape);
-            }
-            void Resize(unsigned int width, unsigned int height) override
-            {
-                shape.setSize({(float)width, (float)height});
-            }
-        };
-        
-        
-        
-        class Waiting : public Component
+        class Waiting : public NovelObject
         {
             float currentTime{ 0.f };
             Novel* novel{ nullptr };
@@ -139,7 +57,7 @@ namespace ns
         
         
         
-        class Background : public Component
+        class Background : public NovelObject
         {
         private:
             sf::Image image;
@@ -185,7 +103,7 @@ namespace ns
         
         
         
-        class Dialogue : public ns::Component
+        class Dialogue : public NovelObject
         {
         private:
             sf::RectangleShape shape;
@@ -235,7 +153,7 @@ namespace ns
         
         
         
-        struct CharacterData : public Component
+        struct CharacterData
         {
             sf::String name{ "" };
             sf::String displayName{ "" };
@@ -243,38 +161,91 @@ namespace ns
         
         
         
-        class Character : public Component
+        class Character : public NovelObject
         {
             
         };
         
         
         
-        class AudioPlayer : public Component
+        class SoundPlayer : public NovelObject
         {
-            
-        };
-        
-        
-        
-        class GUISystem : public Component
-        {
-            
-        };
-        
-        
-        
-        class NovelLibrary : public Component
-        {
-        private:
-            Novel* novel{ nullptr };
+        /*private:
+            sf::SoundBuffer buffer;
+            sf::Sound sound;
+            Novel* novel;
+            List<SoundPlayer>* groupPointer{ nullptr };
             
         public:
+            float maxVolume{ 100 };
+            
+            float appearTime{ 1.f };
+            float disappearTime{ 1.f };
+            
+            void Destroy() override;
+            void SetNovel(Novel* novel);
+            void SetGroup(List<MusicPlayer>* element);
+            void LoadFromFile(sf::String fileName);*/
+        };
+        
+        
+        
+        class MusicPlayer : public NovelObject
+        {
+        private:
+            sf::Music music;
+            Novel* novel;
+            List<MusicPlayer>* groupPointer{ nullptr };
+            
+            bool audioLoaded{ false };
+            bool loop{ true };
+            sf::String audioPath{ "" };
+            
+            float volume{ 0.f };
+            float currentTime{ 0.f };
+            float timeToStartDisappearing{ 0.f };
+            
+        public:
+            enum modeEnum {appearing, playing, disappearing, deprecated};
+        private:
+            modeEnum mode{ appearing };
+            
+        public:
+            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
+            sendMessageBackEnum sendMessageBack{ noMessage };
+            
+        public:
+            float maxVolume{ 100 };
+            
+            float appearTime{ 1.f };
+            float disappearTime{ 1.f };
+            
+            void Update(const sf::Time& elapsedTime) override;
+            void Destroy() override;
+            void SetNovel(Novel* novel);
+            void SetGroup(List<MusicPlayer>* element);
+            void LoadFromFile(sf::String fileName);
+            void SetStateMode(modeEnum newMode);
+        };
+        
+        
+        
+        class GUISystem : public NovelObject
+        {
+            
+        };
+        
+        
+        
+        struct NovelLibrary
+        {
+            Novel* novel{ nullptr };
             List<CharacterData>* charData{ nullptr };
             std::unordered_map<std::wstring, CharacterData*> characterLibrary;
             
-            NovelLibrary(Novel* novel);
+            NovelLibrary();
             ~NovelLibrary();
+            void SetNovel(Novel* novel);
             void FreeData();
             void ScanForCharacters();
         };
@@ -284,9 +255,7 @@ namespace ns
         class Novel : public Component
         {
         private:
-            EntitySystem system;
-            Entity* layers;
-            Entity* essentials;
+            NovelSystem layers;
             
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
@@ -296,18 +265,20 @@ namespace ns
             bool fileOpened{ false };
             std::wstring line;
             
-            List<Component>* onHold{ nullptr };
+            List<NovelObject>* onHold{ nullptr };
             unsigned int onHoldSize{ 0 };
             
             std::wifstream wif;
             
         public:
-            List<ns::NovelComponents::Background>* backgroundGroup{ nullptr };
-            List<ns::NovelComponents::Character>* characterGroup{ nullptr };
-            List<ns::NovelComponents::Dialogue>* dialogueGroup{ nullptr };
-            List<ns::NovelComponents::AudioPlayer>* audioGroup{ nullptr };
-            List<ns::NovelComponents::GUISystem>* GUIGroup{ nullptr };
-            ns::NovelComponents::NovelLibrary* library{ nullptr };
+            NovelLibrary library;
+            
+            List<Background>* backgroundGroup{ nullptr };
+            List<Character>* characterGroup{ nullptr };
+            List<Dialogue>* dialogueGroup{ nullptr };
+            List<SoundPlayer>* soundGroup{ nullptr };
+            List<MusicPlayer>* musicGroup{ nullptr };
+            List<GUISystem>* GUIGroup{ nullptr };
             
             Novel(sf::String path);
             ~Novel();
@@ -315,19 +286,15 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void Resize(unsigned int width, unsigned int height) override;
             void PollEvent(sf::Event& event) override;
-            void OnHold(ns::Component* component);
-            void UnHold(ns::Component* component);
+            void OnHold(NovelObject* component);
+            void UnHold(NovelObject* component);
             sf::String GetFolderPath();
-            template<typename T> void RefreshGroup(List<T>* group)
-            {
-                while (group != nullptr)
-                {
-                    List<T>* next = group->next;
-                    if (group->data == nullptr)
-                        ns::list::Remove<T>(group);
-                    group = next;
-                }
-            }
+            void RemoveFromGroup(List<Background>* groupPointer);
+            void RemoveFromGroup(List<Dialogue>* groupPointer);
+            void RemoveFromGroup(List<Character>* groupPointer);
+            void RemoveFromGroup(List<SoundPlayer>* groupPointer);
+            void RemoveFromGroup(List<MusicPlayer>* groupPointer);
+            void RemoveFromGroup(List<GUISystem>* groupPointer);
             template<typename T> void FreeGroup(List<T>* list)
             {
                 ns::List<T>* next{ nullptr };
@@ -338,11 +305,6 @@ namespace ns
                         delete list;
                 }
             }
-            void RemoveFromGroup(List<Background>* groupPointer);
-            void RemoveFromGroup(List<Dialogue>* groupPointer);
-            void RemoveFromGroup(List<Character>* groupPointer);
-            void RemoveFromGroup(List<AudioPlayer>* groupPointer);
-            void RemoveFromGroup(List<GUISystem>* groupPointer);
         };
         
         
