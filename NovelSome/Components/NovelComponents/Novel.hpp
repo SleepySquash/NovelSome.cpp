@@ -26,12 +26,20 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../Essentials/Base.hpp"
-#include "../Engine/List.hpp"
-#include "../Engine/EntitySystem.hpp"
-#include "../Engine/NovelSystem.hpp"
-#include "../Engine/StaticMethods.hpp"
-#include "../Engine/NovelSomeScript.hpp"
+#include "../../Essentials/Base.hpp"
+#include "../../Engine/List.hpp"
+#include "../../Engine/EntitySystem.hpp"
+#include "../../Engine/NovelSystem.hpp"
+#include "../../Engine/StaticMethods.hpp"
+#include "../../Engine/NovelSomeScript.hpp"
+
+namespace ns
+{
+    namespace NovelComponents
+    {
+        class Novel;
+    }
+}
 
 using std::cin;
 using std::cout;
@@ -41,8 +49,6 @@ namespace ns
 {
     namespace NovelComponents
     {
-        class Novel;
-        
         class Waiting : public NovelObject
         {
             float currentTime{ 0.f };
@@ -54,6 +60,9 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void SetNovel(Novel* novel);
         };
+        
+        
+        
         
         
         
@@ -76,7 +85,7 @@ namespace ns
         private:
             modeEnum mode{ appearing };
         public:
-            enum sendMessageBackEnum {noMessage, atAppearance, atDeprecated};
+            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
             sendMessageBackEnum sendMessageBack{ atAppearance };
             modeEnum afterAppearSwitchTo{ existing };
             
@@ -100,6 +109,9 @@ namespace ns
             void CalculateScale(unsigned int width, unsigned int height);
             void SetStateMode(modeEnum newMode);
         };
+        
+        
+        
         
         
         
@@ -153,6 +165,9 @@ namespace ns
         
         
         
+        
+        
+        
         struct CharacterData
         {
             sf::String name{ "" };
@@ -165,6 +180,9 @@ namespace ns
         {
             
         };
+        
+        
+        
         
         
         
@@ -202,6 +220,7 @@ namespace ns
             sf::String audioPath{ "" };
             
             float volume{ 0.f };
+            sf::Time playingOffset;
             float currentTime{ 0.f };
             float timeToStartDisappearing{ 0.f };
             
@@ -226,14 +245,84 @@ namespace ns
             void SetGroup(List<MusicPlayer>* element);
             void LoadFromFile(sf::String fileName);
             void SetStateMode(modeEnum newMode);
+            void SetLoop(bool setLoop);
+            void SetPlayingOffset(sf::Time timeOffset);
         };
         
         
         
+        
+        
+        
+        struct GUIObject;
         class GUISystem : public NovelObject
         {
+        public:
+            List<GUIObject>* guiObjects{ nullptr };
+            List<GUIObject>* lastGuiObjects{ nullptr };
             
+            ~GUISystem();
+            void Update(const sf::Time& elapsedTime) override;
+            void Draw(sf::RenderWindow* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            template<typename T, typename ...Args> T* AddComponent(Args... args)
+            {
+                T* component = new T(args...);
+                List<GUIObject>* element = (List<GUIObject>*)malloc(sizeof(List<GUIObject>));
+                element->data = component;
+                element->next = nullptr;
+                element->prev = lastGuiObjects;
+                
+                if (lastGuiObjects == nullptr)
+                    guiObjects = element;
+                else
+                    lastGuiObjects->next = element;
+                lastGuiObjects = element;
+                
+                component->SetGUISystem(this);
+                component->Init();
+                component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                
+                return component;
+            }
+            void SetAlpha(int alpha);
+            void Clear();
         };
+        
+        
+        
+        struct GUIObject
+        {
+            int alpha{ 0 };
+            GUISystem* system;
+            
+            virtual void Init() { }
+            virtual void Update(const sf::Time& elapsedTime) { }
+            virtual void Draw(sf::RenderWindow* window) { }
+            virtual void Resize(unsigned int width, unsigned int height) { }
+            virtual void Destroy() { }
+            virtual void SetAlpha(int alpha) { }
+            void SetGUISystem(GUISystem *system);
+        };
+        
+        
+        
+        namespace GUIObjects
+        {
+            struct Rectangle : GUIObject
+            {
+                sf::RectangleShape shape;
+                
+                void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(int alpha) override;
+            };
+        }
+        
+        
+        
         
         
         
@@ -249,6 +338,9 @@ namespace ns
             void FreeData();
             void ScanForCharacters();
         };
+        
+        
+        
         
         
         
@@ -272,6 +364,7 @@ namespace ns
             
         public:
             NovelLibrary library;
+            GUISystem dialogueGUI;
             
             List<Background>* backgroundGroup{ nullptr };
             List<Character>* characterGroup{ nullptr };

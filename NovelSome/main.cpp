@@ -36,7 +36,7 @@
 #include "Engine/StaticMethods.hpp"
 
 #include "Components/EssentialComponents.hpp"
-#include "Components/NovelComponents.hpp"
+#include "Components/NovelComponents/Novel.hpp"
 
 using std::cin;
 using std::cout;
@@ -83,7 +83,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 4");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 5");
     }
     
     sf::Clock clock;
@@ -136,7 +136,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 4");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 5");
                             }
                             break;
                             

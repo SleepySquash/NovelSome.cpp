@@ -53,6 +53,7 @@ namespace nss
     std::wstring ParseArgument(CommandSettings& results);
     wchar_t** ParseArguments(CommandSettings& results);
     std::wstring ArgumentAsString(CommandSettings& results);
+    bool ArgumentAsBool(CommandSettings& results);
     float ArgumentAsFloat(CommandSettings& results);
     int ArgumentAsInt(CommandSettings& results);
 }

@@ -11,7 +11,14 @@
 		DD2B0F222143462A00D6A1CE /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD2B0F202143462A00D6A1CE /* EssentialComponents.cpp */; };
 		DD573E102139C32900F9FFF5 /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DD573E0E2139C32900F9FFF5 /* Novels */; };
 		DD573E112139C32900F9FFF5 /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD573E0F2139C32900F9FFF5 /* Data */; };
-		DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */; };
+		DD7C8CA42147D2A30040CB24 /* GUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CA22147D2A30040CB24 /* GUI.cpp */; };
+		DD7C8CA72147D2C50040CB24 /* Audio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CA52147D2C50040CB24 /* Audio.cpp */; };
+		DD7C8CAA2147DC080040CB24 /* Dialogue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CA82147DC080040CB24 /* Dialogue.cpp */; };
+		DD7C8CAD2147DC410040CB24 /* Background.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CAB2147DC410040CB24 /* Background.cpp */; };
+		DD7C8CB02147E11F0040CB24 /* Misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CAE2147E11F0040CB24 /* Misc.cpp */; };
+		DD7C8CB22147E6930040CB24 /* NovelLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */; };
+		DD7C8CB42147E6D70040CB24 /* NovelUpdate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */; };
+		DD849AF42138B68F00FAFD15 /* Novel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF22138B68F00FAFD15 /* Novel.cpp */; };
 		DD849AFA2139452100FAFD15 /* Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF82139452100FAFD15 /* Base.cpp */; };
 		DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */; };
 		DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849B0E2139725C00FAFD15 /* NovelSomeScript.cpp */; };
@@ -32,8 +39,15 @@
 		DD2B0F232143A3A900D6A1CE /* versionhelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = versionhelpers.h; sourceTree = "<group>"; };
 		DD573E0E2139C32900F9FFF5 /* Novels */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Novels; path = Resources/Novels; sourceTree = "<group>"; };
 		DD573E0F2139C32900F9FFF5 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = Resources/Data; sourceTree = "<group>"; };
-		DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelComponents.cpp; sourceTree = "<group>"; };
-		DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelComponents.hpp; sourceTree = "<group>"; };
+		DD7C8CA22147D2A30040CB24 /* GUI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GUI.cpp; sourceTree = "<group>"; };
+		DD7C8CA52147D2C50040CB24 /* Audio.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Audio.cpp; sourceTree = "<group>"; };
+		DD7C8CA82147DC080040CB24 /* Dialogue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Dialogue.cpp; sourceTree = "<group>"; };
+		DD7C8CAB2147DC410040CB24 /* Background.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Background.cpp; sourceTree = "<group>"; };
+		DD7C8CAE2147E11F0040CB24 /* Misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Misc.cpp; sourceTree = "<group>"; };
+		DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelLibrary.cpp; sourceTree = "<group>"; };
+		DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelUpdate.cpp; sourceTree = "<group>"; };
+		DD849AF22138B68F00FAFD15 /* Novel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Novel.cpp; sourceTree = "<group>"; };
+		DD849AF32138B68F00FAFD15 /* Novel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Novel.hpp; sourceTree = "<group>"; };
 		DD849AF82139452100FAFD15 /* Base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Base.cpp; sourceTree = "<group>"; };
 		DD849AF92139452100FAFD15 /* Base.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Base.hpp; sourceTree = "<group>"; };
 		DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ResourcePath.cpp; sourceTree = "<group>"; };
@@ -75,6 +89,22 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		DD7C8CA12147D24A0040CB24 /* NovelComponents */ = {
+			isa = PBXGroup;
+			children = (
+				DD849AF32138B68F00FAFD15 /* Novel.hpp */,
+				DD849AF22138B68F00FAFD15 /* Novel.cpp */,
+				DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */,
+				DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */,
+				DD7C8CA22147D2A30040CB24 /* GUI.cpp */,
+				DD7C8CA52147D2C50040CB24 /* Audio.cpp */,
+				DD7C8CA82147DC080040CB24 /* Dialogue.cpp */,
+				DD7C8CAB2147DC410040CB24 /* Background.cpp */,
+				DD7C8CAE2147E11F0040CB24 /* Misc.cpp */,
+			);
+			path = NovelComponents;
+			sourceTree = "<group>";
+		};
 		DD849AF72139450C00FAFD15 /* Essentials */ = {
 			isa = PBXGroup;
 			children = (
@@ -108,10 +138,9 @@
 		DDC61FA52132A591000A23A6 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				DD7C8CA12147D24A0040CB24 /* NovelComponents */,
 				DDC61FAC2132AA1F000A23A6 /* TestComponents.cpp */,
 				DDC61FAD2132AA1F000A23A6 /* TestComponents.hpp */,
-				DD849AF22138B68F00FAFD15 /* NovelComponents.cpp */,
-				DD849AF32138B68F00FAFD15 /* NovelComponents.hpp */,
 				DD2B0F202143462A00D6A1CE /* EssentialComponents.cpp */,
 				DD2B0F212143462A00D6A1CE /* EssentialComponents.hpp */,
 			);
@@ -255,18 +284,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD7C8CB22147E6930040CB24 /* NovelLibrary.cpp in Sources */,
+				DD7C8CA72147D2C50040CB24 /* Audio.cpp in Sources */,
 				DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */,
 				DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */,
 				DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */,
-				DD849AF42138B68F00FAFD15 /* NovelComponents.cpp in Sources */,
+				DD849AF42138B68F00FAFD15 /* Novel.cpp in Sources */,
 				DD2B0F1F21433E3800D6A1CE /* NovelSystem.cpp in Sources */,
 				DDC61FAE2132AA1F000A23A6 /* TestComponents.cpp in Sources */,
+				DD7C8CAA2147DC080040CB24 /* Dialogue.cpp in Sources */,
 				DD2B0F222143462A00D6A1CE /* EssentialComponents.cpp in Sources */,
+				DD7C8CA42147D2A30040CB24 /* GUI.cpp in Sources */,
 				DDD0988B212A1FCD00E58C1F /* main.cpp in Sources */,
+				DD7C8CB42147E6D70040CB24 /* NovelUpdate.cpp in Sources */,
 				DDD09888212A1FCD00E58C1F /* ResourcePath.mm in Sources */,
 				DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */,
 				DD849AFA2139452100FAFD15 /* Base.cpp in Sources */,
 				DDA8934A213C950E00D8EF7B /* List.cpp in Sources */,
+				DD7C8CAD2147DC410040CB24 /* Background.cpp in Sources */,
+				DD7C8CB02147E11F0040CB24 /* Misc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -86,7 +86,8 @@ namespace nss
         {
             if (!(Found = (results.line[pos] == until)))
             {
-                text += results.line[pos];
+                if (results.line[pos] != 13)
+                    text += results.line[pos];
                 pos++;
             }
         }
@@ -141,7 +142,8 @@ namespace nss
                 insideQuotes = !insideQuotes;
             if (!(Found = (results.line[pos] == ' ' && !insideQuotes)))
             {
-                text += results.line[pos];
+                if (results.line[pos] != 13 && results.line[pos] != ',')
+                    text += results.line[pos];
                 pos++;
             }
         }
@@ -182,6 +184,14 @@ namespace nss
     {
         std::wstring stringValue = nss::ParseUntil(results, '\0');
         return stringValue;
+    }
+    bool ArgumentAsBool(CommandSettings& results)
+    {
+        std::wstring stringValue = nss::ArgumentAsString(results);
+        if (stringValue == L"true" || stringValue == L"1")
+            return true;
+        else
+            return false;
     }
     float ArgumentAsFloat(CommandSettings& results)
     {

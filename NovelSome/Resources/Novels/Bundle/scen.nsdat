@@ -1,18 +1,19 @@
 "..."
 
-music "Jojos Bizarre Adventure- Awaken(Pillar Men Theme).ogg"
-background "ItJyTkXF_n4.jpg" with appear:0.4 disappear:2.4 fit:fill
+music "Jojos Bizarre Adventure- Awaken(Pillar Men Theme).ogg" from:1 with message:appearance
+background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:no,
+"..."
 
 wait 0.9
 
-background "DVa.jpg" with fit:fill alpha:160
+background "DVa.jpg" with fit:fill, alpha:160, message:no
 DVa "Привет, я Дива!"
 Юля "А я Юля"
 Никита "А я Никитос, йоптабля."
 "Ня <3"
 background hide
 
-"Привет! Йа текст 私は食品を食べる" with appear:2 disappear:0.2
+"Привет! Йа текст 私は食品を食べる" with appear:2, disappear:0.2
 "И я текст! Бла бла бла текст :3"
 
 background "DVa.jpg" with fade:1.5
