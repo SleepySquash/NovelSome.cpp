@@ -22,6 +22,7 @@
 //
 
 //TODO: Make nss::Command not case sensetive as an option in nss::CommandSettings
+//TODO: If not _WIN32, then replace all \ slashes to / in filenames (background, music)
 
 #include <iostream>
 #include <unordered_map>
@@ -83,7 +84,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 5");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 6");
     }
     
     sf::Clock clock;
@@ -136,7 +137,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 5");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 6");
                             }
                             break;
                             

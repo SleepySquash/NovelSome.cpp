@@ -144,6 +144,8 @@ namespace ns
                                             if (charData->displayName == L"")
                                                 charData->displayName = charData->name;
                                             
+                                            charData->filePath = *currentFolder->data + L"/" + entryName;
+                                            
                                             if (novel->library.characterLibrary.find(charData->name) != novel->library.characterLibrary.end())
                                             {
                                                 std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Character with following name is already placed: '" << charData->name.toAnsiString() << '\'' << std::endl;

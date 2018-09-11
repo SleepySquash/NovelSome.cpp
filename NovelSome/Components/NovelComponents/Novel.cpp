@@ -11,7 +11,7 @@
 namespace ns
 {
     namespace NovelComponents
-    { 
+    {
         Novel::Novel(sf::String path) : nsdataPath(path)
         {
             folderPath = ns::base::GetFolderPath(path);

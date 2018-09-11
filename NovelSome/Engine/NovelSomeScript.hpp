@@ -48,6 +48,8 @@ namespace nss
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
     std::wstring ParseAsQuoteString(CommandSettings& results);
+    int ParseAsInt(CommandSettings& results);
+    float ParseAsFloat(CommandSettings& results);
     
     //TODO: Documentation
     std::wstring ParseArgument(CommandSettings& results);

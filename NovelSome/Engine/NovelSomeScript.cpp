@@ -129,6 +129,27 @@ namespace nss
             return L"";
     }
     
+    int ParseAsInt(CommandSettings& results)
+    {
+        std::wstring stringValue = nss::ParseUntil(results, ' ');
+        std::string parsingString = "";
+        for (int i = 0; stringValue[i] != '\0'; i++)
+            if (stringValue[i] >= 48 && stringValue[i] <= 57)
+                parsingString += (char)stringValue[i];
+        
+        return std::atoi(parsingString.c_str());
+    }
+    float ParseAsFloat(CommandSettings& results)
+    {
+        std::wstring stringValue = nss::ParseUntil(results, ' ');
+        std::string parsingString = "";
+        for (int i = 0; stringValue[i] != '\0'; i++)
+            if (stringValue[i] == 46 || (stringValue[i] >= 48 && stringValue[i] <= 57))
+                parsingString += (char)stringValue[i];
+        
+        return std::atof(parsingString.c_str());
+    }
+    
     std::wstring ParseArgument(CommandSettings& results)
     {
         unsigned int pos{ results.lastPos };

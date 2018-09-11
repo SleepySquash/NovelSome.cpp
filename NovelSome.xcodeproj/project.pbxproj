@@ -18,6 +18,7 @@
 		DD7C8CB02147E11F0040CB24 /* Misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CAE2147E11F0040CB24 /* Misc.cpp */; };
 		DD7C8CB22147E6930040CB24 /* NovelLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */; };
 		DD7C8CB42147E6D70040CB24 /* NovelUpdate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */; };
+		DD7C8CB721483F6C0040CB24 /* Character.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7C8CB521483F6C0040CB24 /* Character.cpp */; };
 		DD849AF42138B68F00FAFD15 /* Novel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF22138B68F00FAFD15 /* Novel.cpp */; };
 		DD849AFA2139452100FAFD15 /* Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AF82139452100FAFD15 /* Base.cpp */; };
 		DD849AFC2139695E00FAFD15 /* ResourcePath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD849AFB2139695E00FAFD15 /* ResourcePath.cpp */; };
@@ -46,6 +47,7 @@
 		DD7C8CAE2147E11F0040CB24 /* Misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Misc.cpp; sourceTree = "<group>"; };
 		DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelLibrary.cpp; sourceTree = "<group>"; };
 		DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelUpdate.cpp; sourceTree = "<group>"; };
+		DD7C8CB521483F6C0040CB24 /* Character.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Character.cpp; sourceTree = "<group>"; };
 		DD849AF22138B68F00FAFD15 /* Novel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Novel.cpp; sourceTree = "<group>"; };
 		DD849AF32138B68F00FAFD15 /* Novel.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Novel.hpp; sourceTree = "<group>"; };
 		DD849AF82139452100FAFD15 /* Base.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Base.cpp; sourceTree = "<group>"; };
@@ -96,10 +98,11 @@
 				DD849AF22138B68F00FAFD15 /* Novel.cpp */,
 				DD7C8CB32147E6D70040CB24 /* NovelUpdate.cpp */,
 				DD7C8CB12147E6930040CB24 /* NovelLibrary.cpp */,
-				DD7C8CA22147D2A30040CB24 /* GUI.cpp */,
 				DD7C8CA52147D2C50040CB24 /* Audio.cpp */,
-				DD7C8CA82147DC080040CB24 /* Dialogue.cpp */,
 				DD7C8CAB2147DC410040CB24 /* Background.cpp */,
+				DD7C8CB521483F6C0040CB24 /* Character.cpp */,
+				DD7C8CA82147DC080040CB24 /* Dialogue.cpp */,
+				DD7C8CA22147D2A30040CB24 /* GUI.cpp */,
 				DD7C8CAE2147E11F0040CB24 /* Misc.cpp */,
 			);
 			path = NovelComponents;
@@ -287,6 +290,7 @@
 				DD7C8CB22147E6930040CB24 /* NovelLibrary.cpp in Sources */,
 				DD7C8CA72147D2C50040CB24 /* Audio.cpp in Sources */,
 				DDC61FB1213347B6000A23A6 /* StaticMethods.cpp in Sources */,
+				DD7C8CB721483F6C0040CB24 /* Character.cpp in Sources */,
 				DDC61FA82132A5E4000A23A6 /* EntitySystem.cpp in Sources */,
 				DD849B102139725C00FAFD15 /* NovelSomeScript.cpp in Sources */,
 				DD849AF42138B68F00FAFD15 /* Novel.cpp in Sources */,

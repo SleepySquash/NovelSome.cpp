@@ -172,13 +172,58 @@ namespace ns
         {
             sf::String name{ "" };
             sf::String displayName{ "" };
+            sf::String filePath{ "" };
         };
         
         
         
         class Character : public NovelObject
         {
+        private:
+            sf::Image image;
+            sf::Texture texture;
+            sf::Sprite sprite;
             
+            Novel* novel{ nullptr };
+            List<Character>* groupPointer{ nullptr };
+            CharacterData* characterData{ nullptr };
+            sf::String state{ "" };
+            
+            bool spriteLoaded{ false };
+            sf::Int8 alpha{ 0 };
+            float currentTime{ 0.f };
+            
+        public:
+            enum modeEnum {appearing, existing, disappearing, deprecated};
+        private:
+            modeEnum mode{ appearing };
+        public:
+            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
+            sendMessageBackEnum sendMessageBack{ atAppearance };
+            modeEnum afterAppearSwitchTo{ existing };
+            
+            float customX{ 0 }, customY{ 0 };
+            enum positionEnum { custom, left, cleft, center, cright, right };
+            positionEnum position { center };
+            
+            int maxAlpha{ 255 };
+            
+            float appearTime{ 0.6f };
+            float disappearTime{ 0.6f };
+            
+            bool visible{ true };
+            
+            void LoadState(sf::String state);
+            void Resize(unsigned int width, unsigned int height) override;
+            void Update(const sf::Time& elapsedTime) override;
+            void Draw(sf::RenderWindow* window) override;
+            void Destroy() override;
+            void SetNovel(Novel* novel);
+            void SetGroup(List<Character>* element);
+            void SetStateMode(modeEnum newMode);
+            void SetCharacterData(CharacterData* characterData);
+            CharacterData* GetCharacterData();
+            void SetPosition(positionEnum position, float x, float y);
         };
         
         

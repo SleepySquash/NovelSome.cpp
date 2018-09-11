@@ -1,0 +1,15 @@
+name "Юи"
+display "Юи"
+
+color 255 255 255
+outline 255 255 255
+thickness 1
+
+state normal {
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 0.7
+}
+state nopantyhose {
+    sprite "d266890959ebbd6b808b7f3f00716ede.png"
+    scale 0.7
+}
