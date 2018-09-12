@@ -25,6 +25,7 @@ namespace ns
                     std::getline(wif, line);
                     command.Command(line);
                     
+                    bool backgroundAddingMode{ false };
                     ///---------------------------------------DIALOGUE---------------------------------------
                     ///---------------------------------------DIALOGUE---------------------------------------
                     ///---------------------------------------DIALOGUE---------------------------------------
@@ -174,10 +175,25 @@ namespace ns
                             }
                         }
                     }
-                    else if (nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
+                    else if ((backgroundAddingMode = nss::Command(command, L"background add ")) || nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                     {
                         std::wstring filePath = nss::ParseAsQuoteString(command);
                         wchar_t** arguments = nss::ParseArguments(command);
+                        
+                        if (!backgroundAddingMode)
+                            if (backgroundGroup != nullptr)
+                            {
+                                List<Background>* temp = backgroundGroup;
+                                while (temp != nullptr)
+                                {
+                                    if (temp->data != nullptr)
+                                    {
+                                        temp->data->sendMessageBack = temp->data->noMessage;
+                                        temp->data->SetStateMode(temp->data->disappearing);
+                                    }
+                                    temp = temp->next;
+                                }
+                            }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::Background>(0);
                         component->SetNovel(this);

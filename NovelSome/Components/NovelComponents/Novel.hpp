@@ -16,6 +16,9 @@
 #include <fstream>
 #include <codecvt>
 
+//std::unique_ptr<> in Music and Background
+#include <memory>
+
 //CharacterData in NovelLibrary
 #include <unordered_map>
 
@@ -69,6 +72,8 @@ namespace ns
         class Background : public NovelObject
         {
         private:
+            std::unique_ptr<char[]> fileInMemory;
+            
             sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
@@ -77,6 +82,7 @@ namespace ns
             std::string imagePath;
             
             bool spriteLoaded{ false };
+            bool backgroundLoaded{ false };
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
             
@@ -256,6 +262,8 @@ namespace ns
         class MusicPlayer : public NovelObject
         {
         private:
+            std::unique_ptr<char[]> fileInMemory;
+            
             sf::Music music;
             Novel* novel;
             List<MusicPlayer>* groupPointer{ nullptr };

@@ -109,14 +109,21 @@ namespace ns
                                                     
                                                     if (nss::Command(command, L"name "))
                                                     {
-                                                        nss::ParseUntil(command, '"');
-                                                        std::wstring nameParsed = nss::ParseUntil(command, '"');
+                                                        std::wstring nameParsed;
+                                                        if (command.line[command.lastPos] == L'"')
+                                                            nameParsed = nss::ParseAsQuoteString(command);
+                                                        else
+                                                            nameParsed = nss::ParseUntil(command, ' ');
+                                                        
                                                         charData->name = nameParsed;
                                                     }
                                                     else if (nss::Command(command, L"dname ") || nss::Command(command, L"display "))
                                                     {
-                                                        nss::ParseUntil(command, '"');
-                                                        std::wstring nameParsed = nss::ParseUntil(command, '"');
+                                                        std::wstring nameParsed;
+                                                        if (command.line[command.lastPos] == L'"')
+                                                            nameParsed = nss::ParseAsQuoteString(command);
+                                                        else
+                                                            nameParsed = nss::ParseUntil(command, ' ');
                                                         charData->displayName = nameParsed;
                                                     }
                                                     else if (nss::Command(command, L"state "))

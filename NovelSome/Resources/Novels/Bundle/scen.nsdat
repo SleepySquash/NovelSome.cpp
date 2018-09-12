@@ -3,11 +3,20 @@
 background "Неко.jpg"
 "now showing!!"
 
-show Юи normal cleft with fade:0.5, message:no
+show Юи "normal" cleft with fade:0.5, message:no
 Юи "Приветь, меня зовут Юи :3"
-show Юи nopantyhose cright with fade:0.5, message:no
+show Юи "nopantyhose" cright with fade:0.5, message:no
 Юи "И я тоже Юи! :3"
 hide Юи with fade:1
+
+show Юи nopantyhose right with message:no
+show Юи nopantyhose left with message:no
+show Юи normal cleft with message:no
+show Юи normal cright with message:no
+show Юи normal center with message:no
+
+wait 2
+hide all
 
 "..."
 music "Jojos Bizarre Adventure- Awaken(Pillar Men Theme).ogg" from:1 with message:appearance
@@ -16,7 +25,7 @@ background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:n
 
 wait 0.9
 
-background "DVa.jpg" with fit:fill, alpha:160, message:no
+background add "DVa.jpg" with fit:fill, alpha:160, message:no
 DVa "Привет, я Дива!"
 Юля "А я Юля"
 Никита "А я Никитос, йоптабля."

@@ -84,7 +84,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 6");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 7");
     }
     
     sf::Clock clock;
@@ -137,7 +137,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 6");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 7");
                             }
                             break;
                             

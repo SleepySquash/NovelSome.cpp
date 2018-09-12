@@ -95,10 +95,29 @@ namespace ns
             if (novel != nullptr)
             {
                 sf::String fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                
+#ifdef _WIN32
+                std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
+                if (!ifStream.is_open())
+                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                else
+                {
+                    auto filesize = ifStream.tellg();
+                    fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
+                    ifStream.seekg(0, std::ios::beg);
+                    ifStream.read(fileInMemory.get(), filesize);
+                    ifStream.close();
+                    
+                    audioLoaded = music.openFromMemory(fileInMemory.get(), filesize);
+                }
+#else
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
                 std::string u8str = converter.to_bytes(fullPath.toWideString());
+                if (!(audioLoaded = music.openFromFile(u8str)))
+                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+#endif
                 
-                if ((audioLoaded = (music.openFromFile(u8str))))
+                if (audioLoaded)
                 {
                     audioPath = fileName;
                     music.setLoop(loop);
