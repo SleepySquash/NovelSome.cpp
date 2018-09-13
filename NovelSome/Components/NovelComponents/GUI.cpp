@@ -46,7 +46,7 @@ namespace ns
                     list->data->Resize(width, height);
                 }
         }
-        void GUISystem::SetAlpha(int alpha)
+        void GUISystem::SetAlpha(sf::Int8 alpha)
         {
             List<GUIObject>* next = nullptr;
             if (guiObjects != nullptr)
@@ -97,11 +97,15 @@ namespace ns
             }
             void Rectangle::Resize(unsigned int width, unsigned int height)
             {
-                shape.setSize({(float)width/10, (float)height/10});
+                if (constrains)
+                {
+                    shape.setSize({(float)((width - constrainsRight) - constrainsLeft), shape.getSize().y});
+                    shape.setPosition(constrainsLeft, (height - constrainsBottom) - constrainsFromBottomToTop);
+                }
             }
-            void Rectangle::SetAlpha(int alpha)
+            void Rectangle::SetAlpha(sf::Int8 alpha)
             {
-                
+                shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
             }
         }
     }

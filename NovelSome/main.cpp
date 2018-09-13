@@ -24,6 +24,12 @@
 //TODO: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //TODO: If not _WIN32, then replace all \ slashes to / in filenames (background, music)
 
+//TODO: .mp3 working
+//TODO: Smart global scaling factor
+//TODO: Dialogue's GUI
+//TODO: Constrains and stuff like that, in States of .nschar too
+//TODO: .nsdata files and NovelInfo structure
+
 #include <iostream>
 #include <unordered_map>
 
@@ -84,7 +90,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 7");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 8");
     }
     
     sf::Clock clock;
@@ -137,7 +143,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 7");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 8");
                             }
                             break;
                             
@@ -164,7 +170,6 @@ int main()
         system.Update(clock.restart());
         
         window.clear();
-        //TODO: Do the reverse for-loop, so the UI elements draw last and update first
         system.Draw(&window);
         window.display();
     }

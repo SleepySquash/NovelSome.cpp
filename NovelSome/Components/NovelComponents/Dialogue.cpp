@@ -14,6 +14,8 @@ namespace ns
     {
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
+            if (guiSystem != nullptr)
+                guiSystem->Update(elapsedTime);
             switch (mode)
             {
                 case appearing:
@@ -33,6 +35,8 @@ namespace ns
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
                     
+                    if (guiSystem != nullptr)
+                        guiSystem->SetAlpha(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
                     shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
                     if (drawCharacterName)
@@ -59,6 +63,8 @@ namespace ns
                     else
                         alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     
+                    if (guiSystem != nullptr)
+                        guiSystem->SetAlpha(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
                     shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
                     if (drawCharacterName)
@@ -110,6 +116,8 @@ namespace ns
         }
         void Dialogue::Draw(sf::RenderWindow* window)
         {
+            if (guiSystem != nullptr)
+                guiSystem->Draw(window);
             window->draw(shape);
             if (fontLoaded)
             {
@@ -128,6 +136,8 @@ namespace ns
         }
         void Dialogue::Resize(unsigned int width, unsigned int height)
         {
+            if (guiSystem != nullptr)
+                guiSystem->Resize(width, height);
             text.setPosition(30, height - height/5 + 10);
             shape.setPosition(0, height - height/5);
             shape.setSize({static_cast<float>(width), static_cast<float>(height/5)});
@@ -142,6 +152,10 @@ namespace ns
         void Dialogue::SetNovel(Novel* novel)
         {
             this->novel = novel;
+            if (novel != nullptr)
+                guiSystem = &(novel->dialogueGUI);
+            if (guiSystem != nullptr)
+                guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
         void Dialogue::SetCharacter(sf::String character)
         {

@@ -1,4 +1,7 @@
 "..."
+sound "Sounds/no.ogg" with message:no
+sound "Sounds/heartbeat.ogg" with message:deprecated
+sound stop with fade:1, message:deprecated
 
 background "Неко.jpg"
 "now showing!!"
@@ -19,7 +22,7 @@ wait 2
 hide all
 
 "..."
-music "Jojos Bizarre Adventure- Awaken(Pillar Men Theme).ogg" from:1 with message:appearance
+music "Pixie Paris - Es rappelt im Karton (Картон).ogg" from:0 with message:appearance
 background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:no
 "..."
 
@@ -39,6 +42,6 @@ background "DVa.jpg" with fade:1.5
 "YAY SHIT IS REAL"
 background "Неко.jpg"
 
-music stop with disappear:2
+music stop with disappear:2, message:no
 wait 2
 "Конец :3"

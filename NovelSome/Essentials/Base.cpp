@@ -122,39 +122,6 @@ namespace ns
                 if (!noerase) {str.erase(0,1);} else {noerase = false;}
             } return flp;
         }
-        
-        
-        
-        //TODO: Documentation
-        //TODO: Make this function working
-        /*float ConvertToFloat(std::wstring str)
-        {
-            float value{ 0.f };
-            int pointPos{ -1 };
-         
-            for (int i = 0; str[i] != '\0' && pointPos == -1; i++)
-                if (str[i] == '.')
-                    pointPos = i;
-         
-            int startPos = (pointPos == -1) ? str.length()-1 : pointPos-1;
-            for (int i = startPos; i >= 0; i--)
-                if (str[i] >= 48 && str[i] <= 57)
-                {
-                    if (startPos - i <= 36)
-                    {
-                        std::cout << str[i] - 48 << " " << (startPos - i) << " " << power(10, (startPos - i)) << std::endl;
-                        int64_t i64 = (str[i] - 48) * power(10, (startPos - i));
-                        value += i64;
-                        std::cout << value << std::endl;
-                    }
-                    else
-                        std::cout << "Warning :: NSS :: ConvertToFloat :: Float can't hold more that 38 decimal digits." << std::endl;
-                }
-         
-            //TODO: parse the after point
-         
-            return value;
-        }*/
 
 
 

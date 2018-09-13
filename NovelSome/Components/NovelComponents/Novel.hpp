@@ -36,14 +36,6 @@
 #include "../../Engine/StaticMethods.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
-namespace ns
-{
-    namespace NovelComponents
-    {
-        class Novel;
-    }
-}
-
 using std::cin;
 using std::cout;
 using std::endl;
@@ -52,6 +44,7 @@ namespace ns
 {
     namespace NovelComponents
     {
+        class Novel;
         class Waiting : public NovelObject
         {
             float currentTime{ 0.f };
@@ -121,10 +114,12 @@ namespace ns
         
         
         
+        class GUISystem;
         class Dialogue : public NovelObject
         {
         private:
             sf::RectangleShape shape;
+            GUISystem* guiSystem{ nullptr };
             sf::Text text;
             Novel* novel{ nullptr };
             List<Dialogue>* groupPointer{ nullptr };
@@ -186,6 +181,8 @@ namespace ns
         class Character : public NovelObject
         {
         private:
+            std::unique_ptr<char[]> fileInMemory;
+            
             sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
@@ -239,22 +236,46 @@ namespace ns
         
         class SoundPlayer : public NovelObject
         {
-        /*private:
-            sf::SoundBuffer buffer;
+        private:
+            std::unique_ptr<char[]> fileInMemory;
+            
+            sf::SoundBuffer soundBuffer;
             sf::Sound sound;
             Novel* novel;
             List<SoundPlayer>* groupPointer{ nullptr };
             
+            bool audioLoaded{ false };
+            bool loop{ false };
+            sf::String audioPath{ "" };
+            
+            float volume{ 0.f };
+            sf::Time playingOffset;
+            float currentTime{ 0.f };
+            float timeToStartDisappearing{ 0.f };
+            
+        public:
+            enum modeEnum {appearing, playing, disappearing, deprecated};
+        private:
+            modeEnum mode{ appearing };
+            
+        public:
+            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
+            sendMessageBackEnum sendMessageBack{ noMessage };
+            
         public:
             float maxVolume{ 100 };
             
-            float appearTime{ 1.f };
-            float disappearTime{ 1.f };
+            float appearTime{ 0.f };
+            float disappearTime{ 0.f };
             
+            void Update(const sf::Time& elapsedTime) override;
             void Destroy() override;
             void SetNovel(Novel* novel);
-            void SetGroup(List<MusicPlayer>* element);
-            void LoadFromFile(sf::String fileName);*/
+            void SetGroup(List<SoundPlayer>* element);
+            void LoadFromFile(sf::String fileName);
+            void SetStateMode(modeEnum newMode);
+            void SetLoop(bool setLoop);
+            void SetPlayingOffset(sf::Time timeOffset);
         };
         
         
@@ -338,7 +359,7 @@ namespace ns
                 
                 return component;
             }
-            void SetAlpha(int alpha);
+            void SetAlpha(sf::Int8 alpha);
             void Clear();
         };
         
@@ -347,14 +368,21 @@ namespace ns
         struct GUIObject
         {
             int alpha{ 0 };
+            bool isHappy{ true };
             GUISystem* system;
+            
+            bool constrains{ false };
+            int constrainsLeft{ 0 };
+            int constrainsRight{ 0 };
+            int constrainsBottom{ 0 };
+            int constrainsFromBottomToTop{ 0 };
             
             virtual void Init() { }
             virtual void Update(const sf::Time& elapsedTime) { }
             virtual void Draw(sf::RenderWindow* window) { }
             virtual void Resize(unsigned int width, unsigned int height) { }
             virtual void Destroy() { }
-            virtual void SetAlpha(int alpha) { }
+            virtual void SetAlpha(sf::Int8 alpha) { }
             void SetGUISystem(GUISystem *system);
         };
         
@@ -370,7 +398,7 @@ namespace ns
                 void Update(const sf::Time& elapsedTime) override;
                 void Draw(sf::RenderWindow* window) override;
                 void Resize(unsigned int width, unsigned int height) override;
-                void SetAlpha(int alpha) override;
+                void SetAlpha(sf::Int8 alpha) override;
             };
         }
         

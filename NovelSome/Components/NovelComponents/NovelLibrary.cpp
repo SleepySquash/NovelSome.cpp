@@ -72,7 +72,7 @@ namespace ns
                                     if (extention == L"")
                                     {
                                         List<sf::String>* newFolder = new List<sf::String>();
-                                        newFolder->data = new sf::String(entryName);
+                                        newFolder->data = new sf::String(*currentFolder->data + entryName + L"/");
                                         newFolder->prev = lastFolders;
                                         newFolder->next = nullptr;
                                         lastFolders->next = newFolder;

@@ -43,8 +43,14 @@ namespace ns
                 
                 if (backgroundLoaded)
                 {
+                    bool textureLoaded{ false };
                     imagePath = sf::String(path);
-                    if (texture.loadFromImage(image))
+                    if (image.getSize().x > sf::Texture::getMaximumSize() || image.getSize().y > sf::Texture::getMaximumSize())
+                        textureLoaded = texture.loadFromImage(image, sf::IntRect(0, 0, image.getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().x, image.getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().y));
+                    else
+                        textureLoaded = texture.loadFromImage(image);
+                    
+                    if (textureLoaded)
                     {
                         spriteLoaded = true;
                         texture.setSmooth(true);
@@ -55,8 +61,11 @@ namespace ns
                 }
                 
                 if (!spriteLoaded)
+                {
                     if (sendMessageBack != noMessage)
                         novel->UnHold(this);
+                    this->GetNovelSystem()->PopComponent(this);
+                }
             }
             else
                 cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
@@ -138,8 +147,8 @@ namespace ns
             if (spriteLoaded)
             {
                 float scaleFactorX, scaleFactorY, scaleFactor;
-                scaleFactorX = (float)width / image.getSize().x;
-                scaleFactorY = (float)height / image.getSize().y;
+                scaleFactorX = (float)width / texture.getSize().x;
+                scaleFactorY = (float)height / texture.getSize().y;
                 switch (fitMode)
                 {
                     case defaultFit:
@@ -165,7 +174,7 @@ namespace ns
         }
         void Background::SetStateMode(modeEnum newMode)
         {
-            if (mode != newMode)
+            if (mode != newMode && mode != deprecated)
             {
                 currentTime = 0.f;
                 mode = newMode;

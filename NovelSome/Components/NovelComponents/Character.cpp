@@ -91,6 +91,8 @@ namespace ns
                                     scaleFactorX = nss::ParseAsFloat(command);
                                 else if (nss::Command(command, L"scaley "))
                                     scaleFactorY = nss::ParseAsFloat(command);
+                                
+                                eof = stateReading ? false : true;
                             }
                         }
                         else
@@ -102,12 +104,35 @@ namespace ns
                 if (spritePath.length() != 0)
                 {
                     sf::String filePath = lookForSpritePath + spritePath;
+                    bool imageLoaded{ false };
+                    
+#ifdef _WIN32
+                    std::ifstream ifStream(filePath.toWideString(), std::ios::binary | std::ios::ate);
+                    if (!ifStream.is_open())
+                        std::cerr << "Unable to open file: " << filePath.toAnsiString() << std::endl;
+                    else
+                    {
+                        auto filesize = ifStream.tellg();
+                        fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
+                        ifStream.seekg(0, std::ios::beg);
+                        ifStream.read(fileInMemory.get(), filesize);
+                        ifStream.close();
+                        
+                        imageLoaded = image.loadFromMemory(fileInMemory.get(), filesize);
+                    }
+#else
                     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
                     std::string u8str = converter.to_bytes(filePath.toWideString());
-                    
-                    if (image.loadFromFile(u8str))
+                    imageLoaded = image.loadFromFile(u8str);
+#endif
+                    if (imageLoaded)
                     {
-                        if (texture.loadFromImage(image))
+                        bool textureLoaded{ false };
+                        if (image.getSize().x > sf::Texture::getMaximumSize() || image.getSize().y > sf::Texture::getMaximumSize())
+                            textureLoaded = texture.loadFromImage(image, sf::IntRect(0, 0, image.getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().x, image.getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().y));
+                        else
+                            textureLoaded = texture.loadFromImage(image);
+                        if (textureLoaded)
                         {
                             spriteLoaded = true;
                             texture.setSmooth(true);
@@ -120,8 +145,11 @@ namespace ns
                 }
                 
                 if (!spriteLoaded)
+                {
                     if (sendMessageBack != noMessage)
                         novel->UnHold(this);
+                    this->GetNovelSystem()->PopComponent(this);
+                }
             }
             else
                 cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
@@ -229,7 +257,7 @@ namespace ns
         }
         void Character::SetStateMode(modeEnum newMode)
         {
-            if (mode != newMode)
+            if (mode != newMode && mode != deprecated)
             {
                 currentTime = 0.f;
                 mode = newMode;

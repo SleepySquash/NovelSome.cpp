@@ -503,6 +503,8 @@ namespace ns
                             wchar_t** arguments = nss::ParseArguments(command);
                             
                             float disappearTime{ -1.f };
+                            enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
+                            sendMessageBackEnum sendMessageBack{ atDeprecated };
                             if (arguments != nullptr)
                                 for (int i = 0; arguments[i] != nullptr; i++)
                                 {
@@ -513,6 +515,16 @@ namespace ns
                                         nss::Command(argument, L"fadeout:") ||
                                         nss::Command(argument, L"disappear:"))
                                         disappearTime = nss::ArgumentAsFloat(argument);
+                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    {
+                                        std::wstring stringValue = nss::ArgumentAsString(argument);
+                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                            sendMessageBack = atDisappearing;
+                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                            sendMessageBack = atDeprecated;
+                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                            sendMessageBack = noMessage;
+                                    }
                                     
                                     free(arguments[i]);
                                 }
@@ -523,8 +535,23 @@ namespace ns
                             {
                                 if (temp->data != nullptr)
                                 {
-                                    //OnHold(temp->data);
-                                    temp->data->sendMessageBack = temp->data->atDeprecated;
+                                    if (sendMessageBack != noMessage)
+                                        OnHold(temp->data);
+                                    switch (sendMessageBack)
+                                    {
+                                        case atDeprecated:
+                                            temp->data->sendMessageBack = temp->data->atDeprecated;
+                                            break;
+                                        case atDisappearing:
+                                            temp->data->sendMessageBack = temp->data->atDisappearing;
+                                            break;
+                                        case noMessage:
+                                            temp->data->sendMessageBack = temp->data->noMessage;
+                                            break;
+                                        default:
+                                            temp->data->sendMessageBack = temp->data->atDeprecated;
+                                            break;
+                                    }
                                     temp->data->SetStateMode(temp->data->disappearing);
                                     if (disappearTime >= 0)
                                         temp->data->disappearTime = disappearTime;
@@ -587,6 +614,128 @@ namespace ns
                         musicGroup = ns::list::Insert<ns::NovelComponents::MusicPlayer>(musicGroup);
                         musicGroup->data = component;
                         component->SetGroup(musicGroup);
+                        
+                        component->LoadFromFile(filePath);
+                    }
+                    else if (nss::Command(command, L"sound stop"))
+                    {
+                        if (soundGroup != nullptr)
+                        {
+                            List<SoundPlayer>* temp = soundGroup;
+                            wchar_t** arguments = nss::ParseArguments(command);
+                            
+                            float disappearTime{ -1.f };
+                            enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
+                            sendMessageBackEnum sendMessageBack{ noMessage };
+                            if (arguments != nullptr)
+                                for (int i = 0; arguments[i] != nullptr; i++)
+                                {
+                                    nss::CommandSettings argument;
+                                    argument.Command(arguments[i]);
+                                    
+                                    if (nss::Command(argument, L"fade:")||
+                                        nss::Command(argument, L"fadeout:") ||
+                                        nss::Command(argument, L"disappear:"))
+                                        disappearTime = nss::ArgumentAsFloat(argument);
+                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    {
+                                        std::wstring stringValue = nss::ArgumentAsString(argument);
+                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                            sendMessageBack = atDisappearing;
+                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                            sendMessageBack = atDeprecated;
+                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                            sendMessageBack = noMessage;
+                                    }
+                                    
+                                    free(arguments[i]);
+                                }
+                            if (arguments != nullptr)
+                                free(arguments);
+                            
+                            while (temp != nullptr)
+                            {
+                                if (temp->data != nullptr)
+                                {
+                                    if (sendMessageBack != noMessage)
+                                        OnHold(temp->data);
+                                    switch (sendMessageBack)
+                                    {
+                                        case atDeprecated:
+                                            temp->data->sendMessageBack = temp->data->atDeprecated;
+                                            break;
+                                        case atDisappearing:
+                                            temp->data->sendMessageBack = temp->data->atDisappearing;
+                                            break;
+                                        case noMessage:
+                                            temp->data->sendMessageBack = temp->data->noMessage;
+                                            break;
+                                        default:
+                                            temp->data->sendMessageBack = temp->data->atDeprecated;
+                                            break;
+                                    }
+                                    temp->data->SetStateMode(temp->data->disappearing);
+                                    if (disappearTime >= 0)
+                                        temp->data->disappearTime = disappearTime;
+                                }
+                                temp = temp->next;
+                            }
+                        }
+                    }
+                    else if (nss::Command(command, L"sound "))
+                    {
+                        std::wstring filePath = nss::ParseAsQuoteString(command);
+                        wchar_t** arguments = nss::ParseArguments(command);
+                        
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::SoundPlayer>(0);
+                        component->SetNovel(this);
+                        
+                        if (arguments != nullptr)
+                            for (int i = 0; arguments[i] != nullptr; i++)
+                            {
+                                nss::CommandSettings argument;
+                                argument.Command(arguments[i]);
+                                
+                                if (nss::Command(argument, L"fade:"))
+                                {
+                                    float value = nss::ArgumentAsFloat(argument);
+                                    component->appearTime = value;
+                                    component->disappearTime = value;
+                                }
+                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                    component->appearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                    component->disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
+                                    component->maxVolume = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                {
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                        component->sendMessageBack = component->atAppearance;
+                                    else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                        component->sendMessageBack = component->atDisappearing;
+                                    else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                        component->sendMessageBack = component->atDeprecated;
+                                    else if (stringValue == L"noMessage" || stringValue == L"no")
+                                        component->sendMessageBack = component->noMessage;
+                                }
+                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isLoop:"))
+                                    component->SetLoop(nss::ArgumentAsBool(argument));
+                                else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
+                                    component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
+                                
+                                free(arguments[i]);
+                            }
+                        if (arguments != nullptr)
+                            free(arguments);
+                        
+                        if (component->sendMessageBack != component->noMessage)
+                            OnHold(component);
+                        
+                        soundGroup = ns::list::Insert<ns::NovelComponents::SoundPlayer>(soundGroup);
+                        soundGroup->data = component;
+                        component->SetGroup(soundGroup);
                         
                         component->LoadFromFile(filePath);
                     }

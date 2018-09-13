@@ -18,7 +18,16 @@ namespace ns
             
             library.SetNovel(this);
             library.ScanForCharacters();
-            dialogueGUI.AddComponent<GUIObjects::Rectangle>();
+            
+            //TODO: Dialogue's GUISystem
+            /*GUIObjects::Rectangle* dialogueRect = dialogueGUI.AddComponent<GUIObjects::Rectangle>();
+            dialogueRect->shape.setSize({100, 300});
+            dialogueRect->shape.setFillColor(sf::Color::Black);
+            dialogueRect->constrains = true;
+            dialogueRect->constrainsLeft = 0;
+            dialogueRect->constrainsRight = 0;
+            dialogueRect->constrainsBottom = 0;
+            dialogueRect->constrainsFromBottomToTop = 300;*/
          
             sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
