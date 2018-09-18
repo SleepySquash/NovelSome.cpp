@@ -12,6 +12,9 @@
 #include <iostream>
 #include <string>
 
+//for ns::base::LowercaseTheString
+#include "../Essentials/Base.hpp"
+
 namespace nss
 {
     struct CommandSettings
@@ -19,7 +22,7 @@ namespace nss
         std::wstring line{ L"" };
         unsigned int lastPos{ 0 };
         bool keepTheLastPos{ true };
-        int option1{ 0 };
+        bool lowercaseCommand{ true };
         
         void Command(std::wstring line);
         void Step();

@@ -12,6 +12,7 @@ namespace nss
 {
     void CommandSettings::Command(std::wstring line)
     {
+        //this->line = ns::base::LowercaseTheString(line);
         this->line = line;
         lastPos = 0;
     }
@@ -37,12 +38,13 @@ namespace nss
         bool ReallyFound{ false };
         
         SkipSpaces(results);
-        if (command.length() <= results.line.length())
+        std::wstring commandLine = results.lowercaseCommand ? ns::base::LowercaseTheString(results.line) : results.line;
+        if (command.length() <= commandLine.length())
         {
             bool Found{ true };
             int i = results.keepTheLastPos ? results.lastPos : 0;
             for (int j = 0; Found && j < command.length(); i++, j++)
-                Found = (results.line[i] == command[j]);
+                Found = (commandLine[i] == command[j]);
             
             if (Found)
                 results.lastPos = i;

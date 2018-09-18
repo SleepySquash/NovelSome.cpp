@@ -11,6 +11,10 @@
 
 #include <iostream>
 
+//FileExists
+#include <codecvt>
+#include <sys/stat.h>
+
 //MACROS
 // _WIN32 - both 32-bit and 64-bit
 // _WIN64
@@ -31,6 +35,9 @@ namespace ns
         std::wstring GetFolderPath(std::wstring path);
         std::wstring GetExtentionFromString(std::wstring filename);
         std::wstring GetStringWithNoExtention(std::wstring filename);
+        
+        bool FileExists(std::wstring path);
+        std::wstring LowercaseTheString(const std::wstring& str);
 
         int64_t power(int num, int by);
         float ConvertToFloat(std::wstring str);

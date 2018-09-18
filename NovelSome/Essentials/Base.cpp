@@ -86,6 +86,217 @@ namespace ns
         
         
         
+        bool FileExists(std::wstring path)
+        {
+#ifdef _WIN32
+            struct _wstat buffer;
+            return (stat (path.c_str(), &buffer) == 0);
+#else
+            struct stat buffer;
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            std::string u8str = converter.to_bytes(path);
+            return (stat (u8str.c_str(), &buffer) == 0);
+#endif
+        }
+        
+        
+        
+        std::wstring LowercaseTheString(const std::wstring& str)
+        {
+            std::wstring result = L"";
+            for (int i = 0; i < str.length(); i++)
+            {
+                switch (str[i])
+                {
+                    case L'Q':
+                        result += L'q';
+                        break;
+                    case L'W':
+                        result += L'w';
+                        break;
+                    case L'E':
+                        result += L'e';
+                        break;
+                    case L'R':
+                        result += L'r';
+                        break;
+                    case L'T':
+                        result += L't';
+                        break;
+                    case L'Y':
+                        result += L'y';
+                        break;
+                    case L'U':
+                        result += L'u';
+                        break;
+                    case L'I':
+                        result += L'i';
+                        break;
+                    case L'O':
+                        result += L'o';
+                        break;
+                    case L'P':
+                        result += L'p';
+                        break;
+                    case L'A':
+                        result += L'a';
+                        break;
+                    case L'S':
+                        result += L's';
+                        break;
+                    case L'D':
+                        result += L'd';
+                        break;
+                    case L'F':
+                        result += L'f';
+                        break;
+                    case L'G':
+                        result += L'g';
+                        break;
+                    case L'H':
+                        result += L'h';
+                        break;
+                    case L'J':
+                        result += L'j';
+                        break;
+                    case L'K':
+                        result += L'k';
+                        break;
+                    case L'L':
+                        result += L'l';
+                        break;
+                    case L'Z':
+                        result += L'z';
+                        break;
+                    case L'X':
+                        result += L'x';
+                        break;
+                    case L'C':
+                        result += L'c';
+                        break;
+                    case L'V':
+                        result += L'v';
+                        break;
+                    case L'B':
+                        result += L'b';
+                        break;
+                    case L'N':
+                        result += L'n';
+                        break;
+                    case L'M':
+                        result += L'm';
+                        break;
+                        
+                    case L'Й':
+                        result += L'й';
+                        break;
+                    case L'Ц':
+                        result += L'ц';
+                        break;
+                    case L'У':
+                        result += L'у';
+                        break;
+                    case L'К':
+                        result += L'к';
+                        break;
+                    case L'Е':
+                        result += L'е';
+                        break;
+                    case L'Н':
+                        result += L'н';
+                        break;
+                    case L'Г':
+                        result += L'г';
+                        break;
+                    case L'Ш':
+                        result += L'ш';
+                        break;
+                    case L'Щ':
+                        result += L'щ';
+                        break;
+                    case L'З':
+                        result += L'з';
+                        break;
+                    case L'Ё':
+                        result += L'ё';
+                        break;
+                    case L'Х':
+                        result += L'х';
+                        break;
+                    case L'Ъ':
+                        result += L'ъ';
+                        break;
+                    case L'Ф':
+                        result += L'ф';
+                        break;
+                    case L'Ы':
+                        result += L'ы';
+                        break;
+                    case L'В':
+                        result += L'в';
+                        break;
+                    case L'А':
+                        result += L'а';
+                        break;
+                    case L'П':
+                        result += L'п';
+                        break;
+                    case L'Р':
+                        result += L'р';
+                        break;
+                    case L'О':
+                        result += L'о';
+                        break;
+                    case L'Л':
+                        result += L'л';
+                        break;
+                    case L'Д':
+                        result += L'д';
+                        break;
+                    case L'Ж':
+                        result += L'ж';
+                        break;
+                    case L'Э':
+                        result += L'э';
+                        break;
+                    case L'Я':
+                        result += L'я';
+                        break;
+                    case L'Ч':
+                        result += L'ч';
+                        break;
+                    case L'С':
+                        result += L'с';
+                        break;
+                    case L'М':
+                        result += L'м';
+                        break;
+                    case L'И':
+                        result += L'и';
+                        break;
+                    case L'Т':
+                        result += L'т';
+                        break;
+                    case L'Ь':
+                        result += L'ь';
+                        break;
+                    case L'Б':
+                        result += L'б';
+                        break;
+                    case L'Ю':
+                        result += L'ю';
+                        break;
+                        
+                    default:
+                        result += str[i];
+                        break;
+                }
+            }
+            return result;
+        }
+        
+        
+        
         int64_t power(int num, int by)
         {
             if (by == 0)

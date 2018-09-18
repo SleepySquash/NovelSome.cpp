@@ -21,14 +21,24 @@
 // function `resourcePath()` from ResourcePath.hpp
 //
 
-//TODO: Make nss::Command not case sensetive as an option in nss::CommandSettings
+//DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //TODO: If not _WIN32, then replace all \ slashes to / in filenames (background, music)
 
 //TODO: .mp3 working
 //TODO: Smart global scaling factor
+//TODO: Text's new line when exceed the screen's width
 //TODO: Dialogue's GUI
 //TODO: Constrains and stuff like that, in States of .nschar too
+
+//DONE: Scenario changing with "jump" or "scenario" command
+//TODO: Choice menu and novel's ability to read commands from line[] array
+//TODO: HUD
+//TODO: Variables in unordered_map that can be string, int, float, bool etc.
+//      The type should be specified somewhere? So it's be own-made structure, I guess.
+//      Ability to seamlessly declare and even use without declaring variables.
+//TODO: Logic's "if" and "else"
 //TODO: .nsdata files and NovelInfo structure
+//TODO: Main menu
 
 #include <iostream>
 #include <unordered_map>
@@ -38,7 +48,6 @@
 #include <SFML/Graphics.hpp>
 
 #include "Essentials/ResourcePath.hpp"
-#include "Engine/List.hpp"
 #include "Engine/EntitySystem.hpp"
 #include "Engine/StaticMethods.hpp"
 
@@ -90,7 +99,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 8");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 9");
     }
     
     sf::Clock clock;
@@ -143,7 +152,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 8");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 9");
                             }
                             break;
                             

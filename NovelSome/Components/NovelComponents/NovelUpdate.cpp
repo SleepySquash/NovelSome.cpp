@@ -61,16 +61,16 @@ namespace ns
                                     component->disappearTime = nss::ArgumentAsFloat(argument);
                                 else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
                                     component->maxAlpha = nss::ArgumentAsInt(argument);
-                                else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
                                         component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                         component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                         component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"noMessage" || stringValue == L"no")
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
                                         component->sendMessageBack = component->noMessage;
                                 }
                                 
@@ -107,6 +107,30 @@ namespace ns
                         else
                             cout << "Warning :: NovelComponent :: Couldn't init \"wait\" command for " << amount << " seconds." << endl;
                     }
+                    else if (nss::Command(command, L"scenario ") || nss::Command(command, L"jump "))
+                    {
+                        nss::SkipSpaces(command);
+                        std::wstring path = nss::ParseAsQuoteString(command);
+                        sf::String filePath = sf::String(resourcePath()) + GetFolderPath() + path;
+                        
+                        if (base::FileExists(filePath))
+                        {
+                            wif.close();
+#ifdef _WIN32
+                            wif.open(filePath.toWideString());
+#else
+                            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                            std::string u8str = converter.to_bytes(filePath.toWideString());
+                            wif.open(u8str);
+#endif
+                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                            
+                            if (!(fileOpened = wif.is_open()))
+                                cout << "Error :: NovelComponent :: File couldn't be opened, path: " << filePath.toAnsiString() << endl;
+                        }
+                        else
+                            cout << "Error :: NovelComponent :: Couldn't find scenario with path: \"" << filePath.toAnsiString() << "\"." << endl;
+                    }
                     ///--------------------------------------BACKGROUND--------------------------------------
                     ///--------------------------------------BACKGROUND--------------------------------------
                     ///--------------------------------------BACKGROUND--------------------------------------
@@ -130,14 +154,14 @@ namespace ns
                                         nss::Command(argument, L"fadeout:") ||
                                         nss::Command(argument, L"disappear:"))
                                         disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                     {
                                         std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                             sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                             sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                        else if (stringValue == L"nomessage" || stringValue == L"no")
                                             sendMessageBack = noMessage;
                                     }
                                     
@@ -224,27 +248,27 @@ namespace ns
                                         component->fitMode = component->fillCentre;
                                     else if (stringValue == L"center")
                                         component->fitMode = component->fillCentre;
-                                    else if (stringValue == L"fillCenter")
+                                    else if (stringValue == L"fillcenter")
                                         component->fitMode = component->fillCentre;
                                     else if (stringValue == L"default")
                                         component->fitMode = component->defaultFit;
                                     else if (stringValue == L"no")
                                         component->fitMode = component->noFit;
-                                    else if (stringValue == L"noFit")
+                                    else if (stringValue == L"nofit")
                                         component->fitMode = component->noFit;
                                     else if (stringValue == L"stretch")
                                         component->fitMode = component->stretch;
                                 }
-                                else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
                                         component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                         component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                         component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"noMessage" || stringValue == L"no")
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
                                         component->sendMessageBack = component->noMessage;
                                 }
                                 
@@ -299,16 +323,16 @@ namespace ns
                                             component->disappearTime = nss::ArgumentAsFloat(argument);
                                         else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
                                             component->maxAlpha = nss::ArgumentAsInt(argument);
-                                        else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                        else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                         {
                                             std::wstring stringValue = nss::ArgumentAsString(argument);
-                                            if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                            if (stringValue == L"atappearance" || stringValue == L"appearance")
                                                 component->sendMessageBack = component->atAppearance;
-                                            else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                            else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                                 component->sendMessageBack = component->atDisappearing;
-                                            else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                            else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                                 component->sendMessageBack = component->atDeprecated;
-                                            else if (stringValue == L"noMessage" || stringValue == L"no")
+                                            else if (stringValue == L"nomessage" || stringValue == L"no")
                                                 component->sendMessageBack = component->noMessage;
                                         }
                                         else
@@ -372,14 +396,14 @@ namespace ns
                                         nss::Command(argument, L"fadeout:") ||
                                         nss::Command(argument, L"disappear:"))
                                         disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                     {
                                         std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                             sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                             sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                        else if (stringValue == L"nomessage" || stringValue == L"no")
                                             sendMessageBack = noMessage;
                                     }
                                     
@@ -442,14 +466,14 @@ namespace ns
                                                 nss::Command(argument, L"fadeout:") ||
                                                 nss::Command(argument, L"disappear:"))
                                                 disappearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                             {
                                                 std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                                if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                                     sendMessageBack = atDisappearing;
-                                                else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                                     sendMessageBack = atDeprecated;
-                                                else if (stringValue == L"noMessage" || stringValue == L"no")
+                                                else if (stringValue == L"nomessage" || stringValue == L"no")
                                                     sendMessageBack = noMessage;
                                             }
                                             
@@ -515,14 +539,14 @@ namespace ns
                                         nss::Command(argument, L"fadeout:") ||
                                         nss::Command(argument, L"disappear:"))
                                         disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                     {
                                         std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                             sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                             sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                        else if (stringValue == L"nomessage" || stringValue == L"no")
                                             sendMessageBack = noMessage;
                                     }
                                     
@@ -586,19 +610,19 @@ namespace ns
                                     component->disappearTime = nss::ArgumentAsFloat(argument);
                                 else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
                                     component->maxVolume = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
                                         component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                         component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                         component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"noMessage" || stringValue == L"no")
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
                                         component->sendMessageBack = component->noMessage;
                                 }
-                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isLoop:"))
+                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
                                     component->SetLoop(nss::ArgumentAsBool(argument));
                                 else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
                                     component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
@@ -637,14 +661,14 @@ namespace ns
                                         nss::Command(argument, L"fadeout:") ||
                                         nss::Command(argument, L"disappear:"))
                                         disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                     {
                                         std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                             sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                             sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"noMessage" || stringValue == L"no")
+                                        else if (stringValue == L"nomessage" || stringValue == L"no")
                                             sendMessageBack = noMessage;
                                     }
                                     
@@ -708,19 +732,19 @@ namespace ns
                                     component->disappearTime = nss::ArgumentAsFloat(argument);
                                 else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
                                     component->maxVolume = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"messageBack:") || nss::Command(argument, L"message:"))
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atAppearance" || stringValue == L"appearance")
+                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
                                         component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atDisappearing" || stringValue == L"disappearing")
+                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
                                         component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atDeprecated" || stringValue == L"deprecated")
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
                                         component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"noMessage" || stringValue == L"no")
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
                                         component->sendMessageBack = component->noMessage;
                                 }
-                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isLoop:"))
+                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
                                     component->SetLoop(nss::ArgumentAsBool(argument));
                                 else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
                                     component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));

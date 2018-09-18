@@ -1,9 +1,6 @@
 "..."
-sound "Sounds/no.ogg" with message:no
-sound "Sounds/heartbeat.ogg" with message:deprecated
-sound stop with fade:1, message:deprecated
 
-background "Неко.jpg"
+Background "Неко.jpg"
 "now showing!!"
 
 show Юи "normal" cleft with fade:0.5, message:no
@@ -24,6 +21,8 @@ hide all
 "..."
 music "Pixie Paris - Es rappelt im Karton (Картон).ogg" from:0 with message:appearance
 background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:no
+
+jump "сценарий.nsdat"
 "..."
 
 wait 0.9
@@ -41,6 +40,10 @@ background hide
 background "DVa.jpg" with fade:1.5
 "YAY SHIT IS REAL"
 background "Неко.jpg"
+
+sound "Sounds/no.ogg" with message:no
+sound "Sounds/heartbeat.ogg" with message:deprecated
+sound stop with fade:1, message:deprecated
 
 music stop with disappear:2, message:no
 wait 2

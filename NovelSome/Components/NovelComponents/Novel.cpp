@@ -33,9 +33,9 @@ namespace ns
 #ifdef _WIN32
             wif.open(filePath.toWideString());
 #else
-            std::wstring _wpath = filePath;
-            std::string _path(_wpath.begin(), _wpath.end());
-            wif.open(_path);
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            std::string u8str = converter.to_bytes(filePath.toWideString());
+            wif.open(u8str);
 #endif
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
