@@ -21,7 +21,8 @@ namespace ns
                 std::wstring lookForSpritePath = ns::base::GetFolderPath(fullPath.toWideString());
                 std::wstring spritePath{ L"" };
                 
-                float scaleFactorX{ 1.f }, scaleFactorY{ 1.f };
+                scaleFactorX = 1.f;
+                scaleFactorY = 1.f;
                 
                 std::wifstream wif;
 #ifdef _WIN32
@@ -158,11 +159,12 @@ namespace ns
         {
             if (spriteLoaded)
             {
+                sprite.setScale(scaleFactorX * gs::scale, scaleFactorY * gs::scale);
                 sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getLocalBounds().height > height/sprite.getScale().y ? height/sprite.getScale().y : sprite.getLocalBounds().height);
                 switch (position)
                 {
                     case left:
-                        sprite.setPosition((float)width/5, height);
+                        sprite.setPosition((float)width/6, height);
                         break;
                         
                     case cleft:
@@ -178,7 +180,7 @@ namespace ns
                         break;
                         
                     case right:
-                        sprite.setPosition((width - (float)width/5), height);
+                        sprite.setPosition((width - (float)width/6), height);
                         break;
                         
                     default:

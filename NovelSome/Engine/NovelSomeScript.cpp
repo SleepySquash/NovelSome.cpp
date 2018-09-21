@@ -99,6 +99,26 @@ namespace nss
     }
     
     //TODO: Documentation
+    std::wstring ParseWhile(CommandSettings& results, const wchar_t until)
+    {
+        unsigned int pos{ results.lastPos };
+        std::wstring text = L"";
+        bool Found{ true };
+        
+        while (Found && pos < results.line.length())
+        {
+            if ((Found = (results.line[pos] == until)))
+            {
+                if (results.line[pos] != 13)
+                    text += results.line[pos];
+                pos++;
+            }
+        }
+        
+        return text;
+    }
+    
+    //TODO: Documentation
     std::wstring ParseAsQuoteString(CommandSettings& results)
     {
         SkipSpaces(results);
@@ -133,23 +153,13 @@ namespace nss
     
     int ParseAsInt(CommandSettings& results)
     {
-        std::wstring stringValue = nss::ParseUntil(results, ' ');
-        std::string parsingString = "";
-        for (int i = 0; stringValue[i] != '\0'; i++)
-            if (stringValue[i] >= 48 && stringValue[i] <= 57)
-                parsingString += (char)stringValue[i];
-        
-        return std::atoi(parsingString.c_str());
+        //std::wstring stringValue = nss::ParseUntil(results, ' ');
+        return ns::base::ConvertToInt(nss::ParseUntil(results, ' '));
     }
     float ParseAsFloat(CommandSettings& results)
     {
-        std::wstring stringValue = nss::ParseUntil(results, ' ');
-        std::string parsingString = "";
-        for (int i = 0; stringValue[i] != '\0'; i++)
-            if (stringValue[i] == 46 || (stringValue[i] >= 48 && stringValue[i] <= 57))
-                parsingString += (char)stringValue[i];
-        
-        return std::atof(parsingString.c_str());
+        //std::wstring stringValue = nss::ParseUntil(results, ' ');
+        return ns::base::ConvertToFloat(nss::ParseUntil(results, ' '));
     }
     
     std::wstring ParseArgument(CommandSettings& results)
@@ -253,5 +263,76 @@ namespace nss
         }
         
         return text;
+    }
+    
+    
+    
+    void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width)
+    {
+        text.setString(line);
+        if (text.getLocalBounds().width > width)
+        {
+            std::wstring finalLine = L"";
+            std::wstring currentLine = L"";
+            for (int i = 0; i < line.length(); i++)
+            {
+                currentLine += line[i];
+                text.setString(currentLine);
+                if (text.getLocalBounds().width > width)
+                {
+                    bool spaceFound{ false };
+                    for (int j = currentLine.length() - 1; j >= 0 && !spaceFound; j--)
+                    {
+                        if ((spaceFound = (currentLine[j] == L' ')))
+                        {
+                            std::wstring toFinalLine;
+                            for (int k = 0; k < j; k++)
+                                toFinalLine += currentLine[k];
+                            toFinalLine += L'\n';
+                            finalLine += toFinalLine;
+                            
+                            std::wstring newCurrentLine = L"";
+                            for (int k = j + 1; k < currentLine.length(); k++)
+                                newCurrentLine += currentLine[k];
+                            
+                            currentLine = newCurrentLine;
+                        }
+                    }
+                    if (!spaceFound)
+                    {
+                        currentLine[currentLine.length() - 1] = L'\n';
+                        finalLine += currentLine;
+                        currentLine = L"";
+                        
+                        currentLine += line[i];
+                    }
+                }
+            }
+            finalLine += currentLine;
+            text.setString(finalLine);
+        }
+    }
+    void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width)
+    {
+        text.setString(line);
+        if (text.getLocalBounds().width > width)
+        {
+            std::wstring finalLine = L"";
+            std::wstring currentLine = L"";
+            for (int i = 0; i < line.length(); i++)
+            {
+                currentLine += line[i];
+                text.setString(currentLine);
+                if (text.getLocalBounds().width > width)
+                {
+                    currentLine[currentLine.length() - 1] = L'\n';
+                    finalLine += currentLine;
+                    currentLine = L"";
+                    
+                    currentLine += line[i];
+                }
+            }
+            text.setString(finalLine);
+        }
     }
 }

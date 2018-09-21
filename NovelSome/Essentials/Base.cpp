@@ -297,6 +297,60 @@ namespace ns
         
         
         
+        std::string ConvertToUTF8(const std::wstring& str)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.to_bytes(str);
+        }
+        std::string ConvertToUTF8(const wchar_t& wchar)
+        {
+            std::wstring str = L"";
+            str[0] = wchar;
+            
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.to_bytes(str);
+        }
+        std::wstring ConvertFromUTF8(const std::string& str)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.from_bytes(str);
+        }
+        std::wstring ConvertFromUTF8(const char& wchar)
+        {
+            std::string str = "";
+            str[0] = wchar;
+            
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.from_bytes(str);
+        }
+        int ConvertToInt(const std::wstring& stringValue)
+        {
+            std::string parsingString = "";
+            for (int i = 0; stringValue[i] != '\0'; i++)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
+                    parsingString += (char)stringValue[i];
+            
+            return std::atoi(parsingString.c_str());
+        }
+        float ConvertToFloat(const std::wstring& stringValue)
+        {
+            std::string parsingString = "";
+            for (int i = 0; stringValue[i] != '\0'; i++)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 44 || stringValue[i] == 46)
+                    parsingString += (char)stringValue[i];
+            
+            return std::atof(parsingString.c_str());
+        }
+        bool ConvertToBool(const std::wstring& stringValue)
+        {
+            if (stringValue == L"true" || stringValue == L"True" || stringValue == L"T" || stringValue == L"истина" || stringValue == L"1")
+                return true;
+            else
+                return false;
+        }
+        
+        
+        
         int64_t power(int num, int by)
         {
             if (by == 0)
@@ -310,7 +364,7 @@ namespace ns
         
 
 
-        float ConvertToFloat(std::wstring str)
+        float obsoleteConvertToFloat(std::wstring str)
         {
             float flp = {0.f};
             bool after{false}, noerase{false};

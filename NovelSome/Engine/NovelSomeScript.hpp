@@ -12,6 +12,9 @@
 #include <iostream>
 #include <string>
 
+//nss::SetStringWithLineBreaks
+#include <SFML/Graphics/Text.hpp>
+
 //for ns::base::LowercaseTheString
 #include "../Essentials/Base.hpp"
 
@@ -50,6 +53,7 @@ namespace nss
     
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
+    std::wstring ParseWhile(CommandSettings& results, const wchar_t until);
     std::wstring ParseAsQuoteString(CommandSettings& results);
     int ParseAsInt(CommandSettings& results);
     float ParseAsFloat(CommandSettings& results);
@@ -61,6 +65,9 @@ namespace nss
     bool ArgumentAsBool(CommandSettings& results);
     float ArgumentAsFloat(CommandSettings& results);
     int ArgumentAsInt(CommandSettings& results);
+    
+    void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width);
+    void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
 }
 
 #endif /* NovelSomeScript_hpp */

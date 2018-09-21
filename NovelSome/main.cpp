@@ -21,16 +21,15 @@
 // function `resourcePath()` from ResourcePath.hpp
 //
 
-//DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //TODO: If not _WIN32, then replace all \ slashes to / in filenames (background, music)
 
 //TODO: .mp3 working
 //TODO: Smart global scaling factor
-//TODO: Text's new line when exceed the screen's width
 //TODO: Dialogue's GUI
 //TODO: Constrains and stuff like that, in States of .nschar too
+//TODO: Close, normal and far default states in every character
+//TODO: Make "..." quotes possibly to be on the next line (to make scenarios look eaiser to read) and parse all \n's as \n in lines
 
-//DONE: Scenario changing with "jump" or "scenario" command
 //TODO: Choice menu and novel's ability to read commands from line[] array
 //TODO: HUD
 //TODO: Variables in unordered_map that can be string, int, float, bool etc.
@@ -39,6 +38,11 @@
 //TODO: Logic's "if" and "else"
 //TODO: .nsdata files and NovelInfo structure
 //TODO: Main menu
+
+//DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
+//DONE: Global scaling factor
+//DONE: Text's new line when exceed the screen's width
+//DONE: Scenario changing with "jump" or "scenario" command
 
 #include <iostream>
 #include <unordered_map>
@@ -63,6 +67,9 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
     ns::GlobalSettings::width = 1280;
     ns::GlobalSettings::height = 800;
+    
+    ns::GlobalSettings::relativeWidth = 1280;
+    ns::GlobalSettings::relativeHeight = 800;
 #ifdef _WIN32
     if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
         window.setPosition({- ns::GlobalSettings::windowPositionOffset, window.getPosition().y});
@@ -99,7 +106,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 9");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 10");
     }
     
     sf::Clock clock;
@@ -107,6 +114,7 @@ int main()
     while (window.isOpen())
     {
         sf::Event event;
+        float factorX, factorY;
         while (window.pollEvent(event))
         {
             switch (event.type)
@@ -152,7 +160,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 9");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 10");
                             }
                             break;
                             
@@ -164,6 +172,10 @@ int main()
                 case sf::Event::Resized:
                     ns::GlobalSettings::width = event.size.width;
                     ns::GlobalSettings::height = event.size.height;
+                    
+                    factorX = (float)event.size.width / ns::GlobalSettings::relativeWidth;
+                    factorY = (float)event.size.height / ns::GlobalSettings::relativeHeight;
+                    ns::GlobalSettings::scale = factorX > factorY ? factorX : factorY;
                     
                     system.Resize(event.size.width, event.size.height);
                     

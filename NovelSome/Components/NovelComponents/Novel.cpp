@@ -16,10 +16,15 @@ namespace ns
         {
             folderPath = ns::base::GetFolderPath(path);
             
+            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 10"))});
+            localVariables.insert({L"Я классный чел?", new NovelVariable(true)});
+            localVariables.insert({L"creatingYear", new NovelVariable(2018)});
+            
             library.SetNovel(this);
             library.ScanForCharacters();
             
             //TODO: Dialogue's GUISystem
+            
             /*GUIObjects::Rectangle* dialogueRect = dialogueGUI.AddComponent<GUIObjects::Rectangle>();
             dialogueRect->shape.setSize({100, 300});
             dialogueRect->shape.setFillColor(sf::Color::Black);
@@ -47,6 +52,10 @@ namespace ns
             wif.close();
             layers.Destroy();
             dialogueGUI.Clear();
+            
+            for (auto& key : localVariables)
+                if (key.second != nullptr)
+                    delete key.second;
             
             FreeGroup<Background>(backgroundGroup);
             FreeGroup<Character>(characterGroup);

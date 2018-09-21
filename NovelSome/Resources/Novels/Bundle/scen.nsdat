@@ -1,7 +1,33 @@
 "..."
 
+var backgroundNeko = "Неко.jpg"
+var infoInteger = 123
+var booleanyeah = true
+
 Background "Неко.jpg"
+"Привет, я очень длинный текст. Такой длинный, что до невозможности длинный. ДжоДжо хочу смотреть, а ещё хочу шаверму очень сильно хочу есть шаверму ууу вкусная шаверма аааа вообще я хавать хочу сильно, так что пойду лучше есть, а не программировать этот ваш НовелСам."
+
+юи = "Йей :3"
+
+debug::outputVariables
+
+юи = 0
+infoInteger = -23
+booleanyeah = false
+
+delete backgroundNeko
+
+debug::outputVariables
+
+
+show Юи normal_f right with message:no
+show Юи normal_f left with message:no
+show Юи normal_n cleft with message:no
+show Юи normal_n cright with message:no
+show Юи normal_c center with message:no
+
 "now showing!!"
+hide all
 
 show Юи "normal" cleft with fade:0.5, message:no
 Юи "Приветь, меня зовут Юи :3"
@@ -21,8 +47,6 @@ hide all
 "..."
 music "Pixie Paris - Es rappelt im Karton (Картон).ogg" from:0 with message:appearance
 background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:no
-
-jump "сценарий.nsdat"
 "..."
 
 wait 0.9
@@ -30,7 +54,7 @@ wait 0.9
 background add "DVa.jpg" with fit:fill, alpha:160, message:no
 DVa "Привет, я Дива!"
 Юля "А я Юля"
-Никита "А я Никитос, йоптабля."
+Никита "А я Никитос."
 "Ня <3"
 background hide
 
@@ -46,5 +70,7 @@ sound "Sounds/heartbeat.ogg" with message:deprecated
 sound stop with fade:1, message:deprecated
 
 music stop with disappear:2, message:no
+jump "сценарий.nsdat"
+
 wait 2
 "Конец :3"

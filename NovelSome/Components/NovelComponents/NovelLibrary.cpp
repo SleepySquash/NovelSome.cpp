@@ -198,5 +198,76 @@ namespace ns
         {
             this->novel = novel;
         }
+        
+        
+        
+        
+        
+        
+        
+        
+        NovelVariable::~NovelVariable()
+        {
+            if (type == String)
+                delete[] value.asString;
+        }
+        NovelVariable::NovelVariable() { }
+        NovelVariable::NovelVariable(const int& value)
+        {
+            Set(value);
+        }
+        NovelVariable::NovelVariable(const std::wstring& value)
+        {
+            Set(value);
+        }
+        NovelVariable::NovelVariable(const bool& value)
+        {
+            Set(value);
+        }
+        void NovelVariable::Set(const int& value)
+        {
+            if (type == String)
+                delete[] this->value.asString;
+            
+            type = Integer;
+            this->value.asInt = value;
+        }
+        void NovelVariable::Set(const std::wstring& value)
+        {
+            if (type == String)
+                delete[] this->value.asString;
+            
+            type = String;
+            this->value.asString = (wchar_t*)malloc(sizeof(wchar_t) * (value.length() + 1));
+            for (int i = 0; i <= value.length(); i++)
+                this->value.asString[i] = value[i];
+        }
+        void NovelVariable::Set(const bool& value)
+        {
+            if (type == String)
+                delete[] this->value.asString;
+            
+            type = Boolean;
+            this->value.asBoolean = value;
+        }
+        std::ostream& operator<<(std::ostream& os, const NovelVariable& Var)
+        {
+            switch (Var.type)
+            {
+                case NovelVariable::NotSet:
+                    os << "NotSet";
+                    break;
+                case NovelVariable::Integer:
+                    os << Var.value.asInt;
+                    break;
+                case NovelVariable::Boolean:
+                    os << (Var.value.asBoolean ? "true" : "false");
+                    break;
+                case NovelVariable::String:
+                    os << base::ConvertToUTF8(std::wstring(Var.value.asString));
+                    break;
+            }
+            return os;
+        }
     }
 }

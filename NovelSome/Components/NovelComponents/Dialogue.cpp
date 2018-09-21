@@ -136,17 +136,26 @@ namespace ns
         }
         void Dialogue::Resize(unsigned int width, unsigned int height)
         {
+            charText.setCharacterSize((unsigned int)(characterSize * gs::scale));
+            text.setCharacterSize((unsigned int)(characterSize * gs::scale));
+            
+            if (fontLoaded)
+            {
+                nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(35*gs::scale*2));
+                nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(30*gs::scale*2));
+            }
+            
             if (guiSystem != nullptr)
                 guiSystem->Resize(width, height);
-            text.setPosition(30, height - height/5 + 10);
+            text.setPosition(30*gs::scale, height - height/5 + 10*gs::scale);
             shape.setPosition(0, height - height/5);
             shape.setSize({static_cast<float>(width), static_cast<float>(height/5)});
             
             if (drawCharacterName)
             {
-                charText.setPosition(35, height - height/5 - 10 - 10 - charText.getLocalBounds().height);
-                charShape.setPosition(30, height - height/5 - 10 - 5 - charText.getLocalBounds().height);
-                charShape.setSize({static_cast<float>(charText.getLocalBounds().width + 15), static_cast<float>(charText.getLocalBounds().height + 10)});
+                charText.setPosition(35*gs::scale, height - height/5 - 20*gs::scale - charText.getLocalBounds().height);
+                charShape.setPosition(30*gs::scale, height - height/5 - 15*gs::scale - charText.getLocalBounds().height);
+                charShape.setSize({static_cast<float>(charText.getLocalBounds().width + 15*gs::scale), static_cast<float>(charText.getLocalBounds().height + 10*gs::scale)});
             }
         }
         void Dialogue::SetNovel(Novel* novel)
@@ -163,16 +172,15 @@ namespace ns
             drawCharacterName = true;
             
             charText.setString(charString);
-            charText.setFont(ns::FontCollector::GetFont(fontName));
+            charText.setFont(*ns::FontCollector::GetFont(fontName));
             fontLoaded = (text.getFont() != nullptr);
+            
             charText.setCharacterSize(characterSize);
             charText.setFillColor(sf::Color::White);
             charShape.setFillColor(sf::Color(0,0,0,150));
             
             charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
             charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
-            
-            Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
         void Dialogue::SetGroup(List<Dialogue>* element)
         {
@@ -180,12 +188,16 @@ namespace ns
         }
         void Dialogue::SetDialogue(sf::String dialogue)
         {
-            text.setString(dialogue);
-            text.setFont(ns::FontCollector::GetFont(fontName));
+            textString = dialogue;
+            text.setString(textString);
+            text.setFont(*ns::FontCollector::GetFont(fontName));
             fontLoaded = (text.getFont() != nullptr);
+            
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
             shape.setFillColor(sf::Color(0,0,0,150));
+            
+            Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
         void Dialogue::SetStateMode(modeEnum newMode)
         {

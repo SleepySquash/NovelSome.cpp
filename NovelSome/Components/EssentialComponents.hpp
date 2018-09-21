@@ -58,8 +58,8 @@ namespace ns
             modeEnum mode{ waiting };
             
             int maxAlpha{ 170 };
-            float appearTime{ 0.3f };
-            float disappearTime{ 0.3f };
+            float appearTime{ 0.15f };
+            float disappearTime{ 0.15f };
             
             GamePause();
             void Update(const sf::Time& elapsedTime) override;

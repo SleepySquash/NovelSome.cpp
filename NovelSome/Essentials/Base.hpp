@@ -38,9 +38,16 @@ namespace ns
         
         bool FileExists(std::wstring path);
         std::wstring LowercaseTheString(const std::wstring& str);
+        std::string ConvertToUTF8(const std::wstring& str);
+        std::string ConvertToUTF8(const wchar_t& wchar);
+        std::wstring ConvertFromUTF8(const std::string& str);
+        std::wstring ConvertFromUTF8(const char& wchar);
+        int ConvertToInt(const std::wstring& stringValue);
+        float ConvertToFloat(const std::wstring& stringValue);
+        bool ConvertToBool(const std::wstring& stringValue);
 
         int64_t power(int num, int by);
-        float ConvertToFloat(std::wstring str);
+        float obsoleteConvertToFloat(std::wstring str);
 
         /*Объявляем вспомогательные функции*/
         char* InputString();

@@ -121,6 +121,7 @@ namespace ns
             sf::RectangleShape shape;
             GUISystem* guiSystem{ nullptr };
             sf::Text text;
+            sf::String textString{ "" };
             Novel* novel{ nullptr };
             List<Dialogue>* groupPointer{ nullptr };
             
@@ -145,8 +146,8 @@ namespace ns
             
             int maxAlpha = 255;
             bool forcePressInsideDialogue{ true };
-            std::string fontName{ "Arial Unicode.ttf" };
-            unsigned int characterSize{ 40 };
+            std::string fontName{ "NotoSansCJK-Regular.ttc" };
+            unsigned int characterSize{ 30 };
             
             float waitingTime{ 2.f };
             float appearTime{ 0.6f };
@@ -204,6 +205,8 @@ namespace ns
             enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
             sendMessageBackEnum sendMessageBack{ atAppearance };
             modeEnum afterAppearSwitchTo{ existing };
+            
+            float scaleFactorX{ 1.f }, scaleFactorY{ 1.f };
             
             float customX{ 0 }, customY{ 0 };
             enum positionEnum { custom, left, cleft, center, cright, right };
@@ -420,6 +423,30 @@ namespace ns
             void ScanForCharacters();
         };
         
+        struct NovelVariable
+        {
+            enum typeEnum { NotSet, Integer, String, Boolean };
+            typeEnum type = NotSet;
+            union
+            {
+                bool asBoolean;
+                int asInt;
+                wchar_t* asString;
+            } value;
+            
+            ~NovelVariable();
+            NovelVariable();
+            NovelVariable(const int& integer);
+            NovelVariable(const std::wstring& integer);
+            NovelVariable(const bool& integer);
+            void Set(const int& value);
+            void Set(const std::wstring& value);
+            void Set(const bool& value);
+            
+            friend std::ostream& operator<<(std::ostream& os, const NovelVariable& Var);
+        };
+        
+        
         
         
         
@@ -433,6 +460,7 @@ namespace ns
             sf::String nsdataPath{ "" };
             sf::String folderPath{ "" };
             nss::CommandSettings command;
+            std::unordered_map<std::wstring, NovelVariable*> localVariables;
             
             bool eof{ false };
             bool fileOpened{ false };

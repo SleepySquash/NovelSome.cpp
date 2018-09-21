@@ -30,7 +30,7 @@ namespace ns
         
     public:
         static std::unordered_map<std::string, sf::Font*> fonts;
-        static sf::Font& GetFont(std::string fontName);
+        static sf::Font* GetFont(const std::string& fontName);
         static void FreeFonts();
     };
     
@@ -41,10 +41,19 @@ namespace ns
     public:
         static unsigned int width;
         static unsigned int height;
+        
+        static unsigned int relativeWidth;
+        static unsigned int relativeHeight;
+        static float scale;
+        
         static int windowPositionOffset;
+        
         static bool isPauseEnabled;
         static bool isPause;
     };
+    
+    typedef GlobalSettings gs;
+    typedef FontCollector fc;
 }
 
 #endif /* StaticMethods_hpp */
