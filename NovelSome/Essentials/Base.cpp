@@ -89,8 +89,7 @@ namespace ns
         bool FileExists(std::wstring path)
         {
 #ifdef _WIN32
-            struct _wstat buffer;
-            return (stat (path.c_str(), &buffer) == 0);
+            return _waccess_s(path.c_str(), 0) == 0;
 #else
             struct stat buffer;
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
