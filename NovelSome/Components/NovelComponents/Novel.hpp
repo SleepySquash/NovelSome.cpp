@@ -79,6 +79,8 @@ namespace ns
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
             
+            float defaultPositionX{ 0.f }, defaultPositionY{ 0.f };
+            
         public:
             enum modeEnum {appearing, existing, disappearing, deprecated};
         private:
@@ -90,6 +92,11 @@ namespace ns
             
             enum fitModeEnum { noFit, defaultFit, fillCentre, stretch };
             fitModeEnum fitMode { fillCentre };
+            
+            float scaleX{ 1.f }, scaleY{ 1.f };
+            
+            bool doParallax{ ns::GlobalSettings::isParallaxEnabled };
+            float parallaxPower { ns::GlobalSettings::defaultParallaxBackground };
             
             int maxAlpha{ 255 };
             
@@ -103,9 +110,11 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
+            void PollEvent(sf::Event& event) override;
             void SetNovel(Novel* novel);
             void SetGroup(List<Background>* element);
             void CalculateScale(unsigned int width, unsigned int height);
+            void CalculateParallax(int mouseX, int mouseY);
             void SetStateMode(modeEnum newMode);
         };
         
@@ -115,6 +124,7 @@ namespace ns
         
         
         class GUISystem;
+        struct CharacterData;
         class Dialogue : public NovelObject
         {
         private:
@@ -133,6 +143,8 @@ namespace ns
             bool fontLoaded{ false };
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
+            
+            bool visible{ true };
             
         public:
             enum modeEnum {appearing, waiting, waitingForTime, waitingForInput, disappearing, deprecated};
@@ -160,8 +172,9 @@ namespace ns
             void Resize(unsigned int width, unsigned int height) override;
             void SetNovel(Novel* novel);
             void SetGroup(List<Dialogue>* element);
-            void SetCharacter(sf::String character);
-            void SetDialogue(sf::String dialogue);
+            void SetCharacter(const CharacterData* character);
+            void SetCharacterName(const sf::String& characterName);
+            void SetDialogue(const sf::String& dialogue);
             void SetStateMode(modeEnum newMode);
         };
         
@@ -175,6 +188,10 @@ namespace ns
             sf::String name{ "" };
             sf::String displayName{ "" };
             sf::String filePath{ "" };
+            
+            sf::Color fillColor{ sf::Color::White };
+            sf::Color outlineColor{ sf::Color::Black };
+            float outlineThickness{ 0.f };
         };
         
         
@@ -197,6 +214,8 @@ namespace ns
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
             
+            float defaultPositionX{ 0.f }, defaultPositionY{ 0.f };
+            
         public:
             enum modeEnum {appearing, existing, disappearing, deprecated};
         private:
@@ -206,11 +225,14 @@ namespace ns
             sendMessageBackEnum sendMessageBack{ atAppearance };
             modeEnum afterAppearSwitchTo{ existing };
             
-            float scaleFactorX{ 1.f }, scaleFactorY{ 1.f };
+            float scaleX{ 1.f }, scaleY{ 1.f };
             
             float customX{ 0 }, customY{ 0 };
             enum positionEnum { custom, left, cleft, center, cright, right };
             positionEnum position { center };
+            
+            bool doParallax{ ns::GlobalSettings::isParallaxEnabled };
+            float parallaxPower { ns::GlobalSettings::defaultParallaxNormal };
             
             int maxAlpha{ 255 };
             
@@ -224,6 +246,8 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
+            void PollEvent(sf::Event& event) override;
+            void CalculateParallax(int mouseX, int mouseY);
             void SetNovel(Novel* novel);
             void SetGroup(List<Character>* element);
             void SetStateMode(modeEnum newMode);

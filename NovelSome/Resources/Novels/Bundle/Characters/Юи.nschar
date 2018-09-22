@@ -1,29 +1,29 @@
 name Юи
 display "Юи"
 
-color 255 255 255
+color 255 192 203
 outline 255 255 255
 thickness 1
 
 
-state normal_c {
+state normal_c as close
     "d266890959ebbd6b808b7f3f00716edd.png"
     scale 0.7
-}
-state normal_n {
+
+state normal_n as normal
     "d266890959ebbd6b808b7f3f00716edd.png"
     scale 0.5
-}
-state normal_f {
-    "d266890959ebbd6b808b7f3f00716edd.png"
-    scale 0.4
-}
 
-state normal {
+state normal_f as far
     "d266890959ebbd6b808b7f3f00716edd.png"
     scale 0.4
-}
-state "nopantyhose" {
+
+state normal
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 0.4
+    parallax far
+
+state "nopantyhose"
     sprite "d266890959ebbd6b808b7f3f00716ede.png"
     scale 0.4
-}
+    parallax far

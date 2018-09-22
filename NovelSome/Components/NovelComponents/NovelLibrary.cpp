@@ -132,6 +132,70 @@ namespace ns
                                                         std::wstring stateName = nss::ParseUntil(command, '"');
                                                         //TODO: State parsing
                                                     }
+                                                    else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") || nss::Command(command, L"color ") || nss::Command(command, L"colour "))
+                                                    {
+                                                        std::wstring color1 = nss::ParseUntil(command, ' ');
+                                                        if (color1.length() != 0)
+                                                        {
+                                                            nss::SkipSpaces(command);
+                                                            std::wstring color2 = nss::ParseUntil(command, ' ');
+                                                            if (color2.length() != 0)
+                                                            {
+                                                                nss::SkipSpaces(command);
+                                                                std::wstring color3 = nss::ParseUntil(command, ' ');
+                                                                if (color3.length() != 0)
+                                                                {
+                                                                    int rColor = base::ConvertToInt(color1);
+                                                                    int gColor = base::ConvertToInt(color2);
+                                                                    int bColor = base::ConvertToInt(color3);
+                                                                    charData->fillColor = sf::Color(rColor, gColor, bColor, 0);
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                std::wstring guessColor = base::LowercaseTheString(color1);
+                                                                if (guessColor == L"while")
+                                                                    charData->fillColor = sf::Color::White;
+                                                                else if (guessColor == L"black")
+                                                                    charData->fillColor = sf::Color::Black;
+                                                            }
+                                                        }
+                                                    }
+                                                    else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") || nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour "))
+                                                    {
+                                                        std::wstring color1 = nss::ParseUntil(command, ' ');
+                                                        if (color1.length() != 0)
+                                                        {
+                                                            nss::SkipSpaces(command);
+                                                            std::wstring color2 = nss::ParseUntil(command, ' ');
+                                                            if (color2.length() != 0)
+                                                            {
+                                                                nss::SkipSpaces(command);
+                                                                std::wstring color3 = nss::ParseUntil(command, ' ');
+                                                                if (color3.length() != 0)
+                                                                {
+                                                                    int rColor = base::ConvertToInt(color1);
+                                                                    int gColor = base::ConvertToInt(color2);
+                                                                    int bColor = base::ConvertToInt(color3);
+                                                                    charData->outlineColor = sf::Color(rColor, gColor, bColor, 0);
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                std::wstring guessColor = base::LowercaseTheString(color1);
+                                                                if (guessColor == L"while")
+                                                                    charData->outlineColor = sf::Color::White;
+                                                                else if (guessColor == L"black")
+                                                                    charData->outlineColor = sf::Color::Black;
+                                                            }
+                                                        }
+                                                    }
+                                                    if (nss::Command(command, L"thickness "))
+                                                    {
+                                                        std::wstring possibleThickness = nss::ParseUntil(command, '\0');
+                                                        if (possibleThickness.length() != 0)
+                                                            charData->outlineThickness = ns::base::ConvertToFloat(possibleThickness);
+                                                    }
                                                 }
                                                 else
                                                     eof = true;

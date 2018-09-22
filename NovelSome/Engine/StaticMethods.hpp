@@ -39,6 +39,8 @@ namespace ns
     class GlobalSettings
     {
     public:
+        static sf::RenderWindow* window;
+        
         static unsigned int width;
         static unsigned int height;
         
@@ -48,8 +50,19 @@ namespace ns
         
         static int windowPositionOffset;
         
+        static bool isVerticalSyncEnabled;
+        static int framerateLimit;
+        static int framerateNoFocus;
+        
         static bool isPauseEnabled;
         static bool isPause;
+        
+        static bool isParallaxEnabled;
+        static float defaultParallaxBackground;
+        static float defaultParallaxFar;
+        static float defaultParallaxNormal;
+        static float defaultParallaxClose;
+        static float defaultParallaxFrontground;
     };
     
     typedef GlobalSettings gs;

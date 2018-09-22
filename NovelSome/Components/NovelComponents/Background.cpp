@@ -73,6 +73,7 @@ namespace ns
         void Background::Resize(unsigned int width, unsigned int height)
         {
             CalculateScale(width, height);
+            CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
         }
         void Background::Update(const sf::Time& elapsedTime)
         {
@@ -134,6 +135,20 @@ namespace ns
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
         }
+        void Background::PollEvent(sf::Event& event)
+        {
+            if (event.type == sf::Event::MouseMoved && mode != deprecated && visible && doParallax && parallaxPower > 0)
+                CalculateParallax(event.mouseMove.x, event.mouseMove.y);
+        }
+        void Background::CalculateParallax(int mouseX, int mouseY)
+        {
+            if (mouseX >= 0 && mouseY >= 0 && mouseX <= ns::gs::width && mouseY <= ns::gs::height)
+            {
+                float posX = defaultPositionX + (int)(mouseX - ns::gs::width/2) * parallaxPower;
+                float posY = defaultPositionY + (int)(mouseY - ns::gs::height/2) * parallaxPower;
+                sprite.setPosition(posX, posY);
+            }
+        }
         void Background::SetNovel(Novel* novel)
         {
             this->novel = novel;
@@ -147,8 +162,8 @@ namespace ns
             if (spriteLoaded)
             {
                 float scaleFactorX, scaleFactorY, scaleFactor;
-                scaleFactorX = (float)width / texture.getSize().x;
-                scaleFactorY = (float)height / texture.getSize().y;
+                scaleFactorX = (float)width / (texture.getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
+                scaleFactorY = (float)height / (texture.getSize().y) * (doParallax? 1 + parallaxPower : 1) * scaleY;
                 switch (fitMode)
                 {
                     case defaultFit:
@@ -159,8 +174,9 @@ namespace ns
                     case fillCentre:
                         scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
                         sprite.setScale(scaleFactor, scaleFactor);
-                        sprite.setPosition((float)width/2 - sprite.getLocalBounds().width/2*scaleFactor - sprite.getOrigin().x*scaleFactor,
-                                           (float)height/2 - sprite.getLocalBounds().height/2*scaleFactor - sprite.getOrigin().y*scaleFactor);
+                        defaultPositionX = (float)ns::gs::width/2 - sprite.getLocalBounds().width/2*sprite.getScale().x - sprite.getOrigin().x*sprite.getScale().x;
+                        defaultPositionY = (float)ns::gs::height/2 - sprite.getLocalBounds().height/2*sprite.getScale().y - sprite.getOrigin().y*sprite.getScale().y;
+                        sprite.setPosition(defaultPositionX, defaultPositionY);
                         break;
                         
                     case stretch:

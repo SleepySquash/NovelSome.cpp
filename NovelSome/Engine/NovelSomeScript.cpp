@@ -194,7 +194,7 @@ namespace nss
             SkipSpaces(results);
             std::wstring argument = nss::ParseArgument(results);
             
-            if (argument != L"with")
+            if (argument != L"with" && argument != L"as")
             {
                 arguments = (wchar_t**)realloc(arguments, sizeof(wchar_t*)*(parsedArguments + 1));
                 arguments[parsedArguments] = (wchar_t*)malloc(sizeof(wchar_t)*(argument.length() + 1));
@@ -214,6 +214,12 @@ namespace nss
         return arguments;
     }
     std::wstring ArgumentAsString(CommandSettings& results)
+    {
+        std::wstring parsedUntil = nss::ParseUntil(results, '\0');
+        std::wstring stringValue = ns::base::LowercaseTheString(parsedUntil);
+        return stringValue;
+    }
+    std::wstring ArgumentAsStringWOLowerCase(CommandSettings& results)
     {
         std::wstring stringValue = nss::ParseUntil(results, '\0');
         return stringValue;
@@ -270,7 +276,7 @@ namespace nss
     void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width)
     {
         text.setString(line);
-        if (text.getLocalBounds().width > width)
+        if (text.getLocalBounds().width >= width)
         {
             std::wstring finalLine = L"";
             std::wstring currentLine = L"";
@@ -278,7 +284,7 @@ namespace nss
             {
                 currentLine += line[i];
                 text.setString(currentLine);
-                if (text.getLocalBounds().width > width)
+                if (text.getLocalBounds().width >= width)
                 {
                     bool spaceFound{ false };
                     for (int j = currentLine.length() - 1; j >= 0 && !spaceFound; j--)
@@ -315,7 +321,7 @@ namespace nss
     void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width)
     {
         text.setString(line);
-        if (text.getLocalBounds().width > width)
+        if (text.getLocalBounds().width >= width)
         {
             std::wstring finalLine = L"";
             std::wstring currentLine = L"";
@@ -323,7 +329,7 @@ namespace nss
             {
                 currentLine += line[i];
                 text.setString(currentLine);
-                if (text.getLocalBounds().width > width)
+                if (text.getLocalBounds().width >= width)
                 {
                     currentLine[currentLine.length() - 1] = L'\n';
                     finalLine += currentLine;

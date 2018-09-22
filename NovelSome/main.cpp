@@ -29,6 +29,7 @@
 //TODO: Constrains and stuff like that, in States of .nschar too
 //TODO: Close, normal and far default states in every character
 //TODO: Make "..." quotes possibly to be on the next line (to make scenarios look eaiser to read) and parse all \n's as \n in lines
+//TODO: Scroll the dialogue if text's not fitting
 
 //TODO: Choice menu and novel's ability to read commands from line[] array
 //TODO: HUD
@@ -46,6 +47,8 @@
 
 #include <iostream>
 #include <unordered_map>
+
+#include <thread>
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
@@ -65,6 +68,7 @@ using std::endl;
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
+    ns::GlobalSettings::window = &window;
     ns::GlobalSettings::width = 1280;
     ns::GlobalSettings::height = 800;
     
@@ -79,8 +83,8 @@ int main()
     if (icon.loadFromFile(resourcePath() + "Data/Images/macos@2x.png"))
         window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
     
-    window.setFramerateLimit(120);
-    window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(ns::gs::framerateLimit);
+    window.setVerticalSyncEnabled(ns::gs::isVerticalSyncEnabled);
 
     ns::EntitySystem system;
     
@@ -106,7 +110,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 10");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 11");
     }
     
     sf::Clock clock;
@@ -124,11 +128,15 @@ int main()
                     break;
                     
                 case sf::Event::GainedFocus:
-                    window.setFramerateLimit(120);
+                    window.setFramerateLimit(ns::gs::framerateLimit);
                     break;
                     
                 case sf::Event::LostFocus:
-                    window.setFramerateLimit(30);
+                    window.setFramerateLimit(ns::gs::framerateNoFocus);
+                    break;
+                    
+                case sf::Event::MouseMoved:
+                    system.PollEvent(event);
                     break;
                     
                 case sf::Event::MouseButtonPressed:
@@ -160,7 +168,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 10");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 11");
                             }
                             break;
                             

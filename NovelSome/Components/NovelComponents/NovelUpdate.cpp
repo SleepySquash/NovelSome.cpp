@@ -276,6 +276,22 @@ namespace ns
                                     else if (stringValue == L"nomessage" || stringValue == L"no")
                                         component->sendMessageBack = component->noMessage;
                                 }
+                                else if (nss::Command(argument, L"parallax:"))
+                                {
+                                    std::wstring possibleParallax = nss::ArgumentAsString(argument);
+                                    if (possibleParallax == L"normal" || possibleParallax == L"n")
+                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
+                                    else if (possibleParallax == L"close" || possibleParallax == L"c")
+                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxClose;
+                                    else if (possibleParallax == L"far" || possibleParallax == L"f")
+                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxFar;
+                                    else if (possibleParallax == L"background" || possibleParallax == L"back" || possibleParallax == L"b")
+                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
+                                    else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
+                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
+                                    else
+                                        component->parallaxPower = base::ConvertToFloat(possibleParallax);
+                                }
                                 
                                 free(arguments[i]);
                             }
@@ -916,7 +932,8 @@ namespace ns
                                 std::wstring possibleDialogue = nss::ParseAsQuoteString(command);
                                 if (possibleDialogue.length() != 0)
                                 {
-                                    sf::String characterName = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName)->displayName : sf::String(possibleName);
+                                    CharacterData* characterData = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName) : nullptr;
+                                    sf::String characterName = (characterData != nullptr) ? characterData->displayName : sf::String(possibleName);
                                     wchar_t** arguments = nss::ParseArguments(command);
                                     
                                     auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
@@ -975,7 +992,9 @@ namespace ns
                                     dialogueGroup->data = component;
                                     component->SetGroup(dialogueGroup);
                                     
-                                    component->SetCharacter(characterName);
+                                    component->SetCharacterName(characterName);
+                                    if (characterData != nullptr)
+                                        component->SetCharacter(characterData);
                                     component->SetDialogue(possibleDialogue);
                                 }
                             }

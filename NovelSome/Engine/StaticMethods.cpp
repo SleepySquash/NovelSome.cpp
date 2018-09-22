@@ -36,6 +36,8 @@ namespace ns
 
     std::unordered_map<std::string, sf::Font*> FontCollector::fonts = { {"", nullptr} };
     
+    sf::RenderWindow* GlobalSettings::window = nullptr;
+    
     unsigned int GlobalSettings::width = 0;
     unsigned int GlobalSettings::height = 0;
     
@@ -48,6 +50,18 @@ namespace ns
 #else
     int GlobalSettings::windowPositionOffset = 0;
 #endif
+    
+    bool GlobalSettings::isVerticalSyncEnabled = true;
+    int GlobalSettings::framerateLimit = 120;
+    int GlobalSettings::framerateNoFocus = 30;
+    
     bool GlobalSettings::isPauseEnabled = true;
     bool GlobalSettings::isPause = false;
+    
+    bool GlobalSettings::isParallaxEnabled = true;
+    float GlobalSettings::defaultParallaxBackground = 0.018;
+    float GlobalSettings::defaultParallaxFar = 0.032;
+    float GlobalSettings::defaultParallaxNormal = 0.062;
+    float GlobalSettings::defaultParallaxClose = 0.105;
+    float GlobalSettings::defaultParallaxFrontground = 0.13;
 }

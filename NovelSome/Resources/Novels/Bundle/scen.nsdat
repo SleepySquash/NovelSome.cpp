@@ -5,6 +5,7 @@ var infoInteger = 123
 var booleanyeah = true
 
 Background "Неко.jpg"
+Юи "Йей, йа Юи! <3"
 "Привет, я очень длинный текст. Такой длинный, что до невозможности длинный. ДжоДжо хочу смотреть, а ещё хочу шаверму очень сильно хочу есть шаверму ууу вкусная шаверма аааа вообще я хавать хочу сильно, так что пойду лучше есть, а не программировать этот ваш НовелСам."
 
 юи = "Йей :3"
@@ -51,7 +52,7 @@ background "ItJyTkXF_n4.jpg" with appear:0.4, disappear:2.4, fit:fill, message:n
 
 wait 0.9
 
-background add "DVa.jpg" with fit:fill, alpha:160, message:no
+background add "DVa.jpg" with fit:fill, alpha:160, message:no parallax:0.025
 DVa "Привет, я Дива!"
 Юля "А я Юля"
 Никита "А я Никитос."

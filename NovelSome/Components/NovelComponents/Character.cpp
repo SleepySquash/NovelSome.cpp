@@ -21,8 +21,8 @@ namespace ns
                 std::wstring lookForSpritePath = ns::base::GetFolderPath(fullPath.toWideString());
                 std::wstring spritePath{ L"" };
                 
-                scaleFactorX = 1.f;
-                scaleFactorY = 1.f;
+                scaleX = 1.f;
+                scaleY = 1.f;
                 
                 std::wifstream wif;
 #ifdef _WIN32
@@ -64,6 +64,33 @@ namespace ns
                                         stateName = nss::ParseUntil(command, ' ');
                                     
                                     stateReading = (stateName == state.toWideString()) ? true : false;
+                                    
+                                    if (stateReading)
+                                    {
+                                        wchar_t** arguments = nss::ParseArguments(command);
+                                        if (arguments != nullptr)
+                                        {
+                                            for (int i = 0; arguments[i] != nullptr; i++)
+                                            {
+                                                nss::CommandSettings argument;
+                                                argument.Command(arguments[i]);
+                                                
+                                                if (nss::Command(argument, L"normal") || nss::Command(argument, L"n"))
+                                                    parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
+                                                else if (nss::Command(argument, L"close") || nss::Command(argument, L"c"))
+                                                    parallaxPower = ns::GlobalSettings::defaultParallaxClose;
+                                                else if (nss::Command(argument, L"far") || nss::Command(argument, L"f"))
+                                                    parallaxPower = ns::GlobalSettings::defaultParallaxFar;
+                                                else if (nss::Command(argument, L"background") || nss::Command(argument, L"back") || nss::Command(argument, L"b"))
+                                                    parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
+                                                else if (nss::Command(argument, L"frontground") || nss::Command(argument, L"front") || nss::Command(argument, L"f"))
+                                                    parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
+                                                
+                                                free(arguments[i]);
+                                            }
+                                            free(arguments);
+                                        }
+                                    }
                                 }
                             }
                             else
@@ -79,19 +106,35 @@ namespace ns
                                 }
                                 else if (nss::Command(command, L"scale "))
                                 {
-                                    scaleFactorX = nss::ParseAsFloat(command);
-                                    scaleFactorY = scaleFactorX;
+                                    scaleX = nss::ParseAsFloat(command);
+                                    scaleY = scaleX;
                                 }
                                 else if (nss::Command(command, L"scalexy "))
                                 {
-                                    scaleFactorX = nss::ParseAsFloat(command);
+                                    scaleX = nss::ParseAsFloat(command);
                                     SkipSpaces(command);
-                                    scaleFactorY = nss::ParseAsFloat(command);
+                                    scaleY = nss::ParseAsFloat(command);
                                 }
                                 else if (nss::Command(command, L"scalex "))
-                                    scaleFactorX = nss::ParseAsFloat(command);
+                                    scaleX = nss::ParseAsFloat(command);
                                 else if (nss::Command(command, L"scaley "))
-                                    scaleFactorY = nss::ParseAsFloat(command);
+                                    scaleY = nss::ParseAsFloat(command);
+                                else if (nss::Command(command, L"parallax "))
+                                {
+                                    std::wstring possibleParallax = nss::ArgumentAsString(command);
+                                    if (possibleParallax == L"normal" || possibleParallax == L"n")
+                                        parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
+                                    else if (possibleParallax == L"close" || possibleParallax == L"c")
+                                        parallaxPower = ns::GlobalSettings::defaultParallaxClose;
+                                    else if (possibleParallax == L"far" || possibleParallax == L"f")
+                                        parallaxPower = ns::GlobalSettings::defaultParallaxFar;
+                                    else if (possibleParallax == L"background" || possibleParallax == L"back" || possibleParallax == L"b")
+                                        parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
+                                    else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
+                                        parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
+                                    else
+                                        parallaxPower = base::ConvertToFloat(possibleParallax);
+                                }
                                 
                                 eof = stateReading ? false : true;
                             }
@@ -138,7 +181,7 @@ namespace ns
                             spriteLoaded = true;
                             texture.setSmooth(true);
                             sprite.setTexture(texture);
-                            sprite.setScale(scaleFactorX, scaleFactorY);
+                            sprite.setScale(scaleX, scaleY);
                             
                             Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
                         }
@@ -159,7 +202,7 @@ namespace ns
         {
             if (spriteLoaded)
             {
-                sprite.setScale(scaleFactorX * gs::scale, scaleFactorY * gs::scale);
+                sprite.setScale(scaleX * (doParallax ? (1 + parallaxPower) : 1) * gs::scale, scaleY * (doParallax ? (1 + parallaxPower) : 1) * gs::scale);
                 sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getLocalBounds().height > height/sprite.getScale().y ? height/sprite.getScale().y : sprite.getLocalBounds().height);
                 switch (position)
                 {
@@ -187,6 +230,10 @@ namespace ns
                         sprite.setPosition(customX, customY);
                         break;
                 }
+                
+                defaultPositionX = sprite.getPosition().x;
+                defaultPositionY = sprite.getPosition().y;
+                CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
             }
         }
         void Character::Update(const sf::Time& elapsedTime)
@@ -248,6 +295,20 @@ namespace ns
         {
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
+        }
+        void Character::PollEvent(sf::Event& event)
+        {
+            if (event.type == sf::Event::MouseMoved && mode != deprecated && visible && doParallax && parallaxPower > 0)
+                CalculateParallax(event.mouseMove.x, event.mouseMove.y);
+        }
+        void Character::CalculateParallax(int mouseX, int mouseY)
+        {
+            if (mouseX >= 0 && mouseY >= 0 && mouseX <= ns::gs::width && mouseY <= ns::gs::height)
+            {
+                float posX = defaultPositionX + (int)(mouseX - ns::gs::width/2) * parallaxPower;
+                float posY = defaultPositionY + (int)(mouseY - ns::gs::height/2) * parallaxPower;
+                sprite.setPosition(posX, posY);
+            }
         }
         void Character::SetNovel(Novel* novel)
         {

@@ -57,7 +57,6 @@
 		DD849B0F2139725C00FAFD15 /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
 		DD849B112139959800FAFD15 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		DDA89349213C950E00D8EF7B /* List.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = List.cpp; sourceTree = "<group>"; };
-		DDBD63BB214F05CA0007495E /* libmpg123-mac.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libmpg123-mac.a"; path = "../../../Includes (macOS)/libmpg123-mac.a"; sourceTree = "<group>"; };
 		DDC61FA62132A5E4000A23A6 /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DDC61FA72132A5E4000A23A6 /* EntitySystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EntitySystem.hpp; sourceTree = "<group>"; };
 		DDC61FAA2132A60D000A23A6 /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -125,7 +124,6 @@
 		DDBD63BA214F05CA0007495E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DDBD63BB214F05CA0007495E /* libmpg123-mac.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

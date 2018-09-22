@@ -42,6 +42,8 @@ namespace ns
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+                        if (charText.getOutlineThickness() != 0)
+                            charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
                         charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
                     }
                     break;
@@ -70,6 +72,8 @@ namespace ns
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+                        if (charText.getOutlineThickness() != 0)
+                            charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
                         charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
                     }
                     break;
@@ -100,7 +104,8 @@ namespace ns
         void Dialogue::PollEvent(sf::Event& event)
         {
             if (mode == waitingForInput)
-                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+            {
+                if (visible && event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
                 {
                     mode = (!forcePressInsideDialogue || (event.mouseButton.x > 0 && event.mouseButton.x < ns::GlobalSettings::width && event.mouseButton.y < ns::GlobalSettings::height && event.mouseButton.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5)) ? disappearing : waitingForInput;
                     
@@ -113,19 +118,25 @@ namespace ns
                                 novel->UnHold(this);
                     }
                 }
+                else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+                    visible = !visible;
+            }
         }
         void Dialogue::Draw(sf::RenderWindow* window)
         {
-            if (guiSystem != nullptr)
-                guiSystem->Draw(window);
-            window->draw(shape);
-            if (fontLoaded)
+            if (visible)
             {
-                window->draw(text);
-                if (drawCharacterName)
+                if (guiSystem != nullptr)
+                    guiSystem->Draw(window);
+                window->draw(shape);
+                if (fontLoaded)
                 {
-                    window->draw(charShape);
-                    window->draw(charText);
+                    window->draw(text);
+                    if (drawCharacterName)
+                    {
+                        window->draw(charShape);
+                        window->draw(charText);
+                    }
                 }
             }
         }
@@ -141,8 +152,10 @@ namespace ns
             
             if (fontLoaded)
             {
-                nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(35*gs::scale*2));
-                nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(30*gs::scale*2));
+                if (charString != "")
+                    nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(35*gs::scale*2));
+                if (textString != "")
+                    nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(30*gs::scale*2));
             }
             
             if (guiSystem != nullptr)
@@ -166,9 +179,18 @@ namespace ns
             if (guiSystem != nullptr)
                 guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
-        void Dialogue::SetCharacter(sf::String character)
+        void Dialogue::SetCharacter(const CharacterData* character)
         {
-            charString = character;
+            if (character != nullptr)
+            {
+                charText.setOutlineThickness(character->outlineThickness);
+                charText.setFillColor(sf::Color(character->fillColor.r, character->fillColor.g, character->fillColor.b, alpha));
+                charText.setOutlineColor(sf::Color(character->outlineColor.r, character->outlineColor.g, character->outlineColor.b, alpha));
+            }
+        }
+        void Dialogue::SetCharacterName(const sf::String& characterName)
+        {
+            charString = characterName;
             drawCharacterName = true;
             
             charText.setString(charString);
@@ -180,13 +202,15 @@ namespace ns
             charShape.setFillColor(sf::Color(0,0,0,150));
             
             charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+            if (charText.getOutlineThickness() != 0)
+                charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
             charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
         }
         void Dialogue::SetGroup(List<Dialogue>* element)
         {
             this->groupPointer = element;
         }
-        void Dialogue::SetDialogue(sf::String dialogue)
+        void Dialogue::SetDialogue(const sf::String& dialogue)
         {
             textString = dialogue;
             text.setString(textString);
