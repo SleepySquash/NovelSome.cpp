@@ -21,18 +21,19 @@ namespace ns
             sf::String fullPath = sf::String(resourcePath()) + L"Data/Fonts/" + fontName;
             bool fontLoaded{ false };
 #ifdef _WIN32
+            //TODO: Fix memory leak
             std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
             if (!ifStream.is_open())
                 std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
             else
             {
                 auto filesize = ifStream.tellg();
-                fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
+                char* fileInMemory = new char[static_cast<unsigned int>(filesize)];
                 ifStream.seekg(0, std::ios::beg);
-                ifStream.read(fileInMemory.get(), filesize);
+                ifStream.read(fileInMemory, filesize);
                 ifStream.close();
                 
-                fontLoaded = font->loadFromMemory(fileInMemory.get(), filesize);
+                fontLoaded = font->loadFromMemory(fileInMemory, filesize);
             }
 #else
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;

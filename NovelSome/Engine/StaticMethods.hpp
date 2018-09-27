@@ -14,6 +14,10 @@
 
 #include <codecvt>
 
+//std::unique_ptr<> and std::ifstream in GetFont
+#include <memory>
+#include <fstream>
+
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
