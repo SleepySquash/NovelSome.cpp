@@ -114,7 +114,7 @@ namespace ns
             modeEnum mode{ appearing };
             
             bool mustPressInsideDialogue{ true };
-            std::string fontName{ "Arial Unicode.ttf" };
+            std::wstring fontName{ L"Arial Unicode.ttf" };
             unsigned int characterSize{ 40 };
             
             float waitingTime{ 2.f };

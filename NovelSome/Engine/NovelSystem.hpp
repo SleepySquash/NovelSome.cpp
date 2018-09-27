@@ -39,6 +39,7 @@ namespace ns
         virtual void PollEvent(sf::Event& event);
         virtual void Destroy();
         void SetPriority(int priority);
+        void ChangePriority(int priority);
         void SetNovelSystem(NovelSystem* novelSystem);
         NovelSystem* GetNovelSystem();
     };
@@ -58,6 +59,7 @@ namespace ns
         void PollEvent(sf::Event& event);
         void PopComponent(NovelObject* component);
         void Destroy();
+        void ChangePriorityOf(NovelObject* component, int priority);
         
         template<typename T, typename ...Args> T* PrioritizeComponent(int priority, Args... args)
         {

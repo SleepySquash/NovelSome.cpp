@@ -58,7 +58,7 @@ namespace ns
         }
         void EntityListComponent::Init()
         {
-            text.setFont(*ns::FontCollector::GetFont("Sansation.ttf"));
+            text.setFont(*ns::FontCollector::GetFont(L"Sansation.ttf"));
             fontLoaded = (text.getFont() != nullptr);
             text.setCharacterSize(50);
             text.setFillColor(sf::Color::Black);

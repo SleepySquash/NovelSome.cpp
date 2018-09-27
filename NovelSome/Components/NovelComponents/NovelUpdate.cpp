@@ -35,8 +35,20 @@ namespace ns
                         std::wstring dialogueLine = nss::ParseAsQuoteString(command);
                         wchar_t** arguments = nss::ParseArguments(command);
                         
-                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
-                        component->SetNovel(this);
+                        if (dialogueGroup != nullptr)
+                        {
+                            List<Dialogue>* temp = dialogueGroup;
+                            while (temp != nullptr)
+                            {
+                                if (temp->data != nullptr)
+                                {
+                                    temp->data->priority++;
+                                    temp->data->SetGUISystem(nullptr);
+                                }
+                                temp = temp->next;
+                            }
+                        }
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000, this);
                         
                         if (arguments != nullptr)
                             for (int i = 0; arguments[i] != nullptr; i++)
@@ -92,6 +104,12 @@ namespace ns
                         component->SetGroup(dialogueGroup);
                         
                         component->SetDialogue(dialogueLine);
+                        
+                        if (std::wstring(localVariables.at(L"@name")->value.asString) != L"")
+                            if (skin.dialogue.nameRect != nullptr)
+                                skin.dialogue.nameRect->SetFadings(GUIObjects::DialogueRectangle::disappearing, component->disappearTime);
+                        LocalVariables_Set(L"@dialogue", dialogueLine);
+                        LocalVariables_Set(L"@name", std::wstring(L""));
                     }
                     ///----------------------------------------MISC----------------------------------------
                     ///----------------------------------------MISC----------------------------------------
@@ -796,42 +814,37 @@ namespace ns
                             varName = nss::ParseUntil(command, ' ');
                         if (varName.length() != 0)
                         {
-                            nss::SkipSpaces(command);
-                            if (command.line[command.lastPos] == '=')
+                            if (varName != L"@dialogue" && varName != L"@name")
                             {
-                                command.lastPos++;
                                 nss::SkipSpaces(command);
-                            }
-                            
-                            std::wstring valueString;
-                            bool asString{ false };
-                            if ((asString = (command.line[command.lastPos] == '"')))
-                                valueString = nss::ParseAsQuoteString(command);
-                            else
-                                valueString = nss::ParseUntil(command, ' ');
-                            
-                            if (valueString.length() != 0)
-                            {
-                                NovelVariable *nvar;
-                                if (localVariables.find(varName) == localVariables.end())
+                                if (command.line[command.lastPos] == '=')
                                 {
-                                    nvar = new NovelVariable();
-                                    localVariables.insert({varName, nvar});
+                                    command.lastPos++;
+                                    nss::SkipSpaces(command);
                                 }
-                                else
-                                    nvar = localVariables.at(varName);
                                 
-                                if (asString)
-                                    nvar->Set(valueString);
+                                std::wstring valueString;
+                                bool asString{ false };
+                                if ((asString = (command.line[command.lastPos] == '"')))
+                                    valueString = nss::ParseAsQuoteString(command);
                                 else
+                                    valueString = nss::ParseUntil(command, ' ');
+                                
+                                if (valueString.length() != 0)
                                 {
-                                    if (valueString == L"true" || valueString == L"false")
-                                        nvar->Set(ns::base::ConvertToBool(valueString));
+                                    if (asString)
+                                        LocalVariables_Set(varName, valueString);
                                     else
-                                        nvar->Set(ns::base::ConvertToInt(valueString));
+                                    {
+                                        if (valueString == L"true" || valueString == L"false")
+                                            LocalVariables_Set(varName, ns::base::ConvertToBool(valueString));
+                                        else
+                                            LocalVariables_Set(varName, ns::base::ConvertToInt(valueString));
+                                    }
                                 }
-                                localVariables.insert({varName, nvar});
                             }
+                            else
+                                cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
                         }
                     }
                     else if (nss::Command(command, L"delete "))
@@ -843,12 +856,19 @@ namespace ns
                             varName = nss::ParseUntil(command, ' ');
                         
                         if (varName.length() != 0)
-                            if (localVariables.find(varName) != localVariables.end())
+                        {
+                            if (varName != L"@dialogue" && varName != L"@name")
                             {
-                                NovelVariable* nvar = localVariables.at(varName);
-                                localVariables.erase(varName);
-                                delete nvar;
+                                if (localVariables.find(varName) != localVariables.end())
+                                {
+                                    NovelVariable* nvar = localVariables.at(varName);
+                                    localVariables.erase(varName);
+                                    delete nvar;
+                                }
                             }
+                            else
+                                cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
+                        }
                     }
                     ///----------------------------------------DEBUG----------------------------------------
                     ///----------------------------------------DEBUG----------------------------------------
@@ -868,136 +888,150 @@ namespace ns
                         std::wstring possibleName = nss::ParseUntil(command, ' ');
                         if (possibleName.length() != 0)
                         {
-                            nss::SkipSpaces(command);
-                            
-                            if (nss::Command(command, L"="))
+                            if (possibleName != L"@name" && possibleName != L"@dialogue")
                             {
-                                nss::ParseWhile(command, ' '); nss::SkipSpaces(command);
+                                nss::SkipSpaces(command);
                                 
-                                std::wstring valueString;
-                                bool asString{ false };
-                                if ((asString = (command.line[command.lastPos] == '"')))
-                                    valueString = nss::ParseAsQuoteString(command);
-                                else
-                                    valueString = nss::ParseUntil(command, ' ');
-                                
-                                if (valueString.length() != 0)
+                                if (nss::Command(command, L"="))
                                 {
-                                    NovelVariable *nvar;
-                                    if (localVariables.find(possibleName) == localVariables.end())
-                                    {
-                                        nvar = new NovelVariable();
-                                        localVariables.insert({possibleName, nvar});
-                                    }
-                                    else
-                                        nvar = localVariables.at(possibleName);
+                                    nss::ParseWhile(command, ' '); nss::SkipSpaces(command);
                                     
-                                    if (asString)
-                                        nvar->Set(valueString);
+                                    std::wstring valueString;
+                                    bool asString{ false };
+                                    if ((asString = (command.line[command.lastPos] == '"')))
+                                        valueString = nss::ParseAsQuoteString(command);
                                     else
+                                        valueString = nss::ParseUntil(command, ' ');
+                                    
+                                    if (valueString.length() != 0)
                                     {
-                                        if (valueString == L"true" || valueString == L"false")
-                                            nvar->Set(ns::base::ConvertToBool(valueString));
+                                        if (asString)
+                                            LocalVariables_Set(possibleName, valueString);
                                         else
-                                            nvar->Set(ns::base::ConvertToInt(valueString));
+                                        {
+                                            if (valueString == L"true" || valueString == L"false")
+                                                LocalVariables_Set(possibleName, ns::base::ConvertToBool(valueString));
+                                            else
+                                                LocalVariables_Set(possibleName, ns::base::ConvertToInt(valueString));
+                                        }
                                     }
                                 }
-                            }
-                            else if (nss::Command(command, L"+="))
-                            {
-                                //TODO: +=
-                            }
-                            else if (nss::Command(command, L"-="))
-                            {
-                                //TODO: -=
-                            }
-                            else if (nss::Command(command, L"*="))
-                            {
-                                //TODO: *=
-                            }
-                            else if (nss::Command(command, L"/="))
-                            {
-                                //TODO: /=
-                            }
-                            else if (nss::Command(command, L"++"))
-                            {
-                                //TODO: ++
-                            }
-                            else if (nss::Command(command, L"--"))
-                            {
-                                //TODO: --
+                                else if (nss::Command(command, L"+="))
+                                {
+                                    //TODO: +=
+                                }
+                                else if (nss::Command(command, L"-="))
+                                {
+                                    //TODO: -=
+                                }
+                                else if (nss::Command(command, L"*="))
+                                {
+                                    //TODO: *=
+                                }
+                                else if (nss::Command(command, L"/="))
+                                {
+                                    //TODO: /=
+                                }
+                                else if (nss::Command(command, L"++"))
+                                {
+                                    //TODO: ++
+                                }
+                                else if (nss::Command(command, L"--"))
+                                {
+                                    //TODO: --
+                                }
+                                else
+                                {
+                                    std::wstring possibleDialogue = nss::ParseAsQuoteString(command);
+                                    if (possibleDialogue.length() != 0)
+                                    {
+                                        CharacterData* characterData = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName) : nullptr;
+                                        sf::String characterName = (characterData != nullptr) ? characterData->displayName : sf::String(possibleName);
+                                        wchar_t** arguments = nss::ParseArguments(command);
+                                        
+                                        if (dialogueGroup != nullptr)
+                                        {
+                                            List<Dialogue>* temp = dialogueGroup;
+                                            while (temp != nullptr)
+                                            {
+                                                if (temp->data != nullptr)
+                                                {
+                                                    temp->data->priority++;
+                                                    temp->data->SetGUISystem(nullptr);
+                                                }
+                                                temp = temp->next;
+                                            }
+                                        }
+                                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000, this);
+                                        
+                                        if (arguments != nullptr)
+                                            for (int i = 0; arguments[i] != nullptr; i++)
+                                            {
+                                                nss::CommandSettings argument;
+                                                argument.Command(arguments[i]);
+                                                
+                                                if (nss::Command(argument, L"fade:"))
+                                                {
+                                                    float value = nss::ArgumentAsFloat(argument);
+                                                    component->appearTime = value;
+                                                    component->disappearTime = value;
+                                                }
+                                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                                    component->appearTime = nss::ArgumentAsFloat(argument);
+                                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                                    component->disappearTime = nss::ArgumentAsFloat(argument);
+                                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                                    component->maxAlpha = nss::ArgumentAsInt(argument);
+                                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                                {
+                                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                                        component->sendMessageBack = component->atAppearance;
+                                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                                        component->sendMessageBack = component->atDisappearing;
+                                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                                        component->sendMessageBack = component->atDeprecated;
+                                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                                        component->sendMessageBack = component->noMessage;
+                                                }
+                                                else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
+                                                {
+                                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                                    if (stringValue == L"waitingforinput" || stringValue == L"input")
+                                                        component->afterAppearSwitchTo = component->waitingForInput;
+                                                    else if (stringValue == L"waitingfortime" || stringValue == L"time")
+                                                        component->afterAppearSwitchTo = component->waitingForTime;
+                                                }
+                                                else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
+                                                    component->waitingTime = nss::ArgumentAsFloat(argument);
+                                                
+                                                delete arguments[i];
+                                            }
+                                        if (arguments != nullptr)
+                                            delete arguments;
+                                        
+                                        if (component->sendMessageBack != component->noMessage)
+                                            OnHold(component);
+                                        
+                                        dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
+                                        dialogueGroup->data = component;
+                                        component->SetGroup(dialogueGroup);
+                                        
+                                        component->SetCharacterName(characterName);
+                                        if (characterData != nullptr)
+                                            component->SetCharacter(characterData);
+                                        component->SetDialogue(possibleDialogue);
+                                        
+                                        if (std::wstring(localVariables.at(L"@name")->value.asString) == L"")
+                                            if (skin.dialogue.nameRect != nullptr)
+                                                skin.dialogue.nameRect->SetFadings(GUIObjects::DialogueRectangle::appearing, component->appearTime);
+                                        LocalVariables_Set(L"@dialogue", possibleDialogue);
+                                        LocalVariables_Set(L"@name", characterName.toWideString());
+                                    }
+                                }
                             }
                             else
-                            {
-                                std::wstring possibleDialogue = nss::ParseAsQuoteString(command);
-                                if (possibleDialogue.length() != 0)
-                                {
-                                    CharacterData* characterData = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName) : nullptr;
-                                    sf::String characterName = (characterData != nullptr) ? characterData->displayName : sf::String(possibleName);
-                                    wchar_t** arguments = nss::ParseArguments(command);
-                                    
-                                    auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000);
-                                    component->SetNovel(this);
-                                    
-                                    if (arguments != nullptr)
-                                        for (int i = 0; arguments[i] != nullptr; i++)
-                                        {
-                                            nss::CommandSettings argument;
-                                            argument.Command(arguments[i]);
-                                            
-                                            if (nss::Command(argument, L"fade:"))
-                                            {
-                                                float value = nss::ArgumentAsFloat(argument);
-                                                component->appearTime = value;
-                                                component->disappearTime = value;
-                                            }
-                                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                                component->appearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                                component->disappearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                                component->maxAlpha = nss::ArgumentAsInt(argument);
-                                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                            {
-                                                std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                                    component->sendMessageBack = component->atAppearance;
-                                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                                    component->sendMessageBack = component->atDisappearing;
-                                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                                    component->sendMessageBack = component->atDeprecated;
-                                                else if (stringValue == L"nomessage" || stringValue == L"no")
-                                                    component->sendMessageBack = component->noMessage;
-                                            }
-                                            else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
-                                            {
-                                                std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                if (stringValue == L"waitingforinput" || stringValue == L"input")
-                                                    component->afterAppearSwitchTo = component->waitingForInput;
-                                                else if (stringValue == L"waitingfortime" || stringValue == L"time")
-                                                    component->afterAppearSwitchTo = component->waitingForTime;
-                                            }
-                                            else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
-                                                component->waitingTime = nss::ArgumentAsFloat(argument);
-                                            
-                                            delete arguments[i];
-                                        }
-                                    if (arguments != nullptr)
-                                        delete arguments;
-                                    
-                                    if (component->sendMessageBack != component->noMessage)
-                                        OnHold(component);
-                                    
-                                    dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
-                                    dialogueGroup->data = component;
-                                    component->SetGroup(dialogueGroup);
-                                    
-                                    component->SetCharacterName(characterName);
-                                    if (characterData != nullptr)
-                                        component->SetCharacter(characterData);
-                                    component->SetDialogue(possibleDialogue);
-                                }
-                            }
+                                cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
                         }
                     }
                 }

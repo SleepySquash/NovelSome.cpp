@@ -233,7 +233,8 @@ namespace ns
                 
                 defaultPositionX = sprite.getPosition().x;
                 defaultPositionY = sprite.getPosition().y;
-                CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
+                if (doParallax)
+                    CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
             }
         }
         void Character::Update(const sf::Time& elapsedTime)
@@ -313,6 +314,14 @@ namespace ns
         void Character::SetNovel(Novel* novel)
         {
             this->novel = novel;
+            if (novel != nullptr)
+            {
+                appearTime = novel->skin.character.appearTime;
+                disappearTime = novel->skin.character.disappearTime;
+                maxAlpha = novel->skin.character.maxAlpha;
+                doParallax = novel->skin.character.doParallax;
+                parallaxPower = novel->skin.character.parallaxNormal;
+            }
         }
         void Character::SetGroup(List<Character>* element)
         {

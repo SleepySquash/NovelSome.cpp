@@ -12,6 +12,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <codecvt>
+
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
@@ -29,8 +31,8 @@ namespace ns
         FontCollector() { }
         
     public:
-        static std::unordered_map<std::string, sf::Font*> fonts;
-        static sf::Font* GetFont(const std::string& fontName);
+        static std::unordered_map<std::wstring, sf::Font*> fonts;
+        static sf::Font* GetFont(const std::wstring& fontName);
         static void FreeFonts();
     };
     
@@ -63,6 +65,13 @@ namespace ns
         static float defaultParallaxNormal;
         static float defaultParallaxClose;
         static float defaultParallaxFrontground;
+        
+        static bool forcePressInsideDialogue;
+        
+        static float maxVolumeGlobal;
+        static float maxVolumeMusic;
+        static float maxVolumeAmbeint;
+        static float maxVolumeSound;
     };
     
     typedef GlobalSettings gs;

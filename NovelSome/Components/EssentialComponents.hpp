@@ -34,7 +34,6 @@ namespace ns
             sf::Text buildText;
             bool fontLoaded{ false };
             
-            int fps{ 0 };
             sf::Time deltaTime{ sf::Time::Zero };
             int frames{ 0 };
             

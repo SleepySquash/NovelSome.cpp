@@ -84,6 +84,12 @@ namespace ns
         void SoundPlayer::SetNovel(Novel* novel)
         {
             this->novel = novel;
+            if (novel != nullptr)
+            {
+                appearTime = novel->skin.sound.appearTime;
+                disappearTime = novel->skin.sound.disappearTime;
+                maxVolume = novel->skin.sound.maxVolume * ns::gs::maxVolumeGlobal * ns::gs::maxVolumeSound;
+            }
         }
         void SoundPlayer::SetGroup(List<SoundPlayer>* element)
         {
@@ -239,6 +245,12 @@ namespace ns
         void MusicPlayer::SetNovel(Novel* novel)
         {
             this->novel = novel;
+            if (novel != nullptr)
+            {
+                appearTime = novel->skin.music.appearTime;
+                disappearTime = novel->skin.music.disappearTime;
+                maxVolume = novel->skin.music.maxVolume * ns::gs::maxVolumeGlobal * ns::gs::maxVolumeMusic;
+            }
         }
         void MusicPlayer::SetGroup(List<MusicPlayer>* element)
         {

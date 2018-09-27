@@ -22,7 +22,7 @@ namespace ns
             buildText.setOutlineColor(sf::Color::Black);
             buildText.setOutlineThickness(1.f);
             buildText.setCharacterSize(15);
-            buildText.setFont(*ns::FontCollector::GetFont("Pacifica.ttf"));
+            buildText.setFont(*ns::FontCollector::GetFont(L"Pacifica.ttf"));
             fontLoaded = (buildText.getFont() != nullptr);
             
             projectText.setString("NovelSome by SlSq");
@@ -30,14 +30,14 @@ namespace ns
             projectText.setOutlineColor(sf::Color::Black);
             projectText.setOutlineThickness(1.f);
             projectText.setCharacterSize(23);
-            projectText.setFont(*ns::FontCollector::GetFont("Pacifica.ttf"));
+            projectText.setFont(*ns::FontCollector::GetFont(L"Pacifica.ttf"));
             
-            performanceText.setString("FPS is 999");
+            performanceText.setString("Calculating...");
             performanceText.setFillColor(sf::Color::White);
             performanceText.setOutlineColor(sf::Color::Black);
             performanceText.setOutlineThickness(1.f);
             performanceText.setCharacterSize(15);
-            performanceText.setFont(*ns::FontCollector::GetFont("Pacifica.ttf"));
+            performanceText.setFont(*ns::FontCollector::GetFont(L"Pacifica.ttf"));
         }
         void DebugComponent::Update(const sf::Time& elapsedTime)
         {
@@ -46,9 +46,9 @@ namespace ns
             
             if (deltaTime.asSeconds() > 0.3 && frames > 0)
             {
-                fps = (double)frames/deltaTime.asSeconds();
+                frames = (float)frames/deltaTime.asSeconds();
                 std::wstring perfString = L"FPS is ";
-                perfString += std::to_wstring(fps);
+                perfString += std::to_wstring(frames);
                 
                 performanceText.setString(perfString);
                 performanceText.setPosition(gs::width - performanceText.getLocalBounds().width - 10*gs::scale, performanceText.getPosition().y);

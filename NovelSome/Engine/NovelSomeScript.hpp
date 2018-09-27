@@ -69,6 +69,8 @@ namespace nss
     
     void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width);
     void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
+    
+    float MathParser(const std::wstring& finalLine);
 }
 
 #endif /* NovelSomeScript_hpp */

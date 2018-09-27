@@ -30,25 +30,37 @@
 //TODO: Close, normal and far default states in every character
 //TODO: Make "..." quotes possibly to be on the next line (to make scenarios look eaiser to read) and parse all \n's as \n in lines
 //TODO: Scroll the dialogue if text's not fitting
+//TODO: .nschar having their own dialogue line's colors, so dialogues look better
 
 //TODO: Choice menu and novel's ability to read commands from line[] array
 //TODO: HUD
-//TODO: Variables in unordered_map that can be string, int, float, bool etc.
-//      The type should be specified somewhere? So it's be own-made structure, I guess.
-//      Ability to seamlessly declare and even use without declaring variables.
 //TODO: Logic's "if" and "else"
 //TODO: .nsdata files and NovelInfo structure
 //TODO: Main menu
+//TODO: Parallax should have some default animation (like moving cursor) so the image is not static
+//      (maybe only when cursor is not being moved??) and this might be an option in preferences and in novel's settings
+
+//TODO: Text's outline rescaling with ns::gs::scale
+//TODO: Colors in GUI system
+//TODO: Ownership change in Dialogues
+//TODO: Name box in GUI system
+//TODO: Dialogue's GUISystem should be drawn level BENEATH the actual dialogue lines
+
+//TODO: Condition of appearing the name box
+//TODO: Width of name box depending on @dialogue.width
+//TODO: Minimum width and height. After that no scaling can be made.
+//TODO: LocalVariable_Set - use it everywhere where varialbles are changing.
 
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
 //DONE: Text's new line when exceed the screen's width
 //DONE: Scenario changing with "jump" or "scenario" command
+//DONE: Variables in unordered_map that can be string, int, float, bool etc.
+//      The type should be specified somewhere? So it's be own-made structure, I guess.
+//      Ability to seamlessly declare and even use without declaring variables.
 
 #include <iostream>
 #include <unordered_map>
-
-#include <thread>
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
@@ -110,7 +122,7 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 11");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 12");
     }
     
     sf::Clock clock;
@@ -168,7 +180,7 @@ int main()
                             Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 11");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 12");
                             }
                             break;
                             

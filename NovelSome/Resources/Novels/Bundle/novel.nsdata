@@ -1,7 +1,17 @@
-background "ItJyTkXF_n4.jpg" with fade:1
-"Привет! Йа текст 私は食品を食べる"
-wait 1
-"И я текст! Бла бла бла текст :3"
-"YAY SHIT IS REAL"
+name "Bundle"
+name:ru "Бандл"
 
-wait 2
+breif "Привет, я краткое описание. 255 символов, не более."
+description "Привет, я очень длинное описание. Такое длинное, что очень длинное.
+             Мне даже нужны переносы на новую строку, вот настолько я длинное.
+
+             И вот я пустую строку сверху имею. Ня."
+
+event Scan {
+    background "background.jpg"
+}
+
+event NovelStart {
+    skin "skin.nskin"
+    scenario "scen.nsdat"
+}

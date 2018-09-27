@@ -73,7 +73,8 @@ namespace ns
         void Background::Resize(unsigned int width, unsigned int height)
         {
             CalculateScale(width, height);
-            CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
+            if (doParallax)
+                CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
         }
         void Background::Update(const sf::Time& elapsedTime)
         {
@@ -152,6 +153,14 @@ namespace ns
         void Background::SetNovel(Novel* novel)
         {
             this->novel = novel;
+            if (novel != nullptr)
+            {
+                appearTime = novel->skin.background.appearTime;
+                disappearTime = novel->skin.background.disappearTime;
+                maxAlpha = novel->skin.background.maxAlpha;
+                doParallax = novel->skin.background.doParallax;
+                parallaxPower = novel->skin.background.parallaxPower;
+            }
         }
         void Background::SetGroup(List<Background>* element)
         {

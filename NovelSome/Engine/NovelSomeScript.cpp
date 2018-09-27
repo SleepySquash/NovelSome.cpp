@@ -341,4 +341,57 @@ namespace nss
             text.setString(finalLine);
         }
     }
+    
+    float MathParser(const std::wstring& finalLine)
+    {
+        //math parsing
+        wchar_t action = L' ';
+        float left = 0;
+        int numStartPos = 0;
+        
+        //TODO: Mind the operation order: (* and /) BIGGER THAN (+ and -)
+        for (int i = 0; i <= finalLine.length(); i++)
+        {
+            if (finalLine[i] == L'/' || finalLine[i] == L'+' || finalLine[i] == L'-' || finalLine[i] == L'*' || finalLine[i] == '\0')
+            {
+                if (action == L' ')
+                {
+                    std::wstring leftS = L"";
+                    for (int j = 0; j < i; j++)
+                        leftS += finalLine[j];
+                    left = ns::base::ConvertToFloat(leftS);
+                }
+                else
+                {
+                    std::wstring leftS = L"";
+                    for (int j = numStartPos; j < i; j++)
+                        leftS += finalLine[j];
+                    float right = ns::base::ConvertToFloat(leftS);
+                    
+                    switch (action)
+                    {
+                        case L'+':
+                            left = left + right;
+                            break;
+                        case L'-':
+                            left = left - right;
+                            break;
+                        case L'*':
+                            left = left * right;
+                            break;
+                        case L'/':
+                            left = left / right;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                
+                numStartPos = i + 1;
+                action = finalLine[i];
+            }
+        }
+        
+        return left;
+    }
 }

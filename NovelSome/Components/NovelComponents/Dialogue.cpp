@@ -12,6 +12,25 @@ namespace ns
 {
     namespace NovelComponents
     {
+        Dialogue::Dialogue(Novel* novel)
+        {
+            this->novel = novel;
+            if (novel != nullptr)
+            {
+                guiSystem = &(novel->skin.dialogue.gui);
+                skin = &(novel->skin.dialogue);
+                
+                appearTime = novel->skin.dialogue.appearTime;
+                disappearTime = novel->skin.dialogue.disappearTime;
+                maxAlpha = novel->skin.dialogue.maxAlpha;
+                characterSize = novel->skin.dialogue.characterSize;
+                fontName = novel->skin.dialogue.fontName;
+                
+                forcePressInsideDialogue = novel->skin.dialogue.forcePressInsideDialogue && ns::gs::forcePressInsideDialogue;
+            }
+            if (guiSystem != nullptr)
+                guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+        }
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
             if (guiSystem != nullptr)
@@ -36,15 +55,13 @@ namespace ns
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
                     
                     if (guiSystem != nullptr)
-                        guiSystem->SetAlpha(alpha);
+                        guiSystem->SetAlphaIfBigger(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
-                    shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
                         if (charText.getOutlineThickness() != 0)
                             charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
-                        charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
                     }
                     break;
                     
@@ -68,13 +85,11 @@ namespace ns
                     if (guiSystem != nullptr)
                         guiSystem->SetAlpha(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
-                    shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, alpha));
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
                         if (charText.getOutlineThickness() != 0)
                             charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
-                        charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
                     }
                     break;
                     
@@ -128,13 +143,13 @@ namespace ns
             {
                 if (guiSystem != nullptr)
                     guiSystem->Draw(window);
-                window->draw(shape);
+                //window->draw(shape);
                 if (fontLoaded)
                 {
                     window->draw(text);
                     if (drawCharacterName)
                     {
-                        window->draw(charShape);
+                        //window->draw(charShape);
                         window->draw(charText);
                     }
                 }
@@ -153,36 +168,27 @@ namespace ns
             if (fontLoaded)
             {
                 if (charString != "")
-                    nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(35*gs::scale*2));
+                    nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(skin->nameTextWidth*gs::scale));
                 if (textString != "")
-                    nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(30*gs::scale*2));
+                    nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
             }
             
             if (guiSystem != nullptr)
                 guiSystem->Resize(width, height);
-            text.setPosition(30*gs::scale, height - height/5 + 10*gs::scale);
-            shape.setPosition(0, height - height/5);
-            shape.setSize({static_cast<float>(width), static_cast<float>(height/5)});
+            text.setPosition(skin->textXOffset*gs::scale, height - height/5 + skin->textYOffset*gs::scale);
             
             if (drawCharacterName)
             {
-                charText.setPosition(35*gs::scale, height - height/5 - 20*gs::scale - charText.getLocalBounds().height);
-                charShape.setPosition(30*gs::scale, height - height/5 - 15*gs::scale - charText.getLocalBounds().height);
-                charShape.setSize({static_cast<float>(charText.getLocalBounds().width + 15*gs::scale), static_cast<float>(charText.getLocalBounds().height + 10*gs::scale)});
+                if (character != nullptr && character->outlineThickness != 0)
+                    charText.setOutlineThickness(character->outlineThickness * ns::gs::scale);
+                charText.setPosition(skin->nameTextXOffset*gs::scale, height - height/5 - skin->nameTextYOffset*gs::scale - charText.getLocalBounds().height);
             }
         }
-        void Dialogue::SetNovel(Novel* novel)
-        {
-            this->novel = novel;
-            if (novel != nullptr)
-                guiSystem = &(novel->dialogueGUI);
-            if (guiSystem != nullptr)
-                guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
-        }
-        void Dialogue::SetCharacter(const CharacterData* character)
+        void Dialogue::SetCharacter(CharacterData* character)
         {
             if (character != nullptr)
             {
+                this->character = character;
                 charText.setOutlineThickness(character->outlineThickness);
                 charText.setFillColor(sf::Color(character->fillColor.r, character->fillColor.g, character->fillColor.b, alpha));
                 charText.setOutlineColor(sf::Color(character->outlineColor.r, character->outlineColor.g, character->outlineColor.b, alpha));
@@ -199,12 +205,10 @@ namespace ns
             
             charText.setCharacterSize(characterSize);
             charText.setFillColor(sf::Color::White);
-            charShape.setFillColor(sf::Color(0,0,0,150));
             
             charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
             if (charText.getOutlineThickness() != 0)
                 charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
-            charShape.setFillColor(sf::Color(charShape.getFillColor().r, charShape.getFillColor().g, charShape.getFillColor().b, alpha));
         }
         void Dialogue::SetGroup(List<Dialogue>* element)
         {
@@ -219,7 +223,6 @@ namespace ns
             
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
-            shape.setFillColor(sf::Color(0,0,0,150));
             
             Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
@@ -230,6 +233,10 @@ namespace ns
                 currentTime = 0.f;
                 mode = newMode;
             }
+        }
+        void Dialogue::SetGUISystem(GUISystem* system)
+        {
+            this->guiSystem = system;
         }
     }
 }

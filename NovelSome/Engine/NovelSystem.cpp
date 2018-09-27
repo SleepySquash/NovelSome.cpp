@@ -22,6 +22,11 @@ namespace ns
         this->priority = priority;
         //TODO: Sorting
     }
+    void NovelObject::ChangePriority(int priority)
+    {
+        if (novelSystem != nullptr)
+            novelSystem->ChangePriorityOf(this, priority);
+    }
     void NovelObject::SetNovelSystem(NovelSystem* novelSystem)
     {
         this->novelSystem = novelSystem;
@@ -131,5 +136,37 @@ namespace ns
                 delete list->data;
                 delete list;
             }
+    }
+    void NovelSystem::ChangePriorityOf(NovelObject* component, int priority)
+    {
+        bool found{ false };
+        List<NovelObject>* obj{ nullptr };
+        for (auto* list = objects; list != nullptr && !found; list = list->next)
+        {
+            if ((found = (list->data == component)))
+            {
+                if (list->prev != nullptr)
+                    list->prev->next = list->next;
+                if (list->next != nullptr)
+                    list->next->prev = list->prev;
+                obj = list;
+            }
+        }
+        
+        if (found && obj != nullptr)
+        {
+            for (auto* list = objects; list != nullptr; list = list->next)
+            {
+                if (list->data->priority > priority)
+                {
+                    if (list->prev != nullptr)
+                        list->prev->next = obj;
+                    obj->next = list;
+                    obj->prev = list->prev;
+                    list->prev = obj;
+                    obj->data->priority = priority;
+                }
+            }
+        }
     }
 }

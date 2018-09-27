@@ -125,19 +125,24 @@ namespace ns
         
         class GUISystem;
         struct CharacterData;
+        namespace Skins
+        {
+            struct Dialogue;
+        }
         class Dialogue : public NovelObject
         {
-        private:
-            sf::RectangleShape shape;
-            GUISystem* guiSystem{ nullptr };
+        public:
             sf::Text text;
             sf::String textString{ "" };
-            Novel* novel{ nullptr };
-            List<Dialogue>* groupPointer{ nullptr };
             
-            sf::RectangleShape charShape;
             sf::Text charText;
             sf::String charString{ "" };
+        private:
+            GUISystem* guiSystem{ nullptr };
+            Skins::Dialogue* skin{ nullptr };
+            CharacterData* character{ nullptr };
+            Novel* novel{ nullptr };
+            List<Dialogue>* groupPointer{ nullptr };
             
             bool drawCharacterName{ false };
             bool fontLoaded{ false };
@@ -158,24 +163,25 @@ namespace ns
             
             int maxAlpha = 255;
             bool forcePressInsideDialogue{ true };
-            std::string fontName{ "NotoSansCJK-Regular.ttc" };
+            std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
             unsigned int characterSize{ 30 };
             
             float waitingTime{ 2.f };
             float appearTime{ 0.6f };
             float disappearTime{ 0.6f };
             
+            Dialogue(Novel* novel);
             void Update(const sf::Time& elapsedTime) override;
             void PollEvent(sf::Event& event) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void Resize(unsigned int width, unsigned int height) override;
-            void SetNovel(Novel* novel);
             void SetGroup(List<Dialogue>* element);
-            void SetCharacter(const CharacterData* character);
+            void SetCharacter(CharacterData* character);
             void SetCharacterName(const sf::String& characterName);
             void SetDialogue(const sf::String& dialogue);
             void SetStateMode(modeEnum newMode);
+            void SetGUISystem(GUISystem* system);
         };
         
         
@@ -358,14 +364,25 @@ namespace ns
         struct GUIObject;
         class GUISystem : public NovelObject
         {
+        private:
+            int lastWidth{ 0 };
+            int lastHeight{ 0 };
+            
         public:
+            Novel* novel{ nullptr };
+            GUIObject* parent{ nullptr };
+            unsigned int users{ 0 };
             List<GUIObject>* guiObjects{ nullptr };
             List<GUIObject>* lastGuiObjects{ nullptr };
             
+            sf::Int8 lastAlpha{ 0 };
+            
             ~GUISystem();
+            GUISystem(Novel* novel = nullptr);
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Resize(unsigned int width, unsigned int height) override;
+            void VariableResize(unsigned int width, unsigned int height);
             template<typename T, typename ...Args> T* AddComponent(Args... args)
             {
                 T* component = new T(args...);
@@ -386,23 +403,91 @@ namespace ns
                 
                 return component;
             }
+            void VariableChange(const std::wstring& varName);
             void SetAlpha(sf::Int8 alpha);
+            void SetAlphaIfBigger(sf::Int8 alpha);
             void Clear();
+            void SetNovel(Novel* novel);
+            void SetParent(GUIObject* guiSystem);
         };
         
         
         
+        struct GUIConstrainsResult
+        {
+            int result;
+            bool dependsOnVariable;
+            bool constant;
+            
+            GUIConstrainsResult() { }
+            GUIConstrainsResult(int res, bool depends, bool consta) : result(res), dependsOnVariable(depends), constant(consta) { }
+        };
+        struct GUIConstrains
+        {
+            //Если строка содержит какие-то переменные, не меняющиеся с Resize, то они будут расчитаны и записаны сюда, а строки будут обнулены, чтобы при других Resize не происходило перерасчёта величин.
+            int left{ 0 };
+            int right{ 0 };
+            int top{ 0 };
+            int bottom{ 0 };
+            
+            int width{ 0 };
+            int height{ 0 };
+            
+            int posX{ 0 };
+            int posY{ 0 };
+            
+            
+            bool leftC{ false };
+            bool rightC{ false };
+            bool topC{ false };
+            bool bottomC{ false };
+            
+            bool widthC{ false };
+            bool heightC{ false };
+            
+            bool posXC{ false };
+            bool posYC{ false };
+            
+            
+            std::wstring leftS{ L"" };
+            std::wstring rightS{ L"" };
+            std::wstring topS{ L"" };
+            std::wstring bottomS{ L"" };
+            
+            std::wstring widthS{ L"" };
+            std::wstring heightS{ L"" };
+            
+            std::wstring posXS{ L"" };
+            std::wstring posYS{ L"" };
+            
+            
+            //std::wstring displayWhenVariableIsTrue{ L"" };
+            bool isDependsOnVariable[8] = { false, false, false, false,  false, false,  false, false };
+            std::unordered_map<std::wstring, bool> dependOnVariables;
+            
+            GUIConstrainsResult Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height, std::wstring& line);
+            void Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height);
+        };
         struct GUIObject
         {
-            int alpha{ 0 };
             bool isHappy{ true };
-            GUISystem* system;
             
-            bool constrains{ false };
-            int constrainsLeft{ 0 };
-            int constrainsRight{ 0 };
-            int constrainsBottom{ 0 };
-            int constrainsFromBottomToTop{ 0 };
+            unsigned char maxAlpha = 255;
+            bool visible{ true };
+            
+            GUISystem* guiSystem{ nullptr };
+            GUISystem* child{ nullptr };
+            
+            enum fadingsModeEnum { appearing, disappearing, offline };
+            fadingsModeEnum fadingsMode{ offline };
+            
+            bool ignoreVariableChange{ false };
+            bool regulateFadings{ false };
+            float currentTime{ 0.f };
+            float appearTime{ 0.f };
+            float disappearTime{ 0.f };
+            
+            GUIConstrains constrains;
             
             virtual void Init() { }
             virtual void Update(const sf::Time& elapsedTime) { }
@@ -410,7 +495,11 @@ namespace ns
             virtual void Resize(unsigned int width, unsigned int height) { }
             virtual void Destroy() { }
             virtual void SetAlpha(sf::Int8 alpha) { }
+            void FadingUpdate(const sf::Time& elapsedTime);
+            void SetFadings(fadingsModeEnum newMode, float forTime = 0.f);
+            void VariableChange(const std::wstring& varName);
             void SetGUISystem(GUISystem *system);
+            GUISystem* GetChildSystem();
         };
         
         
@@ -427,7 +516,114 @@ namespace ns
                 void Resize(unsigned int width, unsigned int height) override;
                 void SetAlpha(sf::Int8 alpha) override;
             };
+            
+            struct DialogueRectangle : GUIObject
+            {
+                sf::RectangleShape shape;
+                
+                void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(sf::Int8 alpha) override;
+            };
+            
+            struct NameRectangle : GUIObject
+            {
+                sf::RectangleShape shape;
+                
+                void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(sf::Int8 alpha) override;
+            };
         }
+        
+        
+        
+        
+        
+        namespace Skins
+        {
+            struct Dialogue
+            {
+                GUISystem gui;
+                GUIObjects::DialogueRectangle* dialogueRect{ nullptr };
+                GUIObjects::NameRectangle* nameRect{ nullptr };
+                
+                unsigned int characterSize{ 30 };
+                int maxAlpha = 255;
+                bool forcePressInsideDialogue{ true };
+                std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
+                
+                float appearTime{ 0.6f };
+                float disappearTime{ 0.6f };
+                
+                int textXOffset = 40;
+                int textYOffset = 10;
+                int textWidth = 80;
+                
+                int nameBoxXOffset = 40;
+                int nameBoxYOffset = 15;
+                int nameTextXOffset = 45;
+                int nameTextYOffset = 20;
+                int nameTextWidth = 90;
+            };
+            struct Background
+            {
+                int maxAlpha = 255;
+                float appearTime{ 0.6f };
+                float disappearTime{ 0.6f };
+                
+                bool doParallax{ ns::gs::isParallaxEnabled };
+                float parallaxPower{ ns::gs::defaultParallaxBackground };
+            };
+            struct Character
+            {
+                int maxAlpha = 255;
+                float appearTime{ 0.6f };
+                float disappearTime{ 0.6f };
+                
+                bool doParallax{ ns::gs::isParallaxEnabled };
+                float parallaxClose{ ns::gs::defaultParallaxClose };
+                float parallaxNormal{ ns::gs::defaultParallaxNormal };
+                float parallaxFar{ ns::gs::defaultParallaxFar };
+            };
+            struct Music
+            {
+                float maxVolume = 100;
+                float appearTime{ 1.f };
+                float disappearTime{ 1.f };
+            };
+            struct Ambient
+            {
+                float maxVolume = 100;
+                float appearTime{ 1.f };
+                float disappearTime{ 1.f };
+            };
+            struct Sound
+            {
+                float maxVolume = 100;
+                float appearTime{ 0.f };
+                float disappearTime{ 0.f };
+            };
+        }
+        struct Skin
+        {
+            Skins::Dialogue dialogue;
+            Skins::Background background;
+            Skins::Character character;
+            Skins::Music music;
+            Skins::Ambient ambient;
+            Skins::Sound sound;
+            
+            void restoreToDefaults()
+            {
+                //TODO: Defaults
+            }
+        };
+        
         
         
         
@@ -497,7 +693,7 @@ namespace ns
             
         public:
             NovelLibrary library;
-            GUISystem dialogueGUI;
+            Skin skin;
             
             List<Background>* backgroundGroup{ nullptr };
             List<Character>* characterGroup{ nullptr };
@@ -515,6 +711,11 @@ namespace ns
             void OnHold(NovelObject* component);
             void UnHold(NovelObject* component);
             sf::String GetFolderPath();
+            NovelVariable* FindVariable(const std::wstring& variableName);
+            void VariableChange(const std::wstring& name);
+            void LocalVariables_Set(const std::wstring& name, std::wstring value);
+            void LocalVariables_Set(const std::wstring& name, bool value);
+            void LocalVariables_Set(const std::wstring& name, int value);
             void RemoveFromGroup(List<Background>* groupPointer);
             void RemoveFromGroup(List<Dialogue>* groupPointer);
             void RemoveFromGroup(List<Character>* groupPointer);
