@@ -14,9 +14,10 @@
 
 #include <codecvt>
 
-//std::unique_ptr<> and std::ifstream in GetFont
-#include <memory>
+#ifdef _WIN32
+//std::ifstream in GetFont
 #include <fstream>
+#endif
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
@@ -24,8 +25,9 @@
 
 #include "../Essentials/ResourcePath.hpp"
 #ifdef _WIN32
-    #include "../Essentials/versionhelpers.h"
+#include "../Essentials/versionhelpers.h"
 #endif
+#include "../Essentials/Base.hpp"
 
 namespace ns
 {
@@ -42,6 +44,21 @@ namespace ns
     
     
     
+    class ImageCollector
+    {
+    private:
+        ImageCollector() { }
+        
+    public:
+        static std::unordered_map<std::wstring, sf::Image*> images;
+        static std::unordered_map<std::wstring, int> usage;
+        static sf::Image* LoadImage(const std::wstring& imageName);
+        static void DeleteImage(const std::wstring& imageName);
+        static void FreeImages();
+    };
+    
+    
+    
     class GlobalSettings
     {
     public:
@@ -49,6 +66,9 @@ namespace ns
         
         static unsigned int width;
         static unsigned int height;
+        
+        static unsigned int resizeToWidth;
+        static unsigned int resizeToHeight;
         
         static unsigned int relativeWidth;
         static unsigned int relativeHeight;
@@ -59,6 +79,10 @@ namespace ns
         static bool isVerticalSyncEnabled;
         static int framerateLimit;
         static int framerateNoFocus;
+        
+        static bool isResolutionClassEnabled;
+        static int resolutionClassSetting;
+        static int resolutionClass;
         
         static bool isPauseEnabled;
         static bool isPause;
@@ -80,6 +104,7 @@ namespace ns
     
     typedef GlobalSettings gs;
     typedef FontCollector fc;
+    typedef ImageCollector ic;
 }
 
 #endif /* StaticMethods_hpp */

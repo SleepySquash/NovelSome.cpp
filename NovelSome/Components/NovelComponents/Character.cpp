@@ -18,7 +18,7 @@ namespace ns
             if (novel != nullptr && characterData != nullptr)
             {
                 sf::String fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + characterData->filePath;
-                std::wstring lookForSpritePath = ns::base::GetFolderPath(fullPath.toWideString());
+                std::wstring lookForSpritePath = ns::base::GetFolderPath(novel->GetFolderPath() + characterData->filePath);
                 std::wstring spritePath{ L"" };
                 
                 scaleX = 1.f;
@@ -147,40 +147,26 @@ namespace ns
                 
                 if (spritePath.length() != 0)
                 {
-                    sf::String filePath = lookForSpritePath + spritePath;
-                    bool imageLoaded{ false };
-                    
-#ifdef _WIN32
-                    std::ifstream ifStream(filePath.toWideString(), std::ios::binary | std::ios::ate);
-                    if (!ifStream.is_open())
-                        std::cerr << "Unable to open file: " << filePath.toAnsiString() << std::endl;
-                    else
+                    sf::Image* imagePtr = ns::ic::LoadImage(lookForSpritePath + spritePath);
+                    if (imagePtr != nullptr)
                     {
-                        auto filesize = ifStream.tellg();
-                        fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
-                        ifStream.seekg(0, std::ios::beg);
-                        ifStream.read(fileInMemory.get(), filesize);
-                        ifStream.close();
-                        
-                        imageLoaded = image.loadFromMemory(fileInMemory.get(), filesize);
-                    }
-#else
-                    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                    std::string u8str = converter.to_bytes(filePath.toWideString());
-                    imageLoaded = image.loadFromFile(u8str);
-#endif
-                    if (imageLoaded)
-                    {
+                        imagePath = lookForSpritePath + spritePath;
                         bool textureLoaded{ false };
-                        if (image.getSize().x > sf::Texture::getMaximumSize() || image.getSize().y > sf::Texture::getMaximumSize())
-                            textureLoaded = texture.loadFromImage(image, sf::IntRect(0, 0, image.getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().x, image.getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().y));
+                        if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
+                            textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
                         else
-                            textureLoaded = texture.loadFromImage(image);
+                            textureLoaded = texture.loadFromImage(*imagePtr);
+                        
                         if (textureLoaded)
                         {
                             spriteLoaded = true;
                             texture.setSmooth(true);
                             sprite.setTexture(texture);
+                            
+                            //scale 1 = scale that makes image fit in height with 720 pixels
+                            float scaleFactor = (float)ns::gs::relativeHeight / imagePtr->getSize().y;
+                            scaleX *= scaleFactor;
+                            scaleY *= scaleFactor;
                             sprite.setScale(scaleX, scaleY);
                             
                             Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
@@ -294,6 +280,8 @@ namespace ns
         }
         void Character::Destroy()
         {
+            if (imagePath.toWideString().length() != 0)
+                ns::ic::DeleteImage(imagePath);
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
         }

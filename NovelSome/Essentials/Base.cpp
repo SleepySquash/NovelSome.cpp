@@ -13,30 +13,30 @@ namespace ns
 {
     namespace base
     {
-        #ifdef _WIN32
-            #include <direct.h>
-            std::wstring GetCurrentWorkingDir( void )
-            {
-                wchar_t buff[FILENAME_MAX];
-                _wgetcwd( buff, FILENAME_MAX );
-                std::wstring current_working_dir(buff);
-                return current_working_dir+L'\\';
-            }
-        #else
-            #include <unistd.h>
-            std::wstring GetCurrentWorkingDir( void )
-            {
-                char buff[FILENAME_MAX];
-                getcwd( buff, FILENAME_MAX );
-                std::string current_working_dir(buff);
-                
-                //TODO: change the way it converts
-                std::wstring wcurrent_working_dir(current_working_dir.begin(), current_working_dir.end());
-                
-                return wcurrent_working_dir+L'\\';
-            }
-        #endif
-
+#ifdef _WIN32
+#include <direct.h>
+        std::wstring GetCurrentWorkingDir( void )
+        {
+            wchar_t buff[FILENAME_MAX];
+            _wgetcwd( buff, FILENAME_MAX );
+            std::wstring current_working_dir(buff);
+            return current_working_dir+L'\\';
+        }
+#else
+#include <unistd.h>
+        std::wstring GetCurrentWorkingDir( void )
+        {
+            char buff[FILENAME_MAX];
+            getcwd( buff, FILENAME_MAX );
+            std::string current_working_dir(buff);
+            
+            //TODO: change the way it converts
+            std::wstring wcurrent_working_dir(current_working_dir.begin(), current_working_dir.end());
+            
+            return wcurrent_working_dir+L'\\';
+        }
+#endif
+        
         
         
         //TODO: Documentation
@@ -76,6 +76,16 @@ namespace ns
         {
             std::wstring returned = L"";
             std::wstring extention = GetExtentionFromString(filename);
+            if (extention.length() != 0)
+                for (int i = 0; i < filename.length() - extention.length(); i++)
+                    returned += filename[i];
+            if (returned != L"")
+                return returned;
+            return filename;
+        }
+        std::wstring GetStringWithNoExtention(std::wstring filename, const std::wstring& extention)
+        {
+            std::wstring returned = L"";
             if (extention.length() != 0)
                 for (int i = 0; i < filename.length() - extention.length(); i++)
                     returned += filename[i];
@@ -331,6 +341,15 @@ namespace ns
             
             return std::atoi(parsingString.c_str());
         }
+        int ConvertToInt(const std::string& stringValue)
+        {
+            std::string parsingString = "";
+            for (int i = 0; stringValue[i] != '\0'; i++)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
+                    parsingString += (char)stringValue[i];
+            
+            return std::atoi(parsingString.c_str());
+        }
         float ConvertToFloat(const std::wstring& stringValue)
         {
             std::string parsingString = "";
@@ -361,8 +380,8 @@ namespace ns
             return res;
         }
         
-
-
+        
+        
         float obsoleteConvertToFloat(std::wstring str)
         {
             float flp = {0.f};
@@ -371,24 +390,24 @@ namespace ns
                 switch(str[0])
                 {
                     case L'0': if (!after) {flp *= 10.f;} break;
-                    case L'1': if (!after) {flp *= 10.f; flp += 1.f;} else {flp += 1.f/power(10,str.size());} break;
-                    case L'2': if (!after) {flp *= 10.f; flp += 2.f;} else {flp += 2.f/power(10,str.size());} break;
-                    case L'3': if (!after) {flp *= 10.f; flp += 3.f;} else {flp += 3.f/power(10,str.size());} break;
-                    case L'4': if (!after) {flp *= 10.f; flp += 4.f;} else {flp += 4.f/power(10,str.size());} break;
-                    case L'5': if (!after) {flp *= 10.f; flp += 5.f;} else {flp += 5.f/power(10,str.size());} break;
-                    case L'6': if (!after) {flp *= 10.f; flp += 6.f;} else {flp += 6.f/power(10,str.size());} break;
-                    case L'7': if (!after) {flp *= 10.f; flp += 7.f;} else {flp += 7.f/power(10,str.size());} break;
-                    case L'8': if (!after) {flp *= 10.f; flp += 8.f;} else {flp += 8.f/power(10,str.size());} break;
-                    case L'9': if (!after) {flp *= 10.f; flp += 9.f;} else {flp += 9.f/power(10,str.size());} break;
+                    case L'1': if (!after) {flp *= 10.f; flp += 1.f;} else {flp += 1.f/power(10,(int)str.size());} break;
+                    case L'2': if (!after) {flp *= 10.f; flp += 2.f;} else {flp += 2.f/power(10,(int)str.size());} break;
+                    case L'3': if (!after) {flp *= 10.f; flp += 3.f;} else {flp += 3.f/power(10,(int)str.size());} break;
+                    case L'4': if (!after) {flp *= 10.f; flp += 4.f;} else {flp += 4.f/power(10,(int)str.size());} break;
+                    case L'5': if (!after) {flp *= 10.f; flp += 5.f;} else {flp += 5.f/power(10,(int)str.size());} break;
+                    case L'6': if (!after) {flp *= 10.f; flp += 6.f;} else {flp += 6.f/power(10,(int)str.size());} break;
+                    case L'7': if (!after) {flp *= 10.f; flp += 7.f;} else {flp += 7.f/power(10,(int)str.size());} break;
+                    case L'8': if (!after) {flp *= 10.f; flp += 8.f;} else {flp += 8.f/power(10,(int)str.size());} break;
+                    case L'9': if (!after) {flp *= 10.f; flp += 9.f;} else {flp += 9.f/power(10,(int)str.size());} break;
                     case L'.': if (!after) {after = true; str.erase(0,1); noerase=true; reverse(str.begin(),str.end());} break;
                     default: if (after) {flp *= 10.f;} break;
                 }
                 if (!noerase) {str.erase(0,1);} else {noerase = false;}
             } return flp;
         }
-
-
-
+        
+        
+        
         //----------------------------------------------------------
         //char* InputString()
         //Возвращает введённую пользователем строку с признаком завершения строки, память для хранения которой выделяется динамически.
@@ -455,7 +474,7 @@ namespace ns
             fflush(stdin); std::cin.clear();
             return str;
         }
-
+        
         //----------------------------------------------------------
         //int GetLength(char*)
         //Возвращает длину строки, имеющую признак завершения строки, без учёта этого самого признака завершения строки.

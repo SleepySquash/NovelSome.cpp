@@ -23,7 +23,7 @@ namespace ns
     class Component;
     class Entity;
     class EntitySystem;
-
+    
     class Component
     {
     private:
@@ -43,7 +43,7 @@ namespace ns
         void SetEntity(Entity* entity);
         Entity* GetEntity();
     };
-
+    
     class Entity
     {
     private:
@@ -136,7 +136,7 @@ namespace ns
         int GetComponentsCount();
         List<Component>* GetComponentsListHead();
     };
-
+    
     class EntitySystem
     {
     private:

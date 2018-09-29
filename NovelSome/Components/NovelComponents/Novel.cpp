@@ -14,11 +14,13 @@ namespace ns
     {
         Novel::Novel(sf::String path) : nsdataPath(path)
         {
+            ns::ic::FreeImages();
+            
             folderPath = ns::base::GetFolderPath(path);
             
             localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
             localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 12"))});
+            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 13"))});
             
             library.SetNovel(this);
             library.ScanForCharacters();
@@ -47,7 +49,7 @@ namespace ns
             nameRect->constrains.widthS = L"@name.width + 20";
             nameRect->constrains.heightS = L"@name.height + 10";
             nameRect->SetFadings(GUIObjects::NameRectangle::offline);
-         
+            
             sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
             wif.open(filePath.toWideString());
@@ -66,6 +68,7 @@ namespace ns
             wif.close();
             layers.Destroy();
             skin.dialogue.gui.Clear();
+            ns::ic::FreeImages();
             
             for (auto& key : localVariables)
                 if (key.second != nullptr)

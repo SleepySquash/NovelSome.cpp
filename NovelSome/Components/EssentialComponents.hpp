@@ -70,6 +70,11 @@ namespace ns
             void Draw(sf::RenderWindow *window) override;
             void Resize(unsigned int width, unsigned int height) override;
         };
+        
+        class GyroscopeParallax : public Component
+        {
+            
+        };
     }
 }
 

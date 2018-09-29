@@ -65,14 +65,11 @@ namespace ns
         class Background : public NovelObject
         {
         private:
-            std::unique_ptr<char[]> fileInMemory;
-            
-            sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
             Novel* novel{ nullptr };
             List<Background>* groupPointer{ nullptr };
-            std::string imagePath;
+            sf::String imagePath{ L"" };
             
             bool spriteLoaded{ false };
             bool backgroundLoaded{ false };
@@ -205,11 +202,9 @@ namespace ns
         class Character : public NovelObject
         {
         private:
-            std::unique_ptr<char[]> fileInMemory;
-            
-            sf::Image image;
             sf::Texture texture;
             sf::Sprite sprite;
+            sf::String imagePath{ L"" };
             
             Novel* novel{ nullptr };
             List<Character>* groupPointer{ nullptr };

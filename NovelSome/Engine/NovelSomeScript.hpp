@@ -44,6 +44,7 @@ namespace nss
     ///----------------------------------------------------------
     bool Command(CommandSettings& results, const std::wstring& command);
     bool Command(const std::wstring& line, const std::wstring& command);
+    bool Command(const std::string& line, const std::string& command);
     
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results);
@@ -53,6 +54,7 @@ namespace nss
     
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
+    std::string ParseUntil(std::string line, const char until, unsigned int from = 0);
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until);
     std::wstring ParseAsQuoteString(CommandSettings& results);
     int ParseAsInt(CommandSettings& results);

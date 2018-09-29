@@ -18,37 +18,15 @@ namespace ns
             backgroundLoaded = false;
             if (novel != nullptr)
             {
-                sf::String fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + path;
-                
-#ifdef _WIN32
-                std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
-                if (!ifStream.is_open())
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
-                else
+                sf::Image* imagePtr = ns::ic::LoadImage(novel->GetFolderPath() + path);
+                if (imagePtr != nullptr)
                 {
-                    auto filesize = ifStream.tellg();
-                    fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
-                    ifStream.seekg(0, std::ios::beg);
-                    ifStream.read(fileInMemory.get(), filesize);
-                    ifStream.close();
-                    
-                    backgroundLoaded = image.loadFromMemory(fileInMemory.get(), filesize);
-                }
-#else
-                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                std::string u8str = converter.to_bytes(fullPath.toWideString());
-                if (!(backgroundLoaded = image.loadFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
-#endif
-                
-                if (backgroundLoaded)
-                {
+                    imagePath = novel->GetFolderPath() + sf::String(path);
                     bool textureLoaded{ false };
-                    imagePath = sf::String(path);
-                    if (image.getSize().x > sf::Texture::getMaximumSize() || image.getSize().y > sf::Texture::getMaximumSize())
-                        textureLoaded = texture.loadFromImage(image, sf::IntRect(0, 0, image.getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().x, image.getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : image.getSize().y));
+                    if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
+                        textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
                     else
-                        textureLoaded = texture.loadFromImage(image);
+                        textureLoaded = texture.loadFromImage(*imagePtr);
                     
                     if (textureLoaded)
                     {
@@ -133,6 +111,8 @@ namespace ns
         }
         void Background::Destroy()
         {
+            if (imagePath.toWideString().length() != 0)
+                ns::ic::DeleteImage(imagePath);
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
         }

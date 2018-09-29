@@ -66,26 +66,26 @@ namespace ns
                         {
                             //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
                             /*if (list->data->constrains.displayWhenVariableIsTrue.length() != 0)
-                            {
-                                NovelVariable* nvar = novel->FindVariable(list->data->constrains.displayWhenVariableIsTrue);
-                                if (nvar != nullptr)
-                                {
-                                    switch (nvar->type)
-                                    {
-                                        case NovelVariable::String:
-                                            list->data->visible = std::wstring(nvar->value.asString).length() > 0;
-                                            break;
-                                        case NovelVariable::Integer:
-                                            list->data->visible = nvar->value.asInt != 0;
-                                            break;
-                                        case NovelVariable::Boolean:
-                                            list->data->visible = nvar->value.asBoolean;
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                            }*/
+                             {
+                             NovelVariable* nvar = novel->FindVariable(list->data->constrains.displayWhenVariableIsTrue);
+                             if (nvar != nullptr)
+                             {
+                             switch (nvar->type)
+                             {
+                             case NovelVariable::String:
+                             list->data->visible = std::wstring(nvar->value.asString).length() > 0;
+                             break;
+                             case NovelVariable::Integer:
+                             list->data->visible = nvar->value.asInt != 0;
+                             break;
+                             case NovelVariable::Boolean:
+                             list->data->visible = nvar->value.asBoolean;
+                             break;
+                             default:
+                             break;
+                             }
+                             }
+                             }*/
                             
                             list->data->constrains.Recalculate(*list->data, width, height);
                             list->data->Resize(width, height);
@@ -256,7 +256,7 @@ namespace ns
                 
                 if (word.length() > 0)
                 {
-                
+                    
                     //analyzing the "word"
                     if (itHasAPoint)
                     {
@@ -414,7 +414,7 @@ namespace ns
                                 }
                             }
                         }
-                            
+                        
                         
                         if ((doScale && itsBeingSummed) || forceScale)
                         {
@@ -628,40 +628,40 @@ namespace ns
             {
                 //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
                 /*if (constrains.displayWhenVariableIsTrue.length() != 0 && varName == constrains.displayWhenVariableIsTrue)
-                {
-                    bool lastVisible = visible;
-                    NovelVariable* nvar = guiSystem->novel->FindVariable(constrains.displayWhenVariableIsTrue);
-                    if (nvar != nullptr)
-                    {
-                        switch (nvar->type)
-                        {
-                            case NovelVariable::String:
-                                visible = std::wstring(nvar->value.asString).length() > 0;
-                                break;
-                            case NovelVariable::Integer:
-                                visible = nvar->value.asInt != 0;
-                                break;
-                            case NovelVariable::Boolean:
-                                visible = nvar->value.asBoolean;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    
-                    if (visible != lastVisible)
-                    {
-                        constrains.Recalculate(*this, ns::gs::width, ns::gs::height);
-                        Resize(ns::gs::width, ns::gs::height);
-                    }
-                }*/
+                 {
+                 bool lastVisible = visible;
+                 NovelVariable* nvar = guiSystem->novel->FindVariable(constrains.displayWhenVariableIsTrue);
+                 if (nvar != nullptr)
+                 {
+                 switch (nvar->type)
+                 {
+                 case NovelVariable::String:
+                 visible = std::wstring(nvar->value.asString).length() > 0;
+                 break;
+                 case NovelVariable::Integer:
+                 visible = nvar->value.asInt != 0;
+                 break;
+                 case NovelVariable::Boolean:
+                 visible = nvar->value.asBoolean;
+                 break;
+                 default:
+                 break;
+                 }
+                 }
+                 
+                 if (visible != lastVisible)
+                 {
+                 constrains.Recalculate(*this, ns::gs::width, ns::gs::height);
+                 Resize(ns::gs::width, ns::gs::height);
+                 }
+                 }*/
                 
-                /*constrains.Recalculate(*this, ns::gs::width, ns::gs::height);
+                constrains.Recalculate(*this, ns::gs::width, ns::gs::height);
                 if (child != nullptr)
                     child->VariableResize(ns::gs::width, ns::gs::height);
-                Resize(ns::gs::width, ns::gs::height);*/
+                Resize(ns::gs::width, ns::gs::height);
                 
-                bool changed{ false };
+                /*bool changed{ false };
                 if (!constrains.leftC && constrains.isDependsOnVariable[0] && constrains.leftS.length() != 0)
                 {
                     int oldConstraint = constrains.left;
@@ -781,7 +781,7 @@ namespace ns
                     if (child != nullptr)
                         child->VariableResize(ns::gs::width, ns::gs::height);
                     Resize(ns::gs::width, ns::gs::height);
-                }
+                }*/
             }
         }
         void GUIObject::SetGUISystem(GUISystem *system)
@@ -807,7 +807,6 @@ namespace ns
         {
             void Rectangle::Init()
             {
-                shape.setPosition(100, 100);
                 shape.setFillColor(sf::Color::Black);
             }
             void Rectangle::Update(const sf::Time& elapsedTime)
@@ -858,7 +857,6 @@ namespace ns
             
             void NameRectangle::Init()
             {
-                shape.setPosition(100, 100);
                 shape.setFillColor(sf::Color::Black);
             }
             void NameRectangle::Update(const sf::Time& elapsedTime)

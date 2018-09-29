@@ -69,6 +69,21 @@ namespace nss
         
         return ReallyFound;
     }
+    bool Command(const std::string& line, const std::string& command)
+    {
+        bool ReallyFound{ false };
+        
+        if (command.length() <= line.length())
+        {
+            bool Found{ true };
+            for (int i = 0; Found && i < command.length(); i++)
+                Found = (line[i] == command[i]);
+            
+            ReallyFound = Found;
+        }
+        
+        return ReallyFound;
+    }
     
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results)
@@ -94,6 +109,24 @@ namespace nss
             }
         }
         results.lastPos = pos + 1;
+        
+        return text;
+    }
+    std::string ParseUntil(std::string line, const char until, unsigned int from)
+    {
+        unsigned int pos{ from };
+        std::string text = "";
+        bool Found{ false };
+        
+        while (!Found && pos < line.length())
+        {
+            if (!(Found = (line[pos] == until)))
+            {
+                if (line[pos] != 13)
+                    text += line[pos];
+                pos++;
+            }
+        }
         
         return text;
     }

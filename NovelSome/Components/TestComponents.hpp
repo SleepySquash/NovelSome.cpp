@@ -133,34 +133,34 @@ namespace ns
         
         
         /*NovelComponent(sf::String path) : nsdataPath(path)
-        {
-            entity = system.AddEntity();
-            
-            wif.open(resourcePath() + path);
-            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-            
-            if (wif.is_open())
-            {
-                ns::Entity* entity = system.AddEntity();
-                fileOpened = true;
-
-                while (wif.good())
-                {
-                    std::getline(wif, line);
-                    if (!wif.eof())
-                    {
-                        if (line[0] == L'"')
-                        entity->AddComponent<ns::TestComponents::DialogueComponent>(line);
-                        std::cout << sf::String(line).toAnsiString() << std::endl;
-                    }
-                }
-            }
-            else
-                cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
-            
-            if (!(fileOpened = wif.is_open()))
-                cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
-        }*/
+         {
+         entity = system.AddEntity();
+         
+         wif.open(resourcePath() + path);
+         wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+         
+         if (wif.is_open())
+         {
+         ns::Entity* entity = system.AddEntity();
+         fileOpened = true;
+         
+         while (wif.good())
+         {
+         std::getline(wif, line);
+         if (!wif.eof())
+         {
+         if (line[0] == L'"')
+         entity->AddComponent<ns::TestComponents::DialogueComponent>(line);
+         std::cout << sf::String(line).toAnsiString() << std::endl;
+         }
+         }
+         }
+         else
+         cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
+         
+         if (!(fileOpened = wif.is_open()))
+         cout << "Debug :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
+         }*/
     }
 }
 

@@ -40,16 +40,9 @@
 //TODO: Parallax should have some default animation (like moving cursor) so the image is not static
 //      (maybe only when cursor is not being moved??) and this might be an option in preferences and in novel's settings
 
-//TODO: Text's outline rescaling with ns::gs::scale
 //TODO: Colors in GUI system
-//TODO: Ownership change in Dialogues
-//TODO: Name box in GUI system
-//TODO: Dialogue's GUISystem should be drawn level BENEATH the actual dialogue lines
-
-//TODO: Condition of appearing the name box
-//TODO: Width of name box depending on @dialogue.width
 //TODO: Minimum width and height. After that no scaling can be made.
-//TODO: LocalVariable_Set - use it everywhere where varialbles are changing.
+//TODO: If the device NovelSome is running on is slow on loading images and stuff, then there should be an option to preload it.
 
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
@@ -58,11 +51,25 @@
 //DONE: Variables in unordered_map that can be string, int, float, bool etc.
 //      The type should be specified somewhere? So it's be own-made structure, I guess.
 //      Ability to seamlessly declare and even use without declaring variables.
+//DONE: Text's outline rescaling with ns::gs::scale
+//DONE: Ownership change in Dialogues
+//DONE: Name box in GUI system
+//DONE: Dialogue's GUISystem should be drawn level BENEATH the actual dialogue lines
+//DONE: Condition of appearing the name box
+//DONE: Width of name box depending on @dialogue.width
+//DONE: LocalVariable_Set - use it everywhere where varialbles are changing.
+//DONE: Image's global library so no dublicate will be loaded.
+
+#ifdef __APPLE__
+    #include "TargetConditionals.h"
+    #if TARGET_OS_IPHONE
+        #include <SFML/Main.hpp>
+    #endif
+#endif
 
 #include <iostream>
 #include <unordered_map>
 
-#include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -73,31 +80,120 @@
 #include "Components/EssentialComponents.hpp"
 #include "Components/NovelComponents/Novel.hpp"
 
+#include <SFML/Config.hpp>
+
 using std::cin;
 using std::cout;
 using std::endl;
 
+void CalculateScaleRatios(unsigned int width, unsigned int height)
+{
+    float factorX = (float)width / ns::gs::relativeWidth;
+    float factorY = (float)height / ns::gs::relativeHeight;
+    
+    float ratioFactorX = (float)width/(float)height;
+    float ratioFactorY = (float)height/(float)width;
+    
+    if (ratioFactorY > 1.2)
+        ns::GlobalSettings::scale = factorY - factorY * 1/(ratioFactorY - 0.2)*0.4;
+    else if (ratioFactorX > 1.2)
+        ns::GlobalSettings::scale = factorX * ((1.2 + ratioFactorX*0.3) / ratioFactorX);
+    else
+        ns::GlobalSettings::scale = factorX > factorY ? factorX : factorY;
+}
+
 int main()
 {
+#ifdef SFML_SYSTEM_IOS
+    sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
+    ns::GlobalSettings::width = sf::VideoMode::getDesktopMode().width;
+    ns::GlobalSettings::height = sf::VideoMode::getDesktopMode().height;
+#else
     sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
     ns::GlobalSettings::window = &window;
     ns::GlobalSettings::width = 1280;
     ns::GlobalSettings::height = 800;
-    
+#endif
     ns::GlobalSettings::relativeWidth = 1280;
     ns::GlobalSettings::relativeHeight = 800;
+    CalculateScaleRatios(ns::gs::width, ns::gs::height);
+    
 #ifdef _WIN32
     if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
         window.setPosition({- ns::GlobalSettings::windowPositionOffset, window.getPosition().y});
 #endif
-
+    
+    if (ns::gs::resolutionClassSetting == -1)
+    {
+        unsigned int width;
+        unsigned int height;
+        
+        if (sf::VideoMode::getDesktopMode().width >= sf::VideoMode::getDesktopMode().height)
+        {
+            width = sf::VideoMode::getDesktopMode().width;
+            height = sf::VideoMode::getDesktopMode().height;
+        }
+        else
+        {
+            width = sf::VideoMode::getDesktopMode().height;
+            height = sf::VideoMode::getDesktopMode().width;
+        }
+        
+        if (width <= 640 && height <= 480)
+            ns::gs::resolutionClass = 0;
+        else if (width <= 1024 && height <= 768)
+            ns::gs::resolutionClass = 1;
+        else if (width <= 1920 && height <= 1080)
+            ns::gs::resolutionClass = 2;
+        else
+            ns::gs::resolutionClass = 3;
+        
+        #ifdef SFML_SYSTEM_IOS
+            std::string device = iOSDeviceName();
+            if (nss::Command(device, "iPhone"))
+            {
+                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 6));
+                if (version <= 4)
+                    ns::gs::resolutionClass = 0;
+                else if (version <= 7)
+                    ns::gs::resolutionClass = 1;
+                else if (version == 8)
+                {
+                    int underVersion = ns::base::ConvertToInt(nss::ParseUntil(device, '\0', 8));
+                    if (underVersion == 4)
+                        ns::gs::resolutionClass = 1;
+                    else
+                        ns::gs::resolutionClass = 2;
+                }
+            }
+            else if (nss::Command(device, "iPad"))
+            {
+                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 4));
+                if (version <= 2)
+                    ns::gs::resolutionClass = 0;
+            }
+            else if (nss::Command(device, "iPod"))
+            {
+                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 4));
+                if (version <= 3)
+                    ns::gs::resolutionClass = 0;
+                else if (version <= 4)
+                    ns::gs::resolutionClass = 1;
+            }
+        #endif
+        
+        cout << "main :: GlobalSettings :: Autocomputed ResolutionClass is " << ns::gs::resolutionClass << "@x." << endl;
+    }
+    else
+        ns::gs::resolutionClass = ns::gs::resolutionClassSetting;
+    
     sf::Image icon;
     if (icon.loadFromFile(resourcePath() + "Data/Images/macos@2x.png"))
         window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
     
     window.setFramerateLimit(ns::gs::framerateLimit);
     window.setVerticalSyncEnabled(ns::gs::isVerticalSyncEnabled);
-
+    
     ns::EntitySystem system;
     
     ///----------------------------------------------------------
@@ -122,15 +218,20 @@ int main()
     ns::Entity* Shimakaze = system.AddEntity();
     {
         Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 12");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 13");
+#ifdef SFML_SYSTEM_IOS
+        ns::gs::isParallaxEnabled = false;
+        Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
+#endif
     }
     
     sf::Clock clock;
     sf::FloatRect visibleArea;
+    
+    window.setActive();
     while (window.isOpen())
     {
         sf::Event event;
-        float factorX, factorY;
         while (window.pollEvent(event))
         {
             switch (event.type)
@@ -152,6 +253,10 @@ int main()
                     break;
                     
                 case sf::Event::MouseButtonPressed:
+                    system.PollEvent(event);
+                    break;
+                    
+                case sf::Event::TouchEnded:
                     system.PollEvent(event);
                     break;
                     
@@ -177,10 +282,10 @@ int main()
                             {
                                 Elizabeth->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
                             }
-                            Shimakaze = system.AddEntity();
+                                Shimakaze = system.AddEntity();
                             {
                                 Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 12");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 13");
                             }
                             break;
                             
@@ -192,11 +297,7 @@ int main()
                 case sf::Event::Resized:
                     ns::GlobalSettings::width = event.size.width;
                     ns::GlobalSettings::height = event.size.height;
-                    
-                    factorX = (float)event.size.width / ns::GlobalSettings::relativeWidth;
-                    factorY = (float)event.size.height / ns::GlobalSettings::relativeHeight;
-                    ns::GlobalSettings::scale = factorX > factorY ? factorX : factorY;
-                    
+                    CalculateScaleRatios(event.size.width, event.size.height);
                     system.Resize(event.size.width, event.size.height);
                     
                     visibleArea = sf::FloatRect(0, 0, event.size.width, event.size.height);
@@ -207,7 +308,7 @@ int main()
                     break;
             }
         }
-
+        
         system.Update(clock.restart());
         
         window.clear();

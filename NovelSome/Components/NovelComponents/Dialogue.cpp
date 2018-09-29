@@ -133,6 +133,19 @@ namespace ns
                                 novel->UnHold(this);
                     }
                 }
+                else if (visible && event.type == sf::Event::TouchEnded)
+                {
+                    mode = (!forcePressInsideDialogue || (event.touch.x > 0 && event.touch.x < ns::GlobalSettings::width && event.touch.y < ns::GlobalSettings::height && event.touch.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5)) ? disappearing : waitingForInput;
+                    
+                    if (mode == disappearing)
+                    {
+                        event = sf::Event();
+                        
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDisappearing)
+                                novel->UnHold(this);
+                    }
+                }
                 else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
                     visible = !visible;
             }

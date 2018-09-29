@@ -38,9 +38,21 @@
 /// with the main bundle or an empty string is there is no bundle.
 ///
 ////////////////////////////////////////////////////////////
-std::string resourcePath(void);
-std::wstring executablePath(void);
-//std::string resourceFontsPath(void);
-//std::string resourceNovelsPath(void);
+#include <SFML/Config.hpp>
+
+#ifdef SFML_SYSTEM_IOS
+    std::string iOSDeviceName();
+    inline std::string resourcePath()
+    {
+        return "";
+    }
+    inline std::wstring executablePath()
+    {
+        return L"";
+    }
+#else
+    std::string resourcePath(void);
+    std::wstring executablePath(void);
+#endif
 
 #endif

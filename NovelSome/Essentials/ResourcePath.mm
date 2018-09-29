@@ -29,36 +29,52 @@
 #include "ResourcePath.hpp"
 
 #ifdef __APPLE__
-    #import <Foundation/Foundation.h>
+    #ifdef SFML_SYSTEM_IOS
+        #import <Foundation/Foundation.h>
+        #import <sys/utsname.h>
 
-    ////////////////////////////////////////////////////////////
-    std::string resourcePath(void)
-    {
-        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+        std::string iOSDeviceName()
+        {
+            struct utsname systemInfo;
+            uname(&systemInfo);
+            
+            std::string rpath;
+            NSString* path = [NSString stringWithCString:systemInfo.machine
+                                                encoding:NSUTF8StringEncoding];
+            return [path UTF8String];
+        }
+    #else
+        #import <Foundation/Foundation.h>
 
-        std::string rpath;
-        NSBundle* bundle = [NSBundle mainBundle];
+        ////////////////////////////////////////////////////////////
+        std::string resourcePath(void)
+        {
+            NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-        if (bundle == nil) {
-    #ifdef DEBUG
-            NSLog(@"bundle is nil... thus no resources path can be found.");
-    #endif
-        } else {
-            NSString* path = [bundle resourcePath];
-            rpath = [path UTF8String] + std::string("/");
+            std::string rpath;
+            NSBundle* bundle = [NSBundle mainBundle];
+
+            if (bundle == nil) {
+        #ifdef DEBUG
+                NSLog(@"bundle is nil... thus no resources path can be found.");
+        #endif
+            } else {
+                NSString* path = [bundle resourcePath];
+                rpath = [path UTF8String] + std::string("/");
+            }
+
+            [pool drain];
+
+            return rpath;
         }
 
-        [pool drain];
-
-        return rpath;
-    }
-    
-    std::wstring executablePath(void)
-    {
-        std::string resPath = resourcePath();
-        
-        //TODO: change the way it converts
-        std::wstring exePath(resPath.begin(), resPath.end());
-        return exePath;
-    }
+        std::wstring executablePath(void)
+        {
+            std::string resPath = resourcePath();
+            
+            //TODO: change the way it converts
+            std::wstring exePath(resPath.begin(), resPath.end());
+            return exePath;
+        }
+    #endif
 #endif

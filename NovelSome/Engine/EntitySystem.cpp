@@ -37,14 +37,14 @@ namespace ns
         components = nullptr;
         lastComponent = nullptr;
     }
-
+    
     Entity::Entity(EntitySystem* system)
     {
         this->system = system;
         components = nullptr;
         lastComponent = nullptr;
     }
-
+    
     void Entity::Update(const sf::Time& elapsedTime)
     {
         List<Component>* next = nullptr;
@@ -55,7 +55,7 @@ namespace ns
                 list->data->Update(elapsedTime);
             }
     }
-
+    
     void Entity::Draw(sf::RenderWindow* window)
     {
         List<Component>* next = nullptr;
@@ -144,12 +144,12 @@ namespace ns
                 delete list;
             }
     }
-
+    
     void Entity::SetEntitySystem(EntitySystem* system)
     {
         this->system = system;
     }
-
+    
     int Entity::GetComponentsCount()
     {
         List<Component>* list = components;
@@ -163,12 +163,12 @@ namespace ns
         
         return count;
     }
-
+    
     List<Component>* Entity::GetComponentsListHead()
     {
         return components;
     }
-
+    
     
     
     EntitySystem::EntitySystem()
@@ -176,7 +176,7 @@ namespace ns
         entities = nullptr;
         lastEntity = nullptr;
     }
-
+    
     void EntitySystem::Update(const sf::Time& elapsedTime)
     {
         List<Entity>* next = nullptr;
@@ -187,7 +187,7 @@ namespace ns
                 list->data->Update(elapsedTime);
             }
     }
-
+    
     void EntitySystem::Draw(sf::RenderWindow* window)
     {
         List<Entity>* next = nullptr;
@@ -220,7 +220,7 @@ namespace ns
                 list->data->PollEvent(event);
             }
     }
-
+    
     Entity* EntitySystem::AddEntity()
     {
         Entity* entity = new Entity(this); //Using "new" instead of malloc just to call the constractor (malloc doesn't do that, but "new" does)
@@ -237,7 +237,7 @@ namespace ns
         
         return entity;
     }
-
+    
     void EntitySystem::PopEntity(Entity* entity)
     {
         List<Entity>* current = entities;
@@ -279,7 +279,7 @@ namespace ns
             delete current;
         }
     }
-
+    
     void EntitySystem::Destroy()
     {
         List<Entity>* next = nullptr;
@@ -304,7 +304,7 @@ namespace ns
         
         return count;
     }
-
+    
     List<Entity>* EntitySystem::GetEntitiesListHead()
     {
         return entities;
