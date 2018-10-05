@@ -100,12 +100,33 @@ namespace ns
             audioLoaded = false;
             if (novel != nullptr)
             {
-                sf::String fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                std::wstring fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                
+                if (!base::FileExists(fullPath))
+                {
+                    std::wstring onlyFolder = base::GetFolderPath(fullPath);
+                    std::wstring onlyFileName = L"";
+                    for (int i = onlyFolder.length(); i < fullPath.length(); i++)
+                        onlyFileName += fullPath[i];
+                    
+                    if (base::FileExists(onlyFolder + L"sounds/" + onlyFileName))
+                        fullPath = onlyFolder + L"sounds/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"sound/" + onlyFileName))
+                        fullPath = onlyFolder + L"sound/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"audio/" + onlyFileName))
+                        fullPath = onlyFolder + L"audio/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Sounds/" + onlyFileName))
+                        fullPath = onlyFolder + L"Sounds/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Sound/" + onlyFileName))
+                        fullPath = onlyFolder + L"Sound/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Audio/" + onlyFileName))
+                        fullPath = onlyFolder + L"Audio/" + onlyFileName;
+                }
                 
 #ifdef _WIN32
-                std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
+                std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
                 if (!ifStream.is_open())
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
                 else
                 {
                     auto filesize = ifStream.tellg();
@@ -118,9 +139,9 @@ namespace ns
                 }
 #else
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                std::string u8str = converter.to_bytes(fullPath.toWideString());
+                std::string u8str = converter.to_bytes(fullPath);
                 if (!(audioLoaded = soundBuffer.loadFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
 #endif
                 
                 if (audioLoaded)
@@ -261,12 +282,32 @@ namespace ns
             audioLoaded = false;
             if (novel != nullptr)
             {
-                sf::String fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                std::wstring fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + fileName;
+                if (!base::FileExists(fullPath))
+                {
+                    std::wstring onlyFolder = base::GetFolderPath(fullPath);
+                    std::wstring onlyFileName = L"";
+                    for (int i = onlyFolder.length(); i < fullPath.length(); i++)
+                        onlyFileName += fullPath[i];
+                    
+                    if (base::FileExists(onlyFolder + L"music/" + onlyFileName))
+                        fullPath = onlyFolder + L"music/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"ambient/" + onlyFileName))
+                        fullPath = onlyFolder + L"ambient/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"audio/" + onlyFileName))
+                        fullPath = onlyFolder + L"audio/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Music/" + onlyFileName))
+                        fullPath = onlyFolder + L"Music/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Ambient/" + onlyFileName))
+                        fullPath = onlyFolder + L"Ambient/" + onlyFileName;
+                    else if (base::FileExists(onlyFolder + L"Audio/" + onlyFileName))
+                        fullPath = onlyFolder + L"Audio/" + onlyFileName;
+                }
                 
 #ifdef _WIN32
-                std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
+                std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
                 if (!ifStream.is_open())
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
                 else
                 {
                     auto filesize = ifStream.tellg();
@@ -279,9 +320,9 @@ namespace ns
                 }
 #else
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                std::string u8str = converter.to_bytes(fullPath.toWideString());
+                std::string u8str = converter.to_bytes(fullPath);
                 if (!(audioLoaded = music.openFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
 #endif
                 
                 if (audioLoaded)

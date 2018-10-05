@@ -65,7 +65,8 @@ namespace ns
     
     
     
-    sf::Image* ImageCollector::LoadImage(const std::wstring& imageName)
+    
+    sf::Image* ImageCollector::LoadImage(const std::wstring& imageName, unsigned int mode)
     {
         if (images.find(imageName) != images.end())
         {
@@ -76,7 +77,79 @@ namespace ns
         {
             sf::Image* image = new sf::Image();
             
-            sf::String fullPath = sf::String(resourcePath()) + imageName;
+            std::wstring fullPath = sf::String(resourcePath()) + imageName;
+            
+            if (mode != 0 && !base::FileExists(fullPath))
+            {
+                std::wstring getExtention = base::GetExtentionFromString(fullPath);
+                std::wstring woExtention = base::GetStringWithNoExtention(fullPath, getExtention);
+                if (!base::FileExists(sf::String(woExtention + L"@0x" + getExtention)) &&
+                    !base::FileExists(sf::String(woExtention + L"@1x" + getExtention)) &&
+                    !base::FileExists(sf::String(woExtention + L"@2x" + getExtention)) &&
+                    !base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+                {
+                    bool found{ false };
+                    std::wstring onlyFolder = base::GetFolderPath(fullPath);
+                    
+                    std::wstring onlyFileName = L"";
+                    for (int i = onlyFolder.length(); i < fullPath.length(); i++)
+                        onlyFileName += fullPath[i];
+                    
+                    switch (mode)
+                    {
+                        case 1:
+                            for (int i = 0; i <= 1 && !found; i++)
+                            {
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0:
+                                        currentPath = onlyFolder + L"backgrounds/" + onlyFileName;
+                                        break;
+                                    case 1:
+                                        currentPath = onlyFolder + L"Backgrounds/" + onlyFileName;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath))))
+                                    fullPath = currentPath;
+                            }
+                            break;
+                            
+                        case 2:
+                            for (int i = 0; i <= 1 && !found; i++)
+                            {
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0:
+                                        currentPath = onlyFolder + L"images/" + onlyFileName;
+                                        break;
+                                    case 1:
+                                        currentPath = onlyFolder + L"sprites/" + onlyFileName;
+                                        break;
+                                    case 2:
+                                        currentPath = onlyFolder + L"Images/" + onlyFileName;
+                                        break;
+                                    case 3:
+                                        currentPath = onlyFolder + L"Sprites/" + onlyFileName;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath))))
+                                    fullPath = currentPath;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            
             if (GlobalSettings::isResolutionClassEnabled)
             {
                 std::wstring getExtention = base::GetExtentionFromString(fullPath);
@@ -85,46 +158,46 @@ namespace ns
                 switch (ns::gs::resolutionClass)
                 {
                     case 0:
-                        if (base::FileExists(sf::String(woExtention + L"@0x" + getExtention)))
+                        if (base::FileExists(woExtention + L"@0x" + getExtention))
                             fullPath = woExtention + L"@0x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@1x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@1x" + getExtention))
                             fullPath = woExtention + L"@1x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@2x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@2x" + getExtention))
                             fullPath = woExtention + L"@2x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@3x" + getExtention))
                             fullPath = woExtention + L"@3x" + getExtention;
                         break;
                         
                     case 1:
-                        if (base::FileExists(sf::String(woExtention + L"@1x" + getExtention)))
+                        if (base::FileExists(woExtention + L"@1x" + getExtention))
                             fullPath = woExtention + L"@1x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@2x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@2x" + getExtention))
                             fullPath = woExtention + L"@2x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@0x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@0x" + getExtention))
                             fullPath = woExtention + L"@0x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@3x" + getExtention))
                             fullPath = woExtention + L"@3x" + getExtention;
                         break;
                         
                     case 2:
-                        if (base::FileExists(sf::String(woExtention + L"@2x" + getExtention)))
+                        if (base::FileExists(woExtention + L"@2x" + getExtention))
                             fullPath = woExtention + L"@2x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@1x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@1x" + getExtention))
                             fullPath = woExtention + L"@1x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@3x" + getExtention))
                             fullPath = woExtention + L"@3x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@0x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@0x" + getExtention))
                             fullPath = woExtention + L"@0x" + getExtention;
                         break;
                         
                     case 3:
-                        if (base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+                        if (base::FileExists(woExtention + L"@3x" + getExtention))
                             fullPath = woExtention + L"@3x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@2x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@2x" + getExtention))
                             fullPath = woExtention + L"@2x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@1x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@1x" + getExtention))
                             fullPath = woExtention + L"@1x" + getExtention;
-                        else if (base::FileExists(sf::String(woExtention + L"@0x" + getExtention)))
+                        else if (base::FileExists(woExtention + L"@0x" + getExtention))
                             fullPath = woExtention + L"@0x" + getExtention;
                         break;
                         
@@ -152,10 +225,9 @@ namespace ns
             
             bool imageLoaded{ false };
 #ifdef _WIN32
-            //TODO: Fix memory leak
-            std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
+            std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
             if (!ifStream.is_open())
-                std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
             else
             {
                 auto filesize = ifStream.tellg();
@@ -169,7 +241,7 @@ namespace ns
             }
 #else
             if (!(imageLoaded = image->loadFromFile(base::ConvertToUTF8(fullPath))))
-                std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
+                std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
 #endif
             
             if (imageLoaded)

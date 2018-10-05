@@ -258,7 +258,7 @@ namespace ns
                 {
                     
                     //analyzing the "word"
-                    if (itHasAPoint)
+                    if (itHasAPoint && !itWasANumber)
                     {
                         std::wstring replaceBy = L"";
                         for (int i = 0; i < word.length(); i++)
@@ -800,6 +800,288 @@ namespace ns
             else
                 return child;
         }
+        bool GUISystem::LoadFromFile(const std::wstring& fileName, Skin* skin, std::wstring guiScope)
+        {
+            bool skinLoaded{ false };
+            
+            std::wifstream wif;
+#ifdef _WIN32
+            wif.open(fileName);
+#else
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            std::string u8str = converter.to_bytes(fileName);
+            wif.open(u8str);
+#endif
+            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+            
+            if (!wif.is_open())
+                cout << "Error :: Skin :: File couldn't be opened, path: " << base::ConvertToUTF8(fileName) << endl;
+            else
+            {
+                bool eof{ false };
+                std::wstring line;
+                nss::CommandSettings command;
+                
+                bool parsingGUI{ (guiScope == L"") };
+                List<GUIObject>* scope = new List<GUIObject>();
+                unsigned int knownType = 0;
+                std::wstring forArgumentsParsing{ L"" };
+                GUIObject* component{ nullptr };
+                
+                while (!eof)
+                {
+                    if (!wif.eof())
+                    {
+                        std::getline(wif, line);
+                        command.Command(line);
+                        nss::SkipSpaces(command);
+                        
+                        if (!parsingGUI)
+                        {
+                            if (nss::Command(command, L"//")) { /* that's a comment */ }
+                            else if (nss::Command(command, L"gui "))
+                            {
+                                std::wstring nameParsed;
+                                if (command.line[command.lastPos] == L'"')
+                                    nameParsed = nss::ParseAsQuoteString(command);
+                                else
+                                    nameParsed = nss::ParseUntil(command, ' ');
+                                
+                                parsingGUI = (nameParsed == guiScope);
+                                if (parsingGUI)
+                                {
+                                    skinLoaded = true;
+                                    
+                                    bool typeFound{ false };
+                                    for (int i = 0; i < line.length() && !typeFound; i++)
+                                        typeFound = (line[i] == L'{');
+                                    if (!typeFound)
+                                        knownType = 1;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //TODO: Parsing GUI
+                            
+                            // Какой-то вектор или лист, который будет хранить инфу об объектах выше.
+                            // Нужно считать скоп, в котором сейчас находимся, именно по этому List<GUISystem>'ов.
+                            // Скоп повышается, когда закрывается bracket => нужно вести счёт брекетов.
+                            // Скоп понижается, когда мы открываем новый объект какого-то типа.
+                            // Под объекты одну функцию комманд, узнавать о режиме объекта по переменной какой-нибудь типа бул.
+                            
+                            bool thatsAScope{ false };
+                            for (int i = 0; i < line.length(); ++i)
+                            {
+                                if (line[i] == L'{' && knownType != 1)
+                                    thatsAScope = true;
+                                else if (line[i] == L'{')
+                                    knownType = 0;
+                                else if (line[i] == L'}')
+                                {
+                                    if (thatsAScope)
+                                        thatsAScope = false;
+                                    else if (scope != nullptr)
+                                    {
+                                        List<GUIObject>* next = scope->next;
+                                        delete scope;
+                                        scope = next;
+                                    }
+                                }
+                            }
+                            
+                            if (scope != nullptr)
+                            {
+                                if (thatsAScope)
+                                {
+                                    if (knownType == 0)
+                                    {
+                                        if (nss::Command(command, L"rectangle"))
+                                            knownType = 2;
+                                        
+                                        if (knownType != 0)
+                                            forArgumentsParsing = line;
+                                    }
+                                    
+                                    List<GUIObject>* list = new List<GUIObject>();
+                                    
+                                    if (knownType != 0)
+                                    {
+                                        GUISystem* guiSystemToAddTo{ nullptr };
+                                        if (scope->data != nullptr)
+                                            guiSystemToAddTo = scope->data->GetChildSystem();
+                                        else if (scope->data == nullptr && scope->next == nullptr)
+                                            guiSystemToAddTo = this;
+                                        
+                                        if (guiSystemToAddTo != nullptr)
+                                        {
+                                            GUIObjects::Rectangle* rect;
+                                            switch (knownType)
+                                            {
+                                                case 2:
+                                                    rect = guiSystemToAddTo->AddComponent<GUIObjects::Rectangle>();
+                                                    rect->shape.setFillColor(sf::Color(140,140,140,0));
+                                                    rect->maxAlpha = 200;
+                                                    component = rect;
+                                                    break;
+                                                default:
+                                                    component = nullptr;
+                                                    break;
+                                            }
+                                            list->data = component;
+                                            
+                                            nss::CommandSettings argumentLine;
+                                            argumentLine.Command(forArgumentsParsing);
+                                            wchar_t** arguments = nss::ParseArguments(argumentLine);
+                                            if (arguments != nullptr)
+                                                for (int i = 0; arguments[i] != nullptr; i++)
+                                                {
+                                                    nss::CommandSettings argument;
+                                                    argument.Command(arguments[i]);
+                                                    
+                                                    if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"text")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"}")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"{")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
+                                                    {
+                                                        if (knownType == 2)
+                                                        {
+                                                            skin->dialogue.nameRect = static_cast<GUIObjects::Rectangle*>(component);
+                                                            skin->dialogue.nameRect->SetFadings(GUIObject::offline);
+                                                        }
+                                                    }
+                                                    else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
+                                                    {
+                                                        if (knownType == 2)
+                                                            skin->dialogue.dialogueRect = static_cast<GUIObjects::Rectangle*>(component);
+                                                    }
+                                                    
+                                                    delete arguments[i];
+                                                }
+                                            if (arguments != nullptr)
+                                                delete arguments;
+                                        }
+                                    }
+                                    
+                                    list->next = scope;
+                                    scope->prev = list;
+                                    scope = list;
+                                    knownType = 0;
+                                }
+                                else
+                                {
+                                    if (nss::Command(command, L"//")) { /* that's a comment */ }
+                                    else if (nss::Command(command, L"}")) { /* we've already handled this situation */ }
+                                    else if (nss::Command(command, L"rectangle"))
+                                    {
+                                        forArgumentsParsing = line;
+                                        knownType = 2;
+                                    }
+                                    else if (nss::ContainsUsefulInformation(command))
+                                    {
+                                        knownType = 0;
+                                        if (scope->data != nullptr)
+                                        {
+                                            if (nss::Command(command, L"left:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"right:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"top:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"bottom:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"width:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"height:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                component->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:"))
+                                            {
+                                                int possibleValue = nss::ParseAlpha(command);
+                                                if (possibleValue != -1)
+                                                    component->maxAlpha = possibleValue;
+                                            }
+                                            else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") ||
+                                                     nss::Command(command, L"color ") || nss::Command(command, L"colour ") ||
+                                                     nss::Command(command, L"fill:") || nss::Command(command, L"fillcolor:") ||
+                                                     nss::Command(command, L"color:") || nss::Command(command, L"colour:"))
+                                            {
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255)
+                                                    component->SetColor(possibleColor);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                parsingGUI = false;
+                                scope = new List<GUIObject>();
+                                knownType = 0;
+                            }
+                        }
+                    }
+                    else
+                        eof = true;
+                }
+                
+                while (scope != nullptr)
+                {
+                    List<GUIObject>* next = scope->next;
+                    delete scope;
+                    scope = next;
+                }
+            }
+            wif.close();
+            
+            return skinLoaded;
+        }
+        void GUISystem::PrintIerarchy()
+        {
+            cout << "GUISystem {" << endl;
+            for (List<GUIObject>* list = guiObjects; list != nullptr; list = list->next)
+            {
+                cout << "---GUIObject {" << endl;
+                if (list->data->child != nullptr)
+                    for (List<GUIObject>* list1 = list->data->child->guiObjects; list1 != nullptr; list1 = list1->next)
+                    {
+                        cout << "------GUIObject {" << endl;
+                        if (list1->data->child != nullptr)
+                            for (List<GUIObject>* list2 = list1->data->child->guiObjects; list2 != nullptr; list2 = list2->next)
+                            {
+                                cout << "---------GUIObject {" << endl;
+                                if (list2->data->child != nullptr)
+                                    for (List<GUIObject>* list3 = list2->data->child->guiObjects; list3 != nullptr; list3 = list3->next)
+                                    {
+                                        cout << "------------asd" << endl;
+                                    }
+                                cout << "---------}" << endl;
+                            }
+                        cout << "------}" << endl;
+                    }
+                cout << "---}" << endl;
+            }
+            cout << "}" << endl;
+        }
         
         
         
@@ -827,55 +1109,10 @@ namespace ns
                 unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
             }
-            
-            
-            
-            void DialogueRectangle::Init()
+            void Rectangle::SetColor(const sf::Color& fillColour)
             {
-                shape.setFillColor(sf::Color::Black);
-            }
-            void DialogueRectangle::Update(const sf::Time& elapsedTime)
-            {
-                
-            }
-            void DialogueRectangle::Draw(sf::RenderWindow* window)
-            {
-                window->draw(shape);
-            }
-            void DialogueRectangle::Resize(unsigned int width, unsigned int height)
-            {
-                shape.setSize({static_cast<float>(constrains.width), static_cast<float>(constrains.height)});
-                shape.setPosition(constrains.posX, constrains.posY);
-            }
-            void DialogueRectangle::SetAlpha(sf::Int8 alpha)
-            {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
-                shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
-            }
-            
-            
-            
-            void NameRectangle::Init()
-            {
-                shape.setFillColor(sf::Color::Black);
-            }
-            void NameRectangle::Update(const sf::Time& elapsedTime)
-            {
-                
-            }
-            void NameRectangle::Draw(sf::RenderWindow* window)
-            {
-                window->draw(shape);
-            }
-            void NameRectangle::Resize(unsigned int width, unsigned int height)
-            {
-                shape.setSize({static_cast<float>(constrains.width), static_cast<float>(constrains.height)});
-                shape.setPosition(constrains.posX, constrains.posY);
-            }
-            void NameRectangle::SetAlpha(sf::Int8 alpha)
-            {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
-                shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
+                shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a));
+                //shape.setOutlineColor(outlineColour);
             }
         }
     }

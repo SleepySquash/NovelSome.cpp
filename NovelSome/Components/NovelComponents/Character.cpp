@@ -147,7 +147,7 @@ namespace ns
                 
                 if (spritePath.length() != 0)
                 {
-                    sf::Image* imagePtr = ns::ic::LoadImage(lookForSpritePath + spritePath);
+                    sf::Image* imagePtr = ic::LoadImage(lookForSpritePath + spritePath, 2);
                     if (imagePtr != nullptr)
                     {
                         imagePath = lookForSpritePath + spritePath;
@@ -219,7 +219,7 @@ namespace ns
                 
                 defaultPositionX = sprite.getPosition().x;
                 defaultPositionY = sprite.getPosition().y;
-                if (doParallax)
+                if (doParallax && !(gs::isPauseEnabled && gs::isPause))
                     CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
             }
         }
@@ -281,7 +281,7 @@ namespace ns
         void Character::Destroy()
         {
             if (imagePath.toWideString().length() != 0)
-                ns::ic::DeleteImage(imagePath);
+                ic::DeleteImage(imagePath);
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
         }

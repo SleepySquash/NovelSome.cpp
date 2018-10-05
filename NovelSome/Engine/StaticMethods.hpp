@@ -15,8 +15,8 @@
 #include <codecvt>
 
 #ifdef _WIN32
-//std::ifstream in GetFont
-#include <fstream>
+    //std::ifstream in GetFont
+    #include <fstream>
 #endif
 
 #include <SFML/Main.hpp>
@@ -52,7 +52,8 @@ namespace ns
     public:
         static std::unordered_map<std::wstring, sf::Image*> images;
         static std::unordered_map<std::wstring, int> usage;
-        static sf::Image* LoadImage(const std::wstring& imageName);
+        
+        static sf::Image* LoadImage(const std::wstring& imageName, unsigned int mode = 0);
         static void DeleteImage(const std::wstring& imageName);
         static void FreeImages();
     };

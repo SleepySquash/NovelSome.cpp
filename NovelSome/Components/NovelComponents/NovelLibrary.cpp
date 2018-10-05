@@ -12,6 +12,227 @@ namespace ns
 {
     namespace NovelComponents
     {
+        void Skin::RestoreToDefaults()
+        {
+            //TODO: Defaults
+            dialogue.gui.Clear();
+        }
+        void Skin::LoadFromFile(const std::wstring& fileName)
+        {
+            std::wifstream wif;
+#ifdef _WIN32
+            wif.open(fileName);
+#else
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            std::string u8str = converter.to_bytes(fileName);
+            wif.open(u8str);
+#endif
+            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+            
+            bool fileOpened{ false };
+            if (!((fileOpened = wif.is_open())))
+                cout << "Error :: Skin :: File couldn't be opened, path: " << base::ConvertToUTF8(fileName) << endl;
+            else
+            {
+                bool eof{ false };
+                std::wstring line;
+                nss::CommandSettings command;
+                
+                std::wstring guiScope = L"";
+                std::wstring settingScope = L"";
+                
+                while (!eof)
+                {
+                    if (!wif.eof())
+                    {
+                        std::getline(wif, line);
+                        command.Command(line);
+                        
+                        if (nss::Command(command, L"//")) { /* that's a comment */ }
+                        else if (nss::Command(command, L"gui "))
+                        {
+                            int openedBrackets = 0;
+                            for (int i = command.lastPos; i < line.length(); i++)
+                                if (line[i] == L'{')
+                                    openedBrackets++;
+                            bool mightBeOnNextLine{ (openedBrackets == 0) };
+                            while ((mightBeOnNextLine || openedBrackets > 0) && !wif.eof())
+                            {
+                                std::getline(wif, line);
+                                for (int i = 0; i < line.length(); i++)
+                                {
+                                    if (line[i] == L'{')
+                                        openedBrackets++;
+                                    else if (line[i] == L'}')
+                                        openedBrackets--;
+                                }
+                                if (openedBrackets > 0)
+                                    mightBeOnNextLine = false;
+                            }
+                        }
+                        else if (nss::Command(command, L"appeartime:") || nss::Command(command, L"appeartime "))
+                        {
+                            nss::SkipSpaces(command);
+                            float possibleValue = nss::ParseAsFloat(command);
+                            if (possibleValue >= 0)
+                            {
+                                if (settingScope == L"music")
+                                    music.appearTime = possibleValue;
+                                else if (settingScope == L"ambient")
+                                    ambient.appearTime = possibleValue;
+                                else if (settingScope == L"sound")
+                                    sound.appearTime = possibleValue;
+                                else if (settingScope == L"background")
+                                    background.appearTime = possibleValue;
+                                else if (settingScope == L"character")
+                                    character.appearTime = possibleValue;
+                                else if (settingScope == L"dialogue")
+                                    dialogue.appearTime = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"disappeartime:") || nss::Command(command, L"disappeartime "))
+                        {
+                            nss::SkipSpaces(command);
+                            float possibleValue = nss::ParseAsFloat(command);
+                            if (possibleValue >= 0)
+                            {
+                                if (settingScope == L"music")
+                                    music.disappearTime = possibleValue;
+                                else if (settingScope == L"ambient")
+                                    ambient.disappearTime = possibleValue;
+                                else if (settingScope == L"sound")
+                                    sound.disappearTime = possibleValue;
+                                else if (settingScope == L"background")
+                                    background.disappearTime = possibleValue;
+                                else if (settingScope == L"character")
+                                    character.disappearTime = possibleValue;
+                                else if (settingScope == L"dialogue")
+                                    dialogue.disappearTime = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"maxalpha:") || nss::Command(command, L"maxalpha ") ||
+                                 nss::Command(command, L"alpha:") || nss::Command(command, L"alpha "))
+                        {
+                            int possibleValue = nss::ParseAlpha(command);
+                            if (possibleValue != -1)
+                            {
+                                if (settingScope == L"background")
+                                    background.maxAlpha = possibleValue;
+                                else if (settingScope == L"character")
+                                    character.maxAlpha = possibleValue;
+                                else if (settingScope == L"dialogue")
+                                    dialogue.maxAlpha = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"maxvolume:") || nss::Command(command, L"maxvolume ") ||
+                                 nss::Command(command, L"volume:") || nss::Command(command, L"volume "))
+                        {
+                            nss::SkipSpaces(command);
+                            float possibleValue = nss::ParseAsFloat(command);
+                            if (possibleValue >= 0)
+                            {
+                                if (settingScope == L"music")
+                                    music.maxVolume = possibleValue;
+                                else if (settingScope == L"ambient")
+                                    ambient.maxVolume = possibleValue;
+                                else if (settingScope == L"sound")
+                                    sound.maxVolume = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"charactersize:") || nss::Command(command, L"charactersize "))
+                        {
+                            nss::SkipSpaces(command);
+                            int possibleValue = nss::ParseAsInt(command);
+                            if (possibleValue > 0)
+                                dialogue.characterSize = possibleValue;
+                        }
+                        else if (nss::Command(command, L"size:") || nss::Command(command, L"size "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                int possibleValue = nss::ParseAsInt(command);
+                                if (possibleValue > 0)
+                                    dialogue.characterSize = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"forcePressInsideDialogue:") || nss::Command(command, L"forcePressInsideDialogue "))
+                        {
+                            nss::SkipSpaces(command);
+                            bool possibleValue = nss::ParseAsBool(command);
+                            
+                            dialogue.forcePressInsideDialogue = possibleValue;
+                        }
+                        else if (nss::Command(command, L"fontName:") || nss::Command(command, L"fontName ") ||
+                                 nss::Command(command, L"font:") || nss::Command(command, L"font "))
+                        {
+                            nss::SkipSpaces(command);
+                            
+                            std::wstring possibleValue;
+                            if (command.line[command.lastPos] == '"')
+                                possibleValue = nss::ParseAsQuoteString(command);
+                            else
+                                possibleValue = nss::ParseUntil(command, ' ');
+                            
+                            if (possibleValue.length() != 0)
+                                dialogue.fontName = possibleValue;
+                        }
+                        else if (nss::Command(command, L"music"))
+                            settingScope = L"music";
+                        else if (nss::Command(command, L"sound"))
+                            settingScope = L"sound";
+                        else if (nss::Command(command, L"dialogue"))
+                            settingScope = L"dialogue";
+                        else if (nss::Command(command, L"background"))
+                            settingScope = L"background";
+                        else if (nss::Command(command, L"ambient"))
+                            settingScope = L"ambient";
+                        else if (nss::Command(command, L"character"))
+                            settingScope = L"character";
+                    }
+                    else
+                        eof = true;
+                }
+            }
+            wif.close();
+            
+            bool loadDefaultGUI{ true };
+            if (fileOpened)
+            {
+                dialogue.gui.Clear();
+                loadDefaultGUI = !dialogue.gui.LoadFromFile(fileName, this, L"dialogue");
+            }
+            if (loadDefaultGUI)
+            {
+                //Adding the dialogue's box
+                dialogue.dialogueRect = dialogue.gui.AddComponent<GUIObjects::Rectangle>();
+                GUIObjects::Rectangle* dialogueRect = dialogue.dialogueRect;
+                dialogueRect->shape.setFillColor(sf::Color::Black);
+                dialogueRect->maxAlpha = 170;
+                dialogueRect->constrains.leftS = L"30";
+                dialogueRect->constrains.rightS = L"30";
+                dialogueRect->constrains.bottomS = L"10";
+                dialogueRect->constrains.heightS = L".height/5 - 10";
+                
+                //Requesting the child system to add the name's box
+                GUISystem* childSystem = dialogueRect->GetChildSystem();
+                dialogue.nameRect = childSystem->AddComponent<GUIObjects::Rectangle>();
+                GUIObjects::Rectangle* nameRect = dialogue.nameRect;
+                nameRect->shape.setFillColor(sf::Color::Black);
+                nameRect->maxAlpha = 170;
+                nameRect->constrains.leftS = L"10";
+                nameRect->constrains.rightS = L"0";
+                nameRect->constrains.bottomS = L".height + 5";
+                nameRect->constrains.widthS = L"@name.width + 20";
+                nameRect->constrains.heightS = L"@name.height + 10";
+                nameRect->SetFadings(GUIObject::offline);
+            }
+        }
+        
+        
+        
+        
+        
         NovelLibrary::NovelLibrary() { }
         NovelLibrary::~NovelLibrary()
         {
@@ -134,61 +355,15 @@ namespace ns
                                                     }
                                                     else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") || nss::Command(command, L"color ") || nss::Command(command, L"colour "))
                                                     {
-                                                        std::wstring color1 = nss::ParseUntil(command, ' ');
-                                                        if (color1.length() != 0)
-                                                        {
-                                                            nss::SkipSpaces(command);
-                                                            std::wstring color2 = nss::ParseUntil(command, ' ');
-                                                            if (color2.length() != 0)
-                                                            {
-                                                                nss::SkipSpaces(command);
-                                                                std::wstring color3 = nss::ParseUntil(command, ' ');
-                                                                if (color3.length() != 0)
-                                                                {
-                                                                    int rColor = base::ConvertToInt(color1);
-                                                                    int gColor = base::ConvertToInt(color2);
-                                                                    int bColor = base::ConvertToInt(color3);
-                                                                    charData->fillColor = sf::Color(rColor, gColor, bColor, 0);
-                                                                }
-                                                            }
-                                                            else
-                                                            {
-                                                                std::wstring guessColor = base::LowercaseTheString(color1);
-                                                                if (guessColor == L"while")
-                                                                    charData->fillColor = sf::Color::White;
-                                                                else if (guessColor == L"black")
-                                                                    charData->fillColor = sf::Color::Black;
-                                                            }
-                                                        }
+                                                        sf::Color possibleColor = nss::ParseColor(command);
+                                                        if (possibleColor.a != 255)
+                                                            charData->fillColor = possibleColor;
                                                     }
                                                     else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") || nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour "))
                                                     {
-                                                        std::wstring color1 = nss::ParseUntil(command, ' ');
-                                                        if (color1.length() != 0)
-                                                        {
-                                                            nss::SkipSpaces(command);
-                                                            std::wstring color2 = nss::ParseUntil(command, ' ');
-                                                            if (color2.length() != 0)
-                                                            {
-                                                                nss::SkipSpaces(command);
-                                                                std::wstring color3 = nss::ParseUntil(command, ' ');
-                                                                if (color3.length() != 0)
-                                                                {
-                                                                    int rColor = base::ConvertToInt(color1);
-                                                                    int gColor = base::ConvertToInt(color2);
-                                                                    int bColor = base::ConvertToInt(color3);
-                                                                    charData->outlineColor = sf::Color(rColor, gColor, bColor, 0);
-                                                                }
-                                                            }
-                                                            else
-                                                            {
-                                                                std::wstring guessColor = base::LowercaseTheString(color1);
-                                                                if (guessColor == L"while")
-                                                                    charData->outlineColor = sf::Color::White;
-                                                                else if (guessColor == L"black")
-                                                                    charData->outlineColor = sf::Color::Black;
-                                                            }
-                                                        }
+                                                        sf::Color possibleColor = nss::ParseColor(command);
+                                                        if (possibleColor.a != 255)
+                                                            charData->outlineColor = possibleColor;
                                                     }
                                                     if (nss::Command(command, L"thickness "))
                                                     {

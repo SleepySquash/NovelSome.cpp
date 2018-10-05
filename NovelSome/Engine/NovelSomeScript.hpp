@@ -14,6 +14,7 @@
 
 //nss::SetStringWithLineBreaks
 #include <SFML/Graphics/Text.hpp>
+#include <SFML/Graphics/Color.hpp>
 
 //for ns::base::LowercaseTheString
 #include "../Essentials/Base.hpp"
@@ -48,6 +49,7 @@ namespace nss
     
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results);
+    bool ContainsUsefulInformation(CommandSettings& results);
     
     //TODO: Documentation
     std::wstring GetFromUntil(const std::wstring& line, unsigned int pos, const wchar_t until);
@@ -57,8 +59,16 @@ namespace nss
     std::string ParseUntil(std::string line, const char until, unsigned int from = 0);
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until);
     std::wstring ParseAsQuoteString(CommandSettings& results);
+    std::wstring ParseAsMaybeQuoteString(CommandSettings& results);
+    std::wstring ParseAsMaybeQuoteStringFull(CommandSettings& results);
     int ParseAsInt(CommandSettings& results);
     float ParseAsFloat(CommandSettings& results);
+    std::wstring ParseAsString(CommandSettings& results);
+    std::wstring ParseAsStringWOLowercase(CommandSettings& results);
+    bool ParseAsBool(CommandSettings& results);
+    
+    sf::Color ParseColor(CommandSettings& results);
+    int ParseAlpha(CommandSettings& results);
     
     //TODO: Documentation
     std::wstring ParseArgument(CommandSettings& results);

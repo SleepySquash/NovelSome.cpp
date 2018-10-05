@@ -1,52 +1,150 @@
+name "Default"
+
+font: "NotoSansCJK-Regular.ttc"
+characterSize: 30
+
+dialogue
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+background
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+character
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+music
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+ambient
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+sound
+{
+    appearTime: 0
+    disappearTime: 0
+    volume 100
+}
+
+
 
 
 //или просто menu {
-gui menu {
+gui menu
+{
     //...
 }
 
-//или просто dialogue {
-gui dialogue {
-    rectangle {
-        fit: scale
 
-        height: .height/6
+gui dialogue
+{
+    rectangle as Dialogue
+    {
+        color black
+        alpha: .66
+
         left: 30
         right: 30
         bottom: 10
-    }
-
-    image "dialogue.jpg" {
-        fit: fill
-
-        height: .height/6
-        left: 30
-        right: 30
-        bottom: 10
+        height: ".height/5 - 10"
 
         text @dialogue {
             left: 10
             width: .width - 20
-            font: "font.ttf"
-            size: 16
+            font: "NotoSansCJK-Regular.ttc"
+            size: 30
         }
 
-        if @name {
-            image "name.jpg" { //чтобы height соответствовала "name.jpg" высоте в пикселях
-                imageLeft "nameleft.jpg"
-                imageCenter "name.jpg"
-                imageRight "nameright.jpg"
+        rectangle as Name {
+            color: black
+            maxAlpha: .66
 
-                left: 30
-                width: (@name.length > 0) ? @name.width + 10 - 60 : 0
-                bottom: .top - 10
+            left: 10
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
 
-                text @name {
-                    left: 5
-                    width: .width - 20
-                    font: "font.ttf"
-                    size: 16
-                }
+            fadings as nameRect
+
+            text @name {
+                left: 5
+                width: .width - 20
+                font: "NotoSansCJK-Regular.ttc"
+                size: 30
+            }
+
+            rectangle
+            {
+                //yay
+            }
+
+            rectangle
+            {
+                //yay
+            }
+        }
+    }
+}
+
+
+//или просто dialogue {
+gui sdialogue
+{
+    //глобальные задания переменных на данный скоп
+    font: "NotoSansCJK-Regular.ttc"
+    characterSize: 30
+
+    rectangle {
+        color black
+        alpha: 170
+
+        left: 30
+        right: 30
+        bottom: 10
+        height: ".height/5 - 10"
+
+        text @dialogue {
+            left: 10
+            width: .width - 20
+            font: "NotoSansCJK-Regular.ttc"
+            size: 30
+        }
+
+        rectangle as Name {
+            color: black
+            maxAlpha: 170
+
+            left: 10
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
+
+            fadings as nameRect
+
+            text @name {
+                left: 5
+                width: .width - 20
+                font: "NotoSansCJK-Regular.ttc"
+                size: 30
             }
         }
     }

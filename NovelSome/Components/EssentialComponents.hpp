@@ -64,6 +64,9 @@ namespace ns
             float appearTime{ 0.15f };
             float disappearTime{ 0.15f };
             
+            bool countdownLastTouchedMoment{ false };
+            float lastTouchedMoment{ 0.f };
+            
             GamePause();
             void Update(const sf::Time& elapsedTime) override;
             void PollEvent(sf::Event& event) override;

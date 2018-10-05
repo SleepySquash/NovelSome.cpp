@@ -88,6 +88,16 @@ namespace ns
         }
         void GamePause::Update(const sf::Time& elapsedTime)
         {
+            if (countdownLastTouchedMoment)
+            {
+                if (lastTouchedMoment > 0.f)
+                    lastTouchedMoment -= elapsedTime.asSeconds();
+                if (lastTouchedMoment <= 0.f)
+                {
+                    lastTouchedMoment = 0.f;
+                    countdownLastTouchedMoment = false;
+                }
+            }
             switch (mode)
             {
                 case appearing:
@@ -132,6 +142,26 @@ namespace ns
                 ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
                 mode = ns::GlobalSettings::isPause? appearing : disappearing;
                 currentTime = 0.f;
+            }
+            else if (event.type == sf::Event::TouchBegan)
+            {
+                if (event.touch.finger == 0)
+                {
+                    countdownLastTouchedMoment = true;
+                    lastTouchedMoment = 0.03f;
+                }
+                else if (event.touch.finger == 1)
+                {
+                    if (countdownLastTouchedMoment && lastTouchedMoment > 0)
+                    {
+                        lastTouchedMoment = 0.f;
+                        countdownLastTouchedMoment = false;
+                        
+                        ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
+                        mode = ns::GlobalSettings::isPause? appearing : disappearing;
+                        currentTime = 0.f;
+                    }
+                }
             }
         }
         void GamePause::Draw(sf::RenderWindow *window)

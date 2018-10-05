@@ -26,10 +26,11 @@ namespace ns
                     command.Command(line);
                     
                     bool backgroundAddingMode{ false };
+                    if (nss::Command(command, L"//")) { /* oh, that's a comment... */ }
                     ///---------------------------------------DIALOGUE---------------------------------------
                     ///---------------------------------------DIALOGUE---------------------------------------
                     ///---------------------------------------DIALOGUE---------------------------------------
-                    if (nss::Command(command, L"\""))
+                    else if (nss::Command(command, L"\""))
                     {
                         command.lastPos = command.lastPos - 1;
                         std::wstring dialogueLine = nss::ParseAsQuoteString(command);
@@ -107,7 +108,7 @@ namespace ns
                         
                         if (std::wstring(localVariables.at(L"@name")->value.asString) != L"")
                             if (skin.dialogue.nameRect != nullptr)
-                                skin.dialogue.nameRect->SetFadings(GUIObjects::DialogueRectangle::disappearing, component->disappearTime);
+                                skin.dialogue.nameRect->SetFadings(GUIObject::disappearing, component->disappearTime);
                         LocalVariables_Set(L"@dialogue", dialogueLine);
                         LocalVariables_Set(L"@name", std::wstring(L""));
                     }
@@ -1024,7 +1025,7 @@ namespace ns
                                         
                                         if (std::wstring(localVariables.at(L"@name")->value.asString) == L"")
                                             if (skin.dialogue.nameRect != nullptr)
-                                                skin.dialogue.nameRect->SetFadings(GUIObjects::DialogueRectangle::appearing, component->appearTime);
+                                                skin.dialogue.nameRect->SetFadings(GUIObject::appearing, component->appearTime);
                                         LocalVariables_Set(L"@dialogue", possibleDialogue);
                                         LocalVariables_Set(L"@name", characterName.toWideString());
                                     }

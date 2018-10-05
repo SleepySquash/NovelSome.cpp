@@ -356,6 +356,7 @@ namespace ns
         
         
         
+        struct Skin;
         struct GUIObject;
         class GUISystem : public NovelObject
         {
@@ -404,6 +405,8 @@ namespace ns
             void Clear();
             void SetNovel(Novel* novel);
             void SetParent(GUIObject* guiSystem);
+            bool LoadFromFile(const std::wstring& fileName, Skin* skin = nullptr, std::wstring guiScope = L"");
+            void PrintIerarchy();
         };
         
         
@@ -490,6 +493,7 @@ namespace ns
             virtual void Resize(unsigned int width, unsigned int height) { }
             virtual void Destroy() { }
             virtual void SetAlpha(sf::Int8 alpha) { }
+            virtual void SetColor(const sf::Color& fillColour) { }
             void FadingUpdate(const sf::Time& elapsedTime);
             void SetFadings(fadingsModeEnum newMode, float forTime = 0.f);
             void VariableChange(const std::wstring& varName);
@@ -510,28 +514,7 @@ namespace ns
                 void Draw(sf::RenderWindow* window) override;
                 void Resize(unsigned int width, unsigned int height) override;
                 void SetAlpha(sf::Int8 alpha) override;
-            };
-            
-            struct DialogueRectangle : GUIObject
-            {
-                sf::RectangleShape shape;
-                
-                void Init() override;
-                void Update(const sf::Time& elapsedTime) override;
-                void Draw(sf::RenderWindow* window) override;
-                void Resize(unsigned int width, unsigned int height) override;
-                void SetAlpha(sf::Int8 alpha) override;
-            };
-            
-            struct NameRectangle : GUIObject
-            {
-                sf::RectangleShape shape;
-                
-                void Init() override;
-                void Update(const sf::Time& elapsedTime) override;
-                void Draw(sf::RenderWindow* window) override;
-                void Resize(unsigned int width, unsigned int height) override;
-                void SetAlpha(sf::Int8 alpha) override;
+                void SetColor(const sf::Color& fillColour) override;
             };
         }
         
@@ -544,8 +527,8 @@ namespace ns
             struct Dialogue
             {
                 GUISystem gui;
-                GUIObjects::DialogueRectangle* dialogueRect{ nullptr };
-                GUIObjects::NameRectangle* nameRect{ nullptr };
+                GUIObjects::Rectangle* dialogueRect{ nullptr };
+                GUIObjects::Rectangle* nameRect{ nullptr };
                 
                 unsigned int characterSize{ 30 };
                 int maxAlpha = 255;
@@ -613,10 +596,8 @@ namespace ns
             Skins::Ambient ambient;
             Skins::Sound sound;
             
-            void restoreToDefaults()
-            {
-                //TODO: Defaults
-            }
+            void RestoreToDefaults();
+            void LoadFromFile(const std::wstring& fileName);
         };
         
         

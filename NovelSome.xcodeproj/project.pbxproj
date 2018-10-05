@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		DD265515216020CB008F1545 /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */; };
+		DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDAB7496215D88450062F8B6 /* Assets.xcassets */; };
 		DD8F82A1215E59FF000CB7BB /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82A0215E59FF000CB7BB /* Data */; };
 		DD8F82A2215E59FF000CB7BB /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82A0215E59FF000CB7BB /* Data */; };
 		DD8F82B3215E5A9A000CB7BB /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */; };
@@ -253,7 +254,6 @@
 		DDAB7486215D88430062F8B6 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				DDAB7496215D88450062F8B6 /* Assets.xcassets */,
 				DDAB749B215D88450062F8B6 /* Info.plist */,
 			);
 			path = iOS;
@@ -289,6 +289,7 @@
 		DDAB74C7215D8B950062F8B6 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				DDAB7496215D88450062F8B6 /* Assets.xcassets */,
 				DD8F82A0215E59FF000CB7BB /* Data */,
 				DD8F82BF215E5C2A000CB7BB /* Novels */,
 			);
@@ -391,6 +392,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */,
 				DD8F82A1215E59FF000CB7BB /* Data in Resources */,
 				DD8F82C0215E5C2A000CB7BB /* Novels in Resources */,
 			);
@@ -572,7 +574,7 @@
 		DDAB747F215D88050062F8B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_macOS;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/;
@@ -594,7 +596,7 @@
 		DDAB7480215D88050062F8B6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_macOS;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/;
@@ -621,7 +623,7 @@
 					arm64,
 					armv7,
 				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_iOS;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -695,7 +697,7 @@
 					arm64,
 					armv7,
 				);
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_iOS;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";

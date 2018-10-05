@@ -10,7 +10,7 @@ Background "Неко.jpg"
 
 юи = "Йей :3"
 
-debug::outputVariables
+//debug::outputVariables
 
 юи = 0
 infoInteger = -23
@@ -18,7 +18,7 @@ booleanyeah = false
 
 delete backgroundNeko
 
-debug::outputVariables
+//debug::outputVariables
 
 
 show Юи normal_f right with message:no

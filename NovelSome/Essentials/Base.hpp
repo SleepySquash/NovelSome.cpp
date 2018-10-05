@@ -38,6 +38,7 @@ namespace ns
         std::wstring GetStringWithNoExtention(std::wstring filename, const std::wstring& extention);
         
         bool FileExists(std::wstring path);
+        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath);
         std::wstring LowercaseTheString(const std::wstring& str);
         std::string ConvertToUTF8(const std::wstring& str);
         std::string ConvertToUTF8(const wchar_t& wchar);

@@ -91,6 +91,13 @@ namespace nss
         while (results.lastPos < results.line.length() && (results.line[results.lastPos] == L' ' || results.line[results.lastPos] == L'\t'))
             results.lastPos++;
     }
+    bool ContainsUsefulInformation(CommandSettings& results)
+    {
+        for (int i = results.lastPos; i < results.line.length(); i++)
+            if (results.line[i] != L' ' && results.line[i] != L'\t' && results.line[i] != L'\0' && results.line[i] != L'\n')
+                return true;
+        return false;
+    }
     
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until)
@@ -183,6 +190,20 @@ namespace nss
         else
             return L"";
     }
+    std::wstring ParseAsMaybeQuoteString(CommandSettings& results)
+    {
+        if (results.line[results.lastPos] == L'"')
+            return nss::ParseAsQuoteString(results);
+        else
+            return nss::ParseUntil(results, L' ');
+    }
+    std::wstring ParseAsMaybeQuoteStringFull(CommandSettings& results)
+    {
+        if (results.line[results.lastPos] == L'"')
+            return nss::ParseAsQuoteString(results);
+        else
+            return nss::ParseUntil(results, L'\0');
+    }
     
     int ParseAsInt(CommandSettings& results)
     {
@@ -194,6 +215,92 @@ namespace nss
         //std::wstring stringValue = nss::ParseUntil(results, ' ');
         return ns::base::ConvertToFloat(nss::ParseUntil(results, ' '));
     }
+    std::wstring ParseAsString(CommandSettings& results)
+    {
+        std::wstring parsedUntil = nss::ParseUntil(results, '\0');
+        std::wstring stringValue = ns::base::LowercaseTheString(parsedUntil);
+        return stringValue;
+    }
+    std::wstring ParseAsStringWOLowercase(CommandSettings& results)
+    {
+        std::wstring parsedUntil = nss::ParseUntil(results, '\0');
+        return parsedUntil;
+    }
+    bool ParseAsBool(CommandSettings& results)
+    {
+        std::wstring stringValue = nss::ParseAsString(results);
+        if (stringValue == L"true" || stringValue == L"1")
+            return true;
+        else
+            return false;
+    }
+    
+    
+    sf::Color ParseColor(CommandSettings& results)
+    {
+        nss::SkipSpaces(results);
+        std::wstring color1 = nss::ParseUntil(results, ' ');
+        if (color1.length() != 0)
+        {
+            nss::SkipSpaces(results);
+            std::wstring color2 = nss::ParseUntil(results, ' ');
+            if (color2.length() != 0)
+            {
+                nss::SkipSpaces(results);
+                std::wstring color3 = nss::ParseUntil(results, ' ');
+                if (color3.length() != 0)
+                {
+                    int rColor = ns::base::ConvertToInt(color1);
+                    int gColor = ns::base::ConvertToInt(color2);
+                    int bColor = ns::base::ConvertToInt(color3);
+                    return sf::Color(rColor, gColor, bColor, 0);
+                }
+            }
+            else
+            {
+                std::wstring guessColor = ns::base::LowercaseTheString(color1);
+                if (guessColor == L"while")
+                    return sf::Color(255, 255, 255, 0);
+                else if (guessColor == L"black")
+                    return sf::Color(0, 0, 0, 0);
+                else if (guessColor == L"red")
+                    return sf::Color(sf::Color::Red.r, sf::Color::Red.g, sf::Color::Red.b, 0);
+                else if (guessColor == L"magenta")
+                    return sf::Color(sf::Color::Magenta.r, sf::Color::Magenta.g, sf::Color::Magenta.b, 0);
+                else if (guessColor == L"cyan")
+                    return sf::Color(sf::Color::Cyan.r, sf::Color::Cyan.g, sf::Color::Cyan.b, 0);
+                else if (guessColor == L"yellow")
+                    return sf::Color(sf::Color::Yellow.r, sf::Color::Yellow.g, sf::Color::Yellow.b, 0);
+            }
+        }
+        
+        return sf::Color(0, 0, 0, 255);
+    }
+    int ParseAlpha(CommandSettings& results)
+    {
+        nss::SkipSpaces(results);
+        
+        float possibleValueAsFloat{ -1 };
+        for (int i = results.lastPos; i < results.line.length() && results.line[i] != L' '; i++)
+            if (results.line[i] == L'.')
+                possibleValueAsFloat = nss::ParseAsFloat(results);
+        
+        int possibleValue;
+        if (possibleValueAsFloat < 0 || possibleValueAsFloat > 1)
+        {
+            possibleValue = nss::ParseAsInt(results);
+            if (possibleValue >= 0 && possibleValue <= 255)
+                return possibleValue;
+        }
+        else
+        {
+            possibleValue = 255 * possibleValueAsFloat;
+            return possibleValue;
+        }
+        
+        return -1;
+    }
+    
     
     std::wstring ParseArgument(CommandSettings& results)
     {

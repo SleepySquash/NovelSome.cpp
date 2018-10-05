@@ -20,35 +20,13 @@ namespace ns
             
             localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
             localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 13"))});
+            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 14"))});
             
             library.SetNovel(this);
             library.ScanForCharacters();
             
             skin.dialogue.gui.SetNovel(this);
-            
-            //Adding the dialogue's box
-            skin.dialogue.dialogueRect = skin.dialogue.gui.AddComponent<GUIObjects::DialogueRectangle>();
-            GUIObjects::DialogueRectangle* dialogueRect = skin.dialogue.dialogueRect;
-            dialogueRect->shape.setFillColor(sf::Color::Black);
-            dialogueRect->maxAlpha = 170;
-            dialogueRect->constrains.leftS = L"30";
-            dialogueRect->constrains.rightS = L"30";
-            dialogueRect->constrains.bottomS = L"10";
-            dialogueRect->constrains.heightS = L".height/5 - 10";
-            
-            //Requesting the child system to add the name's box
-            GUISystem* childSystem = dialogueRect->GetChildSystem();
-            skin.dialogue.nameRect = childSystem->AddComponent<GUIObjects::NameRectangle>();
-            GUIObjects::NameRectangle* nameRect = skin.dialogue.nameRect;
-            nameRect->shape.setFillColor(sf::Color::Black);
-            nameRect->maxAlpha = 170;
-            nameRect->constrains.leftS = L"10";
-            nameRect->constrains.rightS = L"0";
-            nameRect->constrains.bottomS = L".height + 5";
-            nameRect->constrains.widthS = L"@name.width + 20";
-            nameRect->constrains.heightS = L"@name.height + 10";
-            nameRect->SetFadings(GUIObjects::NameRectangle::offline);
+            skin.LoadFromFile(sf::String(resourcePath()) + folderPath + L"skin.nskin");
             
             sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
@@ -132,6 +110,12 @@ namespace ns
         {
             return folderPath;
         }
+        
+        
+        
+        
+        
+        
         NovelVariable* Novel::FindVariable(const std::wstring& variableName)
         {
             return (localVariables.find(variableName) != localVariables.end()) ? localVariables.at(variableName) : nullptr;
@@ -214,6 +198,12 @@ namespace ns
             if (callChange)
                 VariableChange(name);
         }
+        
+        
+        
+        
+        
+        
         void Novel::RemoveFromGroup(List<Background>* groupPointer)
         {
             if (groupPointer == backgroundGroup)

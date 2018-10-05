@@ -107,6 +107,27 @@ namespace ns
             return (stat (u8str.c_str(), &buffer) == 0);
 #endif
         }
+        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath)
+        {
+            if (!FileExists(currentPath))
+            {
+                std::wstring getExtention = GetExtentionFromString(currentPath);
+                std::wstring woExtention = GetStringWithNoExtention(currentPath, getExtention);
+                
+                if (FileExists(woExtention + L"@3x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@2x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@1x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@0x" + getExtention))
+                    return true;
+            }
+            else
+                return true;
+            
+            return false;
+        }
         
         
         

@@ -18,7 +18,7 @@ namespace ns
             backgroundLoaded = false;
             if (novel != nullptr)
             {
-                sf::Image* imagePtr = ns::ic::LoadImage(novel->GetFolderPath() + path);
+                sf::Image* imagePtr = ic::LoadImage(novel->GetFolderPath() + path, 1);
                 if (imagePtr != nullptr)
                 {
                     imagePath = novel->GetFolderPath() + sf::String(path);
@@ -51,7 +51,7 @@ namespace ns
         void Background::Resize(unsigned int width, unsigned int height)
         {
             CalculateScale(width, height);
-            if (doParallax)
+            if (doParallax && !(gs::isPauseEnabled && gs::isPause))
                 CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
         }
         void Background::Update(const sf::Time& elapsedTime)
@@ -112,7 +112,7 @@ namespace ns
         void Background::Destroy()
         {
             if (imagePath.toWideString().length() != 0)
-                ns::ic::DeleteImage(imagePath);
+                ic::DeleteImage(imagePath);
             if (groupPointer != nullptr && novel != nullptr)
                 novel->RemoveFromGroup(groupPointer);
         }
