@@ -1042,6 +1042,7 @@ namespace ns
             
             if (fileOpened && !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
                 layers.Update(elapsedTime);
+            gamePause.Update(elapsedTime);
         }
     }
 }

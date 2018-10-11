@@ -25,8 +25,9 @@ namespace ns
             library.SetNovel(this);
             library.ScanForCharacters();
             
+            gamePause.novel = this;
             skin.dialogue.gui.SetNovel(this);
-            skin.LoadFromFile(sf::String(resourcePath()) + folderPath + L"skin.nskin");
+            skin.LoadFromFile(folderPath + L"skin.nskin");
             
             sf::String filePath = (resourcePath() + path);
 #ifdef _WIN32
@@ -46,6 +47,7 @@ namespace ns
             wif.close();
             layers.Destroy();
             skin.dialogue.gui.Clear();
+            skin.gamePauseGUI.Clear();
             ns::ic::FreeImages();
             
             for (auto& key : localVariables)
@@ -65,16 +67,19 @@ namespace ns
         {
             if (fileOpened)
                 layers.Draw(window);
+            gamePause.Draw(window);
         }
         void Novel::Resize(unsigned int width, unsigned int height)
         {
             if (fileOpened)
                 layers.Resize(width, height);
+            gamePause.Resize(width, height);
         }
         void Novel::PollEvent(sf::Event& event)
         {
             if (fileOpened && !(ns::GlobalSettings::isPause))
                 layers.PollEvent(event);
+            gamePause.PollEvent(event);
         }
         void Novel::OnHold(NovelObject* component)
         {

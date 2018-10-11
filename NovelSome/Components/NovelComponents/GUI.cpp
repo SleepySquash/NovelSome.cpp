@@ -87,6 +87,7 @@ namespace ns
                              }
                              }*/
                             
+                            list->data->PreCalculate(width, height);
                             list->data->constrains.Recalculate(*list->data, width, height);
                             list->data->Resize(width, height);
                             if (list->data->child != nullptr)
@@ -273,6 +274,14 @@ namespace ns
                                     if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr)
                                         nvar = guiObject.guiSystem->novel->FindVariable(possibleVariable);
                                 
+                                bool availableToSelf{ false };
+                                if (possibleVariable == L"@text")
+                                {
+                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                    if (textPtr != nullptr)
+                                        availableToSelf = true, nvar = new NovelVariable(textPtr->textString);
+                                }
+                                
                                 if (possibleVariable.length() != 0 && nvar == nullptr)
                                     cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::ConvertToUTF8(possibleVariable) << "'." << endl;
                                 else
@@ -311,6 +320,14 @@ namespace ns
                                                     if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
                                                         replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->text.getLocalBounds().width);
                                                 }
+                                                else if (possibleVariable == L"@text")
+                                                {
+                                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                                    if (textPtr != nullptr)
+                                                        replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().width);
+                                                    else
+                                                        cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                }
                                                 else
                                                     cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                             }
@@ -346,6 +363,14 @@ namespace ns
                                                     if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
                                                         replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->text.getLocalBounds().height);
                                                 }
+                                                else if (possibleVariable == L"@text")
+                                                {
+                                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                                    if (textPtr != nullptr)
+                                                        replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().height);
+                                                    else
+                                                        cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                }
                                                 else
                                                     cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                             }
@@ -363,6 +388,9 @@ namespace ns
                                                 replaceBy += std::to_wstring(std::wstring(nvar->value.asString).length());
                                             }
                                     }
+                                    
+                                    if (availableToSelf)
+                                        delete nvar;
                                 }
                             }
                         }
@@ -450,6 +478,9 @@ namespace ns
                 left = res.result;
                 leftC = res.constant;
                 isDependsOnVariable[0] = res.dependsOnVariable;
+                
+                if (leftC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    left += guiObject.guiSystem->parent->constrains.left;
             }
             if (!rightC && rightS.length() != 0)
             {
@@ -457,6 +488,9 @@ namespace ns
                 right = res.result;
                 rightC = res.constant;
                 isDependsOnVariable[1] = res.dependsOnVariable;
+                
+                if (rightC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    right += guiObject.guiSystem->parent->constrains.right;
             }
             if (!topC && topS.length() != 0)
             {
@@ -464,6 +498,9 @@ namespace ns
                 top = res.result;
                 topC = res.constant;
                 isDependsOnVariable[2] = res.dependsOnVariable;
+                
+                if (topC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    top += guiObject.guiSystem->parent->constrains.top;
             }
             if (!bottomC && bottomS.length() != 0)
             {
@@ -471,6 +508,9 @@ namespace ns
                 bottom = res.result;
                 bottomC = res.constant;
                 isDependsOnVariable[3] = res.dependsOnVariable;
+                
+                if (bottomC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    bottom += guiObject.guiSystem->parent->constrains.bottom;
             }
             
             if (!widthC && widthS.length() != 0)
@@ -479,6 +519,9 @@ namespace ns
                 this->width = res.result;
                 widthC = res.constant;
                 isDependsOnVariable[4] = res.dependsOnVariable;
+                
+                if (widthC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    width += guiObject.guiSystem->parent->constrains.width;
             }
             if (!heightC && heightS.length() != 0)
             {
@@ -486,6 +529,9 @@ namespace ns
                 this->height = res.result;
                 heightC = res.constant;
                 isDependsOnVariable[5] = res.dependsOnVariable;
+                
+                if (heightC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    height += guiObject.guiSystem->parent->constrains.height;
             }
             
             if (!posXC && posXS.length() != 0)
@@ -494,6 +540,9 @@ namespace ns
                 posX = res.result;
                 posXC = res.constant;
                 isDependsOnVariable[6] = res.dependsOnVariable;
+                
+                if (posXC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    posX += guiObject.guiSystem->parent->constrains.posX;
             }
             if (!posYC && posYS.length() != 0)
             {
@@ -501,6 +550,9 @@ namespace ns
                 posY = res.result;
                 posYC = res.constant;
                 isDependsOnVariable[7] = res.dependsOnVariable;
+                
+                if (posYC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                    posY += guiObject.guiSystem->parent->constrains.posY;
             }
             
             if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
@@ -515,10 +567,14 @@ namespace ns
                 if (!posYC && posYS.length() == 0)
                     posY = guiObject.guiSystem->parent->constrains.posY + guiObject.guiSystem->parent->constrains.height - bottom - this->height;
                 
-                left += guiObject.guiSystem->parent->constrains.left;
-                right += guiObject.guiSystem->parent->constrains.right;
-                top += guiObject.guiSystem->parent->constrains.top;
-                bottom += guiObject.guiSystem->parent->constrains.bottom;
+                if (!leftC)
+                    left += guiObject.guiSystem->parent->constrains.left;
+                if (!rightC)
+                    right += guiObject.guiSystem->parent->constrains.right;
+                if (!topC)
+                    top += guiObject.guiSystem->parent->constrains.top;
+                if (!bottomC)
+                    bottom += guiObject.guiSystem->parent->constrains.bottom;
             }
             else
             {
@@ -803,13 +859,14 @@ namespace ns
         bool GUISystem::LoadFromFile(const std::wstring& fileName, Skin* skin, std::wstring guiScope)
         {
             bool skinLoaded{ false };
+            std::wstring fullPath = sf::String(resourcePath()) + fileName;
             
             std::wifstream wif;
 #ifdef _WIN32
-            wif.open(fileName);
+            wif.open(fullPath);
 #else
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(fileName);
+            std::string u8str = converter.to_bytes(fullPath);
             wif.open(u8str);
 #endif
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
@@ -862,14 +919,6 @@ namespace ns
                         }
                         else
                         {
-                            //TODO: Parsing GUI
-                            
-                            // Какой-то вектор или лист, который будет хранить инфу об объектах выше.
-                            // Нужно считать скоп, в котором сейчас находимся, именно по этому List<GUISystem>'ов.
-                            // Скоп повышается, когда закрывается bracket => нужно вести счёт брекетов.
-                            // Скоп понижается, когда мы открываем новый объект какого-то типа.
-                            // Под объекты одну функцию комманд, узнавать о режиме объекта по переменной какой-нибудь типа бул.
-                            
                             bool thatsAScope{ false };
                             for (int i = 0; i < line.length(); ++i)
                             {
@@ -898,6 +947,10 @@ namespace ns
                                     {
                                         if (nss::Command(command, L"rectangle"))
                                             knownType = 2;
+                                        else if (nss::Command(command, L"text"))
+                                            knownType = 3;
+                                        else if (nss::Command(command, L"image"))
+                                            knownType = 4;
                                         
                                         if (knownType != 0)
                                             forArgumentsParsing = line;
@@ -916,13 +969,23 @@ namespace ns
                                         if (guiSystemToAddTo != nullptr)
                                         {
                                             GUIObjects::Rectangle* rect;
+                                            GUIObjects::Image* img;
+                                            GUIObjects::Text* text;
                                             switch (knownType)
                                             {
                                                 case 2:
                                                     rect = guiSystemToAddTo->AddComponent<GUIObjects::Rectangle>();
-                                                    rect->shape.setFillColor(sf::Color(140,140,140,0));
-                                                    rect->maxAlpha = 200;
+                                                    rect->shape.setFillColor(sf::Color(0,0,0,0));
                                                     component = rect;
+                                                    break;
+                                                case 3:
+                                                    text = guiSystemToAddTo->AddComponent<GUIObjects::Text>();
+                                                    text->SetFont(skin->defaultFontName);
+                                                    component = text;
+                                                    break;
+                                                case 4:
+                                                    img = guiSystemToAddTo->AddComponent<GUIObjects::Image>();
+                                                    component = img;
                                                     break;
                                                 default:
                                                     component = nullptr;
@@ -940,22 +1003,32 @@ namespace ns
                                                     argument.Command(arguments[i]);
                                                     
                                                     if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"image")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"text")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"\""))
+                                                    {
+                                                        if (knownType == 3 && text != nullptr)
+                                                        {
+                                                            argument.lastPos--;
+                                                            std::wstring str = nss::ParseAsQuoteString(argument);
+                                                            text->SetString(str);
+                                                        }
+                                                        else if (knownType == 4 && img != nullptr)
+                                                        {
+                                                            argument.lastPos--;
+                                                            std::wstring path = nss::ParseAsQuoteString(argument);
+                                                            img->LoadImage(base::GetFolderPath(fileName) + path);
+                                                        }
+                                                    }
                                                     else if (nss::Command(argument, L"}")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"{")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
                                                     {
-                                                        if (knownType == 2)
-                                                        {
-                                                            skin->dialogue.nameRect = static_cast<GUIObjects::Rectangle*>(component);
-                                                            skin->dialogue.nameRect->SetFadings(GUIObject::offline);
-                                                        }
+                                                        skin->dialogue.nameRect = component;
+                                                        skin->dialogue.nameRect->SetFadings(GUIObject::offline);
                                                     }
                                                     else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
-                                                    {
-                                                        if (knownType == 2)
-                                                            skin->dialogue.dialogueRect = static_cast<GUIObjects::Rectangle*>(component);
-                                                    }
+                                                        skin->dialogue.dialogueRect = component;
                                                     
                                                     delete arguments[i];
                                                 }
@@ -978,46 +1051,76 @@ namespace ns
                                         forArgumentsParsing = line;
                                         knownType = 2;
                                     }
+                                    else if (nss::Command(command, L"text"))
+                                    {
+                                        forArgumentsParsing = line;
+                                        knownType = 3;
+                                    }
+                                    else if (nss::Command(command, L"image"))
+                                    {
+                                        forArgumentsParsing = line;
+                                        knownType = 4;
+                                    }
                                     else if (nss::ContainsUsefulInformation(command))
                                     {
                                         knownType = 0;
                                         if (scope->data != nullptr)
                                         {
-                                            if (nss::Command(command, L"left:"))
+                                            if (nss::Command(command, L"left:") || nss::Command(command, L"left "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"right:"))
+                                            else if (nss::Command(command, L"right:") || nss::Command(command, L"right "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"top:"))
+                                            else if (nss::Command(command, L"top:") || nss::Command(command, L"top "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"bottom:"))
+                                            else if (nss::Command(command, L"bottom:") || nss::Command(command, L"bottom "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"width:"))
+                                            else if (nss::Command(command, L"width:") || nss::Command(command, L"width "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"height:"))
+                                            else if (nss::Command(command, L"height:") || nss::Command(command, L"height "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                component->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope->data->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:"))
+                                            else if (nss::Command(command, L"posx:") || nss::Command(command, L"positionx:") ||
+                                                     nss::Command(command, L"posx ") || nss::Command(command, L"positionx "))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                scope->data->constrains.posXS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"posy:") || nss::Command(command, L"positiony:") ||
+                                                     nss::Command(command, L"posy ") || nss::Command(command, L"positiony "))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                scope->data->constrains.posYS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            }
+                                            else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:")
+                                                     || nss::Command(command, L"alpha ") || nss::Command(command, L"maxalpha "))
                                             {
                                                 int possibleValue = nss::ParseAlpha(command);
                                                 if (possibleValue != -1)
-                                                    component->maxAlpha = possibleValue;
+                                                    scope->data->maxAlpha = possibleValue;
+                                            }
+                                            else if (nss::Command(command, L"fit:") || nss::Command(command, L"fitmode:")
+                                                     || nss::Command(command, L"fit ") || nss::Command(command, L"fitmode "))
+                                            {
+                                                int possibleValue = nss::ParseAlpha(command);
+                                                if (possibleValue != -1)
+                                                    scope->data->maxAlpha = possibleValue;
                                             }
                                             else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") ||
                                                      nss::Command(command, L"color ") || nss::Command(command, L"colour ") ||
@@ -1026,7 +1129,52 @@ namespace ns
                                             {
                                                 sf::Color possibleColor = nss::ParseColor(command);
                                                 if (possibleColor.a != 255)
-                                                    component->SetColor(possibleColor);
+                                                    scope->data->SetColor(possibleColor);
+                                            }
+                                            else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") ||
+                                                     nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour ") ||
+                                                     nss::Command(command, L"outline:") || nss::Command(command, L"outlinecolor:") ||
+                                                     nss::Command(command, L"ocolor:") || nss::Command(command, L"ocolour:"))
+                                            {
+                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                if (textPtr != nullptr)
+                                                {
+                                                    sf::Color possibleColor = nss::ParseColor(command);
+                                                    if (possibleColor.a != 255)
+                                                        textPtr->text.setOutlineColor(possibleColor);
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"thickness ") || nss::Command(command, L"thickness:"))
+                                            {
+                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                if (textPtr != nullptr)
+                                                {
+                                                    float thickness = nss::ArgumentAsFloat(command);
+                                                    if (thickness >= 0)
+                                                        textPtr->SetOutlineThickness(thickness);
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"size ") || nss::Command(command, L"size:") ||
+                                                     nss::Command(command, L"charactersize ") || nss::Command(command, L"charactersize:"))
+                                            {
+                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                if (textPtr != nullptr)
+                                                {
+                                                    unsigned int characterSize = nss::ArgumentAsInt(command);
+                                                    if (characterSize > 0)
+                                                        textPtr->SetCharacterSize(characterSize);
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"font ") || nss::Command(command, L"font:") ||
+                                                     nss::Command(command, L"fontname ") || nss::Command(command, L"fontname:"))
+                                            {
+                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                if (textPtr != nullptr)
+                                                {
+                                                    std::wstring fontName = nss::ParseAsMaybeQuoteStringFull(command);
+                                                    if (fontName.length() != 0)
+                                                        textPtr->SetFont(fontName);
+                                                }
                                             }
                                         }
                                     }
@@ -1112,7 +1260,117 @@ namespace ns
             void Rectangle::SetColor(const sf::Color& fillColour)
             {
                 shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a));
-                //shape.setOutlineColor(outlineColour);
+            }
+            
+            
+            
+            void Text::Init()
+            {
+                text.setFillColor(sf::Color::White);
+                text.setString(textString);
+                text.setPosition(0, 0);
+            }
+            void Text::Update(const sf::Time& elapsedTime)
+            {
+                
+            }
+            void Text::Draw(sf::RenderWindow* window)
+            {
+                if (fontLoaded)
+                    window->draw(text);
+            }
+            void Text::PreCalculate(unsigned int width, unsigned int height)
+            {
+                text.setCharacterSize((unsigned int)(characterSize * gs::scale));
+                if (thickness != 0)
+                    text.setOutlineThickness(thickness * gs::scale);
+            }
+            void Text::Resize(unsigned int width, unsigned int height)
+            {
+                text.setPosition(constrains.posX, constrains.posY);
+            }
+            void Text::SetAlpha(sf::Int8 alpha)
+            {
+                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
+                text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
+            }
+            void Text::SetColor(const sf::Color& fillColour)
+            {
+                text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a));
+            }
+            void Text::SetString(const std::wstring& wstr)
+            {
+                textString = wstr;
+                text.setString(textString);
+            }
+            void Text::SetFont(const std::wstring& font)
+            {
+                fontName = font;
+                if ((fontLoaded = (ns::FontCollector::GetFont(font) != nullptr)))
+                    text.setFont(*ns::FontCollector::GetFont(font));
+            }
+            void Text::SetOutlineThickness(const float& thickness)
+            {
+                this->thickness = thickness;
+                text.setOutlineThickness(thickness * gs::scale);
+            }
+            void Text::SetCharacterSize(const unsigned int& characterSize)
+            {
+                this->characterSize = characterSize;
+                text.setCharacterSize(characterSize * gs::scale);
+            }
+            
+            
+            
+            void Image::Init()
+            {
+                
+            }
+            void Image::Update(const sf::Time& elapsedTime)
+            {
+                
+            }
+            void Image::Draw(sf::RenderWindow* window)
+            {
+                window->draw(sprite);
+            }
+            void Image::Resize(unsigned int width, unsigned int height)
+            {
+                sprite.setScale({static_cast<float>(constrains.width) / texture.getSize().x, static_cast<float>(constrains.height)  / texture.getSize().y});
+                sprite.setPosition(constrains.posX, constrains.posY);
+            }
+            void Image::SetAlpha(sf::Int8 alpha)
+            {
+                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
+            }
+            void Image::SetColor(const sf::Color& fillColour)
+            {
+                sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a));
+            }
+            void Image::LoadImage(const std::wstring& path)
+            {
+                spriteLoaded = false;
+                sf::Image* imagePtr = ic::LoadImage(path);
+                if (imagePtr != nullptr)
+                {
+                    imagePath = path;
+                    bool textureLoaded{ false };
+                    if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
+                        textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
+                    else
+                        textureLoaded = texture.loadFromImage(*imagePtr);
+                    
+                    if (textureLoaded)
+                    {
+                        spriteLoaded = true;
+                        texture.setSmooth(true);
+                        sprite.setTexture(texture);
+                        
+                        Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                    }
+                }
             }
         }
     }

@@ -48,32 +48,6 @@ namespace ns
         
         
         
-        class GamePause : public Component
-        {
-        private:
-            sf::RectangleShape shape;
-            
-            sf::Int8 alpha{ 0 };
-            float currentTime{ 0.f };
-            
-        public:
-            enum modeEnum{ appearing, waiting, disappearing };
-            modeEnum mode{ waiting };
-            
-            int maxAlpha{ 170 };
-            float appearTime{ 0.15f };
-            float disappearTime{ 0.15f };
-            
-            bool countdownLastTouchedMoment{ false };
-            float lastTouchedMoment{ 0.f };
-            
-            GamePause();
-            void Update(const sf::Time& elapsedTime) override;
-            void PollEvent(sf::Event& event) override;
-            void Draw(sf::RenderWindow *window) override;
-            void Resize(unsigned int width, unsigned int height) override;
-        };
-        
         class GyroscopeParallax : public Component
         {
             

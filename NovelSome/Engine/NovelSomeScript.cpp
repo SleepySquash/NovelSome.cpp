@@ -199,6 +199,7 @@ namespace nss
     }
     std::wstring ParseAsMaybeQuoteStringFull(CommandSettings& results)
     {
+        nss::SkipSpaces(results);
         if (results.line[results.lastPos] == L'"')
             return nss::ParseAsQuoteString(results);
         else
@@ -481,6 +482,81 @@ namespace nss
             text.setString(finalLine);
         }
     }
+    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width)
+    {
+        sf::Text tempText = text;
+        tempText.setString(line);
+        if (tempText.getLocalBounds().width >= width)
+        {
+            std::wstring finalLine = L"";
+            std::wstring currentLine = L"";
+            for (int i = 0; i < line.length(); i++)
+            {
+                currentLine += line[i];
+                tempText.setString(currentLine);
+                if (tempText.getLocalBounds().width >= width)
+                {
+                    bool spaceFound{ false };
+                    for (int j = currentLine.length() - 1; j >= 0 && !spaceFound; j--)
+                    {
+                        if ((spaceFound = (currentLine[j] == L' ')))
+                        {
+                            std::wstring toFinalLine;
+                            for (int k = 0; k <= j; k++)
+                                toFinalLine += currentLine[k];
+                            toFinalLine += L'\n';
+                            finalLine += toFinalLine;
+                            
+                            std::wstring newCurrentLine = L"";
+                            for (int k = j + 1; k < currentLine.length(); k++)
+                                newCurrentLine += currentLine[k];
+                            
+                            currentLine = newCurrentLine;
+                        }
+                    }
+                    if (!spaceFound)
+                    {
+                        currentLine[currentLine.length() - 1] = L'\n';
+                        finalLine += currentLine;
+                        currentLine = L"";
+                        
+                        currentLine += line[i];
+                    }
+                }
+            }
+            finalLine += currentLine;
+            return finalLine;
+        }
+        return std::wstring(line);
+    }
+    std::wstring GetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width)
+    {
+        sf::Text tempText = text;
+        tempText.setString(line);
+        if (tempText.getLocalBounds().width >= width)
+        {
+            std::wstring finalLine = L"";
+            std::wstring currentLine = L"";
+            for (int i = 0; i < line.length(); i++)
+            {
+                currentLine += line[i];
+                tempText.setString(currentLine);
+                if (tempText.getLocalBounds().width >= width)
+                {
+                    currentLine[currentLine.length() - 1] = L'\n';
+                    finalLine += currentLine;
+                    currentLine = L"";
+                    
+                    currentLine += line[i];
+                }
+            }
+            return finalLine;
+        }
+        return std::wstring(line);
+    }
+    
+    
+    
     
     float MathParser(const std::wstring& finalLine)
     {

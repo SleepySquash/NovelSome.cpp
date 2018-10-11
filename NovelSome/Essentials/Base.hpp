@@ -37,6 +37,8 @@ namespace ns
         std::wstring GetStringWithNoExtention(std::wstring filename);
         std::wstring GetStringWithNoExtention(std::wstring filename, const std::wstring& extention);
         
+        size_t GetLengthWONewLines(const std::wstring& string);
+        
         bool FileExists(std::wstring path);
         bool DoesFileExistWithResolutionClass(const std::wstring& currentPath);
         std::wstring LowercaseTheString(const std::wstring& str);

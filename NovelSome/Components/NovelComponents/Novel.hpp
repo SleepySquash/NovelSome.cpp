@@ -45,6 +45,39 @@ namespace ns
     namespace NovelComponents
     {
         class Novel;
+        class GamePause : public Component
+        {
+        private:
+            sf::RectangleShape shape;
+            
+            sf::Int8 alpha{ 0 };
+            float currentTime{ 0.f };
+            
+        public:
+            Novel* novel{ nullptr };
+            enum modeEnum{ appearing, waiting, disappearing };
+            modeEnum mode{ waiting };
+            
+            int maxAlpha{ 255 };
+            float appearTime{ 0.15f };
+            float disappearTime{ 0.15f };
+            
+            bool countdownLastTouchedMoment{ false };
+            float lastTouchedMoment{ 0.f };
+            
+            GamePause();
+            ~GamePause();
+            void Update(const sf::Time& elapsedTime) override;
+            void PollEvent(sf::Event& event) override;
+            void Draw(sf::RenderWindow *window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+        };
+        
+        
+        
+        
+        
+        
         class Waiting : public NovelObject
         {
             float currentTime{ 0.f };
@@ -131,6 +164,8 @@ namespace ns
         public:
             sf::Text text;
             sf::String textString{ "" };
+            std::wstring printingString{ L"" };
+            std::wstring currentString{ L"" };
             
             sf::Text charText;
             sf::String charString{ "" };
@@ -157,6 +192,14 @@ namespace ns
             enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
             sendMessageBackEnum sendMessageBack{ atDisappearing };
             modeEnum afterAppearSwitchTo{ waitingForInput };
+            
+            unsigned int textAppearPos{ 0 };
+            unsigned int textAppearMax{ 0 };
+            unsigned int textAppearI{ 0 };
+            float characterInSecond{ 0.04 };
+            float elapsedCharacterSum{ 0 };
+            enum class textAppearModeEnum {fading, printing};
+            textAppearModeEnum textAppearMode{ textAppearModeEnum::printing };
             
             int maxAlpha = 255;
             bool forcePressInsideDialogue{ true };
@@ -461,6 +504,8 @@ namespace ns
             
             //std::wstring displayWhenVariableIsTrue{ L"" };
             bool isDependsOnVariable[8] = { false, false, false, false,  false, false,  false, false };
+            bool isDependsOnConstrains[8] = { false, false, false, false,  false, false,  false, false };
+            bool isDependsOnParent[8] = { false, false, false, false,  false, false,  false, false };
             std::unordered_map<std::wstring, bool> dependOnVariables;
             
             GUIConstrainsResult Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height, std::wstring& line);
@@ -490,6 +535,7 @@ namespace ns
             virtual void Init() { }
             virtual void Update(const sf::Time& elapsedTime) { }
             virtual void Draw(sf::RenderWindow* window) { }
+            virtual void PreCalculate(unsigned int width, unsigned int height) { }
             virtual void Resize(unsigned int width, unsigned int height) { }
             virtual void Destroy() { }
             virtual void SetAlpha(sf::Int8 alpha) { }
@@ -516,6 +562,68 @@ namespace ns
                 void SetAlpha(sf::Int8 alpha) override;
                 void SetColor(const sf::Color& fillColour) override;
             };
+            
+            struct Text : GUIObject
+            {
+                sf::Text text;
+                unsigned int characterSize{ 16 };
+                float thickness{ 0.f };
+                std::wstring textString{ L"Text" };
+                
+                std::wstring fontName{ L"" };
+                bool fontLoaded{ false };
+                
+                void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void PreCalculate(unsigned int width, unsigned int height) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(sf::Int8 alpha) override;
+                void SetColor(const sf::Color& fillColour) override;
+                void SetString(const std::wstring& wstr);
+                void SetFont(const std::wstring& font);
+                void SetOutlineThickness(const float& thickness);
+                void SetCharacterSize(const unsigned int& characterSize);
+            };
+            
+            struct Image : GUIObject
+            {
+                sf::Texture texture;
+                sf::Sprite sprite;
+                
+                bool spriteLoaded{ false };
+                std::wstring imagePath{ L"" };
+                
+                void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(sf::Int8 alpha) override;
+                void SetColor(const sf::Color& fillColour) override;
+                void LoadImage(const std::wstring& path);
+            };
+            
+            struct Button : GUIObject
+            {
+                sf::Text text;
+                std::wstring title{ L"" };
+                unsigned int characterSize{ 16 };
+                float thickness{ 0.f };
+                bool fontLoaded{ false };
+                
+                sf::Texture textures[3];
+                sf::Sprite sprites[3];
+                bool spriteLoaded[3] = { };
+                std::wstring imagePath[3] = { L"", L"", L"" };
+                
+                /*void Init() override;
+                void Update(const sf::Time& elapsedTime) override;
+                void Draw(sf::RenderWindow* window) override;
+                void Resize(unsigned int width, unsigned int height) override;
+                void SetAlpha(sf::Int8 alpha) override;
+                void SetColor(const sf::Color& fillColour) override;
+                void LoadImage(const std::wstring& path, int num);*/
+            };
         }
         
         
@@ -527,12 +635,14 @@ namespace ns
             struct Dialogue
             {
                 GUISystem gui;
-                GUIObjects::Rectangle* dialogueRect{ nullptr };
-                GUIObjects::Rectangle* nameRect{ nullptr };
+                GUIObject* dialogueRect{ nullptr };
+                GUIObject* nameRect{ nullptr };
                 
                 unsigned int characterSize{ 30 };
                 int maxAlpha = 255;
                 bool forcePressInsideDialogue{ true };
+                float characterInSecond{ 0.04 };
+                unsigned int textAppearMode{ 0 };
                 std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
                 
                 float appearTime{ 0.6f };
@@ -589,6 +699,9 @@ namespace ns
         }
         struct Skin
         {
+            std::wstring defaultFontName{ L"NotoSansCJK-Regular.ttc" };
+            
+            GUISystem gamePauseGUI;
             Skins::Dialogue dialogue;
             Skins::Background background;
             Skins::Character character;
@@ -668,6 +781,7 @@ namespace ns
             std::wifstream wif;
             
         public:
+            GamePause gamePause;
             NovelLibrary library;
             Skin skin;
             

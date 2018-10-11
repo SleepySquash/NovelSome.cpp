@@ -16,15 +16,42 @@ namespace ns
         {
             //TODO: Defaults
             dialogue.gui.Clear();
+            GUIObjects::Rectangle* dialogueRect = dialogue.gui.AddComponent<GUIObjects::Rectangle>();
+            dialogue.dialogueRect = dialogueRect;
+            dialogueRect->shape.setFillColor(sf::Color::Black);
+            dialogueRect->maxAlpha = 170;
+            dialogueRect->constrains.leftS = L"30";
+            dialogueRect->constrains.rightS = L"30";
+            dialogueRect->constrains.bottomS = L"10";
+            dialogueRect->constrains.heightS = L".height/5 - 10";
+            
+            GUISystem* childSystem = dialogueRect->GetChildSystem();
+            GUIObjects::Rectangle* nameRect = childSystem->AddComponent<GUIObjects::Rectangle>();
+            dialogue.nameRect = nameRect;
+            nameRect->shape.setFillColor(sf::Color::Black);
+            nameRect->maxAlpha = 170;
+            nameRect->constrains.leftS = L"10";
+            nameRect->constrains.rightS = L"0";
+            nameRect->constrains.bottomS = L".height + 5";
+            nameRect->constrains.widthS = L"@name.width + 20";
+            nameRect->constrains.heightS = L"@name.height + 10";
+            nameRect->SetFadings(GUIObject::offline);
+            
+            gamePauseGUI.Clear();
+            GUIObjects::Rectangle* pauseRect = gamePauseGUI.AddComponent<GUIObjects::Rectangle>();
+            pauseRect->shape.setFillColor(sf::Color::Black);
+            pauseRect->maxAlpha = 170;
         }
         void Skin::LoadFromFile(const std::wstring& fileName)
         {
+            std::wstring fullPath = sf::String(resourcePath()) + fileName;
+            
             std::wifstream wif;
 #ifdef _WIN32
-            wif.open(fileName);
+            wif.open(fullPath);
 #else
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(fileName);
+            std::string u8str = converter.to_bytes(fullPath);
             wif.open(u8str);
 #endif
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
@@ -156,6 +183,39 @@ namespace ns
                                     dialogue.characterSize = possibleValue;
                             }
                         }
+                        else if (nss::Command(command, L"characterinsecond:") || nss::Command(command, L"characterinsecond ") ||
+                                 nss::Command(command, L"characterspeed:") || nss::Command(command, L"characterspeed "))
+                        {
+                            nss::SkipSpaces(command);
+                            float possibleValue = nss::ParseAsFloat(command);
+                            if (possibleValue >= 0)
+                                dialogue.characterInSecond = possibleValue;
+                        }
+                        else if (nss::Command(command, L"insecond:") || nss::Command(command, L"insecond ")
+                                 || nss::Command(command, L"speed:") || nss::Command(command, L"speed "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                float possibleValue = nss::ParseAsFloat(command);
+                                if (possibleValue >= 0)
+                                    dialogue.characterInSecond = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"mode:") || nss::Command(command, L"mode ") ||
+                                 nss::Command(command, L"appearmode:") || nss::Command(command, L"appearmode ") ||
+                                 nss::Command(command, L"textmode:") || nss::Command(command, L"textmode "))
+                        {
+                            nss::SkipSpaces(command);
+                            std::wstring possibleValue = nss::ParseAsMaybeQuoteString(command);
+                            if (possibleValue.length() != 0)
+                            {
+                                if (possibleValue == L"appearing" || possibleValue == L"fading" || possibleValue == L"appear" || possibleValue == L"fade" || possibleValue == L"fadein" || possibleValue == L"fadings" || possibleValue == L"alpha")
+                                    dialogue.textAppearMode = 0;
+                                else if (possibleValue == L"printing" || possibleValue == L"print" || possibleValue == L"character" || possibleValue == L"characters" || possibleValue == L"bycharacter" || possibleValue == L"bycharacters" || possibleValue == L"insecond" || possibleValue == L"inseconds" || possibleValue == L"second" || possibleValue == L"seconds" || possibleValue == L"bysecond" || possibleValue == L"byseconds" || possibleValue == L"speed" || possibleValue == L"characterspeed" || possibleValue == L"characterinsecond")
+                                    dialogue.textAppearMode = 1;
+                            }
+                        }
                         else if (nss::Command(command, L"forcePressInsideDialogue:") || nss::Command(command, L"forcePressInsideDialogue "))
                         {
                             nss::SkipSpaces(command);
@@ -167,15 +227,14 @@ namespace ns
                                  nss::Command(command, L"font:") || nss::Command(command, L"font "))
                         {
                             nss::SkipSpaces(command);
-                            
-                            std::wstring possibleValue;
-                            if (command.line[command.lastPos] == '"')
-                                possibleValue = nss::ParseAsQuoteString(command);
-                            else
-                                possibleValue = nss::ParseUntil(command, ' ');
-                            
+                            std::wstring possibleValue = nss::ParseAsMaybeQuoteString(command);
                             if (possibleValue.length() != 0)
-                                dialogue.fontName = possibleValue;
+                            {
+                                if (settingScope == L"dialogue")
+                                    dialogue.fontName = possibleValue;
+                                else
+                                    defaultFontName = possibleValue, dialogue.fontName = possibleValue;
+                            }
                         }
                         else if (nss::Command(command, L"music"))
                             settingScope = L"music";
@@ -197,16 +256,20 @@ namespace ns
             wif.close();
             
             bool loadDefaultGUI{ true };
+            bool loadDefaultPause{ true };
             if (fileOpened)
             {
                 dialogue.gui.Clear();
                 loadDefaultGUI = !dialogue.gui.LoadFromFile(fileName, this, L"dialogue");
+                
+                gamePauseGUI.Clear();
+                loadDefaultPause = !gamePauseGUI.LoadFromFile(fileName, this, L"gamepause");
             }
             if (loadDefaultGUI)
             {
                 //Adding the dialogue's box
-                dialogue.dialogueRect = dialogue.gui.AddComponent<GUIObjects::Rectangle>();
-                GUIObjects::Rectangle* dialogueRect = dialogue.dialogueRect;
+                GUIObjects::Rectangle* dialogueRect = dialogue.gui.AddComponent<GUIObjects::Rectangle>();
+                dialogue.dialogueRect = dialogueRect;
                 dialogueRect->shape.setFillColor(sf::Color::Black);
                 dialogueRect->maxAlpha = 170;
                 dialogueRect->constrains.leftS = L"30";
@@ -216,8 +279,8 @@ namespace ns
                 
                 //Requesting the child system to add the name's box
                 GUISystem* childSystem = dialogueRect->GetChildSystem();
-                dialogue.nameRect = childSystem->AddComponent<GUIObjects::Rectangle>();
-                GUIObjects::Rectangle* nameRect = dialogue.nameRect;
+                GUIObjects::Rectangle* nameRect = childSystem->AddComponent<GUIObjects::Rectangle>();
+                dialogue.nameRect = nameRect;
                 nameRect->shape.setFillColor(sf::Color::Black);
                 nameRect->maxAlpha = 170;
                 nameRect->constrains.leftS = L"10";
@@ -226,6 +289,12 @@ namespace ns
                 nameRect->constrains.widthS = L"@name.width + 20";
                 nameRect->constrains.heightS = L"@name.height + 10";
                 nameRect->SetFadings(GUIObject::offline);
+            }
+            if (loadDefaultPause)
+            {
+                GUIObjects::Rectangle* pauseRect = gamePauseGUI.AddComponent<GUIObjects::Rectangle>();
+                pauseRect->shape.setFillColor(sf::Color::Black);
+                pauseRect->maxAlpha = 170;
             }
         }
         

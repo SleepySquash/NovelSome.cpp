@@ -1,13 +1,18 @@
 name "Default"
 
-font: "NotoSansCJK-Regular.ttc"
-characterSize: 30
+font: "Pacifica.ttf"
 
 dialogue
 {
     appearTime: 0.6
     disappearTime: 0.6
     alpha: 1.
+
+    insecond: 0.03
+    mode: insecond
+
+    font: "NotoSansCJK-Regular.ttc"
+    size: 30
 }
 
 background
@@ -55,11 +60,32 @@ gui menu
 }
 
 
+
+gui gamepause
+{
+    rectangle
+    {
+        alpha: .8
+    }
+
+    text "Game pause"
+    {
+        posx: .width/2 - @text.width + 230
+        posy: .height/4.5
+
+        fill: white
+        outline: red
+        thickness: 2
+        size: 96
+    }
+}
+
+
+
 gui dialogue
 {
     rectangle as Dialogue
     {
-        color black
         alpha: .66
 
         left: 30
@@ -67,40 +93,14 @@ gui dialogue
         bottom: 10
         height: ".height/5 - 10"
 
-        text @dialogue {
-            left: 10
-            width: .width - 20
-            font: "NotoSansCJK-Regular.ttc"
-            size: 30
-        }
-
-        rectangle as Name {
-            color: black
+        rectangle as Name
+        {
             maxAlpha: .66
 
             left: 10
             bottom: .height + 5
             width: @name.width + 20
             height: @name.height + 10
-
-            fadings as nameRect
-
-            text @name {
-                left: 5
-                width: .width - 20
-                font: "NotoSansCJK-Regular.ttc"
-                size: 30
-            }
-
-            rectangle
-            {
-                //yay
-            }
-
-            rectangle
-            {
-                //yay
-            }
         }
     }
 }
@@ -124,7 +124,9 @@ gui sdialogue
 
         text @dialogue {
             left: 10
+            top: 10
             width: .width - 20
+
             font: "NotoSansCJK-Regular.ttc"
             size: 30
         }
@@ -142,7 +144,9 @@ gui sdialogue
 
             text @name {
                 left: 5
+                top: 5
                 width: .width - 20
+
                 font: "NotoSansCJK-Regular.ttc"
                 size: 30
             }

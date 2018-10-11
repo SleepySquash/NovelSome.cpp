@@ -43,13 +43,18 @@
 //TODO: Choice menu and novel's ability to read commands from line[] array.
 //TODO: HUD as GUISystem parsed from skin file with command.
 //TODO: .mp3 working.
-//TODO: Smart global scaling factor.
 //TODO: Game Pause having some buttons.
 //TODO: Make game pause's fingers be blocked from touching something on the screen.
 //TODO: There is should be Text's scaling factor, which will be diffrent from the usual gs::scale to make text more readble on the big devices and screens.
 
-//TODO: Getting the color and getting the alpha should have its own NSS functions.
-//      (usage in GUI parsing and in Skin parsing
+//TODO: Double clicking also calls Game Pause.
+//TODO: Individual scaling factor in Settings or stuff.
+//TODO: GUI class with buttons.
+//TODO: Correct scaling speed when ratio is big.
+
+//TODO: "dialogue hide" command hides all the dialogues with fade.
+//TODO: Argument after dialogue command CHAR "..." or just "..." named as "new" or "add" should make dialogues that have been already created not to destroy. Instead it should change their "after input/wait switch to mode" and set it to "waiting" until dialogue that will destroy every dialogue will appear or until "dialogue hide" will be called. However, every dialogue has to draw it's own GUI, so dialogue's GUI will be drawn the times dialogues are presented (before Draw() SetAlpha() event should be called as well). So that way you can create "bubble"-like dialogues near characters or stuff like that.
+//TODO: Make in every GUIConstrains array of bools that show dependence of other constrains (even of parent's constrains) or a variable.
 
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
@@ -68,6 +73,9 @@
 //DONE: LocalVariable_Set - use it everywhere where varialbles are changing.
 //DONE: Image's global library so no dublicate will be loaded.
 //DONE: Game Pause entered by clicking with two fingers.
+//DONE: Smart global scaling factor.
+//DONE: Getting the color and getting the alpha should have its own NSS functions.
+//      (usage in GUI parsing and in Skin parsing)
 
 // PARSINGS:
 //          NovelUpdate
@@ -153,7 +161,11 @@ void CalculateScaleRatios(unsigned int width, unsigned int height)
 
 
 
+#ifdef _MSC_VER
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+#else
 int main()
+#endif
 {
 #ifdef SFML_SYSTEM_IOS
     sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
@@ -272,8 +284,7 @@ int main()
     ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 14");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 15");
 #ifdef SFML_SYSTEM_IOS
         ns::gs::isParallaxEnabled = false;
         Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
@@ -347,8 +358,7 @@ int main()
                             }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<ns::EssentialComponents::GamePause>();
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 14");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 15");
 #ifdef SFML_SYSTEM_IOS
                                 Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
 #endif

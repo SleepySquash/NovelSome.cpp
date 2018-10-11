@@ -96,6 +96,22 @@ namespace ns
         
         
         
+        size_t GetLengthWONewLines(const std::wstring& string)
+        {
+            size_t size = 0;
+            size_t i = 0;
+            while (string[i] != '\0')
+            {
+                if (string[i] != '\n')
+                    size++;
+                i++;
+            }
+            
+            return size;
+        }
+        
+        
+        
         bool FileExists(std::wstring path)
         {
 #ifdef _WIN32

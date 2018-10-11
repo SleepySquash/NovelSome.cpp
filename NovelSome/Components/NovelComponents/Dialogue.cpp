@@ -24,7 +24,19 @@ namespace ns
                 disappearTime = novel->skin.dialogue.disappearTime;
                 maxAlpha = novel->skin.dialogue.maxAlpha;
                 characterSize = novel->skin.dialogue.characterSize;
+                characterInSecond = novel->skin.dialogue.characterInSecond;
                 fontName = novel->skin.dialogue.fontName;
+                switch (novel->skin.dialogue.textAppearMode)
+                {
+                    case 0:
+                        textAppearMode = textAppearModeEnum::fading;
+                        break;
+                    case 1:
+                        textAppearMode = textAppearModeEnum::printing;
+                        break;
+                    default:
+                        break;
+                }
                 
                 forcePressInsideDialogue = novel->skin.dialogue.forcePressInsideDialogue && ns::gs::forcePressInsideDialogue;
             }
@@ -35,6 +47,24 @@ namespace ns
         {
             if (guiSystem != nullptr)
                 guiSystem->Update(elapsedTime);
+            
+            if (mode != deprecated && textAppearMode == textAppearModeEnum::printing)
+                if (textAppearPos < textAppearMax)
+                {
+                    elapsedCharacterSum += elapsedTime.asSeconds();
+                    while (elapsedCharacterSum > characterInSecond && textAppearPos < textAppearMax)
+                    {
+                        ++textAppearPos;
+                        elapsedCharacterSum -= characterInSecond;
+                        
+                        while (printingString[textAppearI] == L'\n')
+                            currentString += printingString[textAppearI++];
+                        currentString += printingString[textAppearI++];
+                        
+                        text.setString(currentString);
+                    }
+                }
+            
             switch (mode)
             {
                 case appearing:
@@ -120,30 +150,29 @@ namespace ns
         {
             if (mode == waitingForInput)
             {
-                if (visible && event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+                if (visible && (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchEnded))
                 {
-                    mode = (!forcePressInsideDialogue || (event.mouseButton.x > 0 && event.mouseButton.x < ns::GlobalSettings::width && event.mouseButton.y < ns::GlobalSettings::height && event.mouseButton.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5)) ? disappearing : waitingForInput;
+                    //TODO: Working zone.
+                    bool pressed{ false };
+                    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+                        pressed = (!forcePressInsideDialogue || (event.mouseButton.x > 0 && event.mouseButton.x < ns::GlobalSettings::width && event.mouseButton.y < ns::GlobalSettings::height && event.mouseButton.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5));
+                    else if (event.type == sf::Event::TouchEnded)
+                        pressed = (!forcePressInsideDialogue || (event.touch.x > 0 && event.touch.x < ns::GlobalSettings::width && event.touch.y < ns::GlobalSettings::height && event.touch.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5));
                     
-                    if (mode == disappearing)
+                    if (pressed)
                     {
-                        event = sf::Event();
+                        bool fadeAway{ true };
+                        if (textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
+                            currentString = printingString, text.setString(currentString), textAppearPos = textAppearMax, fadeAway = false;
                         
-                        if (novel != nullptr)
-                            if (sendMessageBack == atDisappearing)
-                                novel->UnHold(this);
-                    }
-                }
-                else if (visible && event.type == sf::Event::TouchEnded)
-                {
-                    mode = (!forcePressInsideDialogue || (event.touch.x > 0 && event.touch.x < ns::GlobalSettings::width && event.touch.y < ns::GlobalSettings::height && event.touch.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5)) ? disappearing : waitingForInput;
-                    
-                    if (mode == disappearing)
-                    {
                         event = sf::Event();
-                        
-                        if (novel != nullptr)
-                            if (sendMessageBack == atDisappearing)
-                                novel->UnHold(this);
+                        if (fadeAway)
+                        {
+                            mode = disappearing;
+                            if (novel != nullptr)
+                                if (sendMessageBack == atDisappearing)
+                                    novel->UnHold(this);
+                        }
                     }
                 }
                 else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
@@ -156,15 +185,11 @@ namespace ns
             {
                 if (guiSystem != nullptr)
                     guiSystem->Draw(window);
-                //window->draw(shape);
                 if (fontLoaded)
                 {
                     window->draw(text);
                     if (drawCharacterName)
-                    {
-                        //window->draw(charShape);
                         window->draw(charText);
-                    }
                 }
             }
         }
@@ -182,8 +207,23 @@ namespace ns
             {
                 if (charString != "")
                     nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(skin->nameTextWidth*gs::scale));
-                if (textString != "")
-                    nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
+                if (textString != L"")
+                {
+                    if (textAppearMode ==  textAppearModeEnum::printing)
+                    {
+                        currentString = L""; textAppearI = 0;
+                        printingString = nss::GetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
+                        for (size_t i = 0; i < textAppearPos; ++i)
+                        {
+                            while (printingString[textAppearI] == L'\n')
+                                currentString += printingString[textAppearI++];
+                            currentString += printingString[textAppearI++];
+                        }
+                        text.setString(currentString);
+                    }
+                    else
+                        nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
+                }
             }
             
             if (guiSystem != nullptr)
@@ -230,7 +270,15 @@ namespace ns
         void Dialogue::SetDialogue(const sf::String& dialogue)
         {
             textString = dialogue;
-            text.setString(textString);
+            printingString = textString;
+            if (textAppearMode == textAppearModeEnum::printing)
+            {
+                currentString = L"", textAppearMax = base::GetLengthWONewLines(textString);
+                text.setString(currentString);
+            }
+            else
+                text.setString(printingString);
+            
             text.setFont(*ns::FontCollector::GetFont(fontName));
             fontLoaded = (text.getFont() != nullptr);
             
