@@ -19,6 +19,13 @@
 //for ns::base::LowercaseTheString
 #include "../Essentials/Base.hpp"
 
+//for mathparser, stack functionality
+#include "List.hpp"
+
+using std::cout;
+using std::cin;
+using std::endl;
+
 namespace nss
 {
     struct CommandSettings
@@ -50,6 +57,7 @@ namespace nss
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results);
     bool ContainsUsefulInformation(CommandSettings& results);
+    bool ContainsUsefulInformation(const std::wstring& wstr);
     
     //TODO: Documentation
     std::wstring GetFromUntil(const std::wstring& line, unsigned int pos, const wchar_t until);
@@ -79,9 +87,9 @@ namespace nss
     float ArgumentAsFloat(CommandSettings& results);
     int ArgumentAsInt(CommandSettings& results);
     
-    void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width);
+    void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift = 0);
     void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
-    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, const unsigned int width);
+    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift = 0);
     std::wstring GetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
     
     float MathParser(const std::wstring& finalLine);

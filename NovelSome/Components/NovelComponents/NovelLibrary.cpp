@@ -37,6 +37,18 @@ namespace ns
             nameRect->constrains.heightS = L"@name.height + 10";
             nameRect->SetFadings(GUIObject::offline);
             
+            
+            choose.guiChoose.Clear();
+            GUIObjects::Rectangle* chooseRect = choose.guiChoose.AddComponent<GUIObjects::Rectangle>();
+            choose.chooseRect = chooseRect;
+            chooseRect->shape.setFillColor(sf::Color::Black);
+            chooseRect->maxAlpha = 170;
+            chooseRect->constrains.posXS = L".width/2 - 240";
+            chooseRect->constrains.posYS = L".height/2 - 160";
+            chooseRect->constrains.widthS = L"480";
+            chooseRect->constrains.heightS = L"320";
+            
+            
             gamePauseGUI.Clear();
             GUIObjects::Rectangle* pauseRect = gamePauseGUI.AddComponent<GUIObjects::Rectangle>();
             pauseRect->shape.setFillColor(sf::Color::Black);
@@ -236,6 +248,92 @@ namespace ns
                                     defaultFontName = possibleValue, dialogue.fontName = possibleValue;
                             }
                         }
+                        else if (nss::Command(command, L"onleft:") || nss::Command(command, L"onleft ") ||
+                                 nss::Command(command, L"ladd:") || nss::Command(command, L"ladd "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                if (command.line[command.lastPos] != 0)
+                                    dialogue.leftSpeechAddition = command.line[command.lastPos];
+                            }
+                        }
+                        else if (nss::Command(command, L"onright:") || nss::Command(command, L"onright ") ||
+                                 nss::Command(command, L"radd:") || nss::Command(command, L"radd "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                if (command.line[command.lastPos] != 0)
+                                    dialogue.rightSpeechAddition = command.line[command.lastPos];
+                            }
+                        }
+                        else if (nss::Command(command, L"leftspeechaddition:") || nss::Command(command, L"leftspeechaddition ") ||
+                                 nss::Command(command, L"leftaddition:") || nss::Command(command, L"leftaddition ") ||
+                                 nss::Command(command, L"laddition:") || nss::Command(command, L"laddition "))
+                        {
+                            nss::SkipSpaces(command);
+                            if (command.line[command.lastPos] != 0)
+                                dialogue.leftSpeechAddition = command.line[command.lastPos];
+                        }
+                        else if (nss::Command(command, L"rightspeechaddition:") || nss::Command(command, L"rightspeechaddition ") ||
+                                 nss::Command(command, L"rightaddition:") || nss::Command(command, L"rightaddition ") ||
+                                 nss::Command(command, L"raddition:") || nss::Command(command, L"raddition "))
+                        {
+                            nss::SkipSpaces(command);
+                            if (command.line[command.lastPos] != 0)
+                                dialogue.rightSpeechAddition = command.line[command.lastPos];
+                        }
+                        else if (nss::Command(command, L"shift:") || nss::Command(command, L"shift "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                dialogue.afterRedLineShift = nss::ParseAsInt(command);
+                            }
+                        }
+                        else if (nss::Command(command, L"afterredlineshift:") || nss::Command(command, L"afterredlineshift ") ||
+                                 nss::Command(command, L"redlineshift:") || nss::Command(command, L"redlineshift ") ||
+                                 nss::Command(command, L"afterredline:") || nss::Command(command, L"afterredline "))
+                        {
+                            nss::SkipSpaces(command);
+                            dialogue.afterRedLineShift = nss::ParseAsInt(command);
+                        }
+                        else if (nss::Command(command, L"thickness:") || nss::Command(command, L"thickness ") ||
+                                 nss::Command(command, L"outlinethickness:") || nss::Command(command, L"outlinethickness "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                float possibleValue = nss::ParseAsFloat(command);
+                                if (possibleValue >= 0)
+                                    dialogue.outlineThickness = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"color:") || nss::Command(command, L"color ") ||
+                                 nss::Command(command, L"fill:") || nss::Command(command, L"fill ") ||
+                                 nss::Command(command, L"fillcolor:") || nss::Command(command, L"fillcolor "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                sf::Color possibleValue = nss::ParseColor(command);
+                                if (possibleValue.a != 255)
+                                    dialogue.fillColor = possibleValue;
+                            }
+                        }
+                        else if (nss::Command(command, L"ocolor:") || nss::Command(command, L"ocolor ") ||
+                                 nss::Command(command, L"outline:") || nss::Command(command, L"outline ") ||
+                                 nss::Command(command, L"outlinecolor:") || nss::Command(command, L"outlinecolor "))
+                        {
+                            if (settingScope == L"dialogue")
+                            {
+                                nss::SkipSpaces(command);
+                                sf::Color possibleValue = nss::ParseColor(command);
+                                if (possibleValue.a != 255)
+                                    dialogue.outlineColor = possibleValue;
+                            }
+                        }
                         else if (nss::Command(command, L"music"))
                             settingScope = L"music";
                         else if (nss::Command(command, L"sound"))
@@ -256,11 +354,15 @@ namespace ns
             wif.close();
             
             bool loadDefaultGUI{ true };
+            bool loadDefaultChoice{ true };
             bool loadDefaultPause{ true };
             if (fileOpened)
             {
                 dialogue.gui.Clear();
                 loadDefaultGUI = !dialogue.gui.LoadFromFile(fileName, this, L"dialogue");
+                
+                choose.guiChoose.Clear();
+                loadDefaultChoice = !choose.guiChoose.LoadFromFile(fileName, this, L"choose");
                 
                 gamePauseGUI.Clear();
                 loadDefaultPause = !gamePauseGUI.LoadFromFile(fileName, this, L"gamepause");
@@ -289,6 +391,17 @@ namespace ns
                 nameRect->constrains.widthS = L"@name.width + 20";
                 nameRect->constrains.heightS = L"@name.height + 10";
                 nameRect->SetFadings(GUIObject::offline);
+            }
+            if (loadDefaultChoice)
+            {
+                GUIObjects::Rectangle* chooseRect = choose.guiChoose.AddComponent<GUIObjects::Rectangle>();
+                choose.chooseRect = chooseRect;
+                chooseRect->shape.setFillColor(sf::Color::Black);
+                chooseRect->maxAlpha = 170;
+                chooseRect->constrains.posXS = L".width/2 - 240";
+                chooseRect->constrains.posYS = L".height/2 - 160";
+                chooseRect->constrains.widthS = L"480";
+                chooseRect->constrains.heightS = L"320";
             }
             if (loadDefaultPause)
             {
@@ -434,7 +547,7 @@ namespace ns
                                                         if (possibleColor.a != 255)
                                                             charData->outlineColor = possibleColor;
                                                     }
-                                                    if (nss::Command(command, L"thickness "))
+                                                    else if (nss::Command(command, L"thickness "))
                                                     {
                                                         std::wstring possibleThickness = nss::ParseUntil(command, '\0');
                                                         if (possibleThickness.length() != 0)

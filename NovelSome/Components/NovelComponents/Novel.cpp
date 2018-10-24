@@ -20,7 +20,7 @@ namespace ns
             
             localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
             localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 14"))});
+            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 16"))});
             
             library.SetNovel(this);
             library.ScanForCharacters();
@@ -128,6 +128,8 @@ namespace ns
         void Novel::VariableChange(const std::wstring& name)
         {
             skin.dialogue.gui.VariableChange(name);
+            skin.choose.guiChoose.VariableChange(name);
+            skin.gamePauseGUI.VariableChange(name);
             if (GUIGroup != nullptr)
             {
                 List<GUISystem>* temp = GUIGroup;
@@ -234,6 +236,26 @@ namespace ns
             if (groupPointer == dialogueGroup)
             {
                 dialogueGroup = groupPointer->next;
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = nullptr;
+                
+                delete groupPointer;
+            }
+            else
+            {
+                if (groupPointer->next != nullptr)
+                    groupPointer->next->prev = groupPointer->prev;
+                if (groupPointer->prev != nullptr)
+                    groupPointer->prev->next = groupPointer->next;
+                
+                delete groupPointer;
+            }
+        }
+        void Novel::RemoveFromGroup(List<Choose>* groupPointer)
+        {
+            if (groupPointer == chooseGroup)
+            {
+                chooseGroup = groupPointer->next;
                 if (groupPointer->next != nullptr)
                     groupPointer->next->prev = nullptr;
                 

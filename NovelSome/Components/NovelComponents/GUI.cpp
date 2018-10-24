@@ -109,6 +109,7 @@ namespace ns
                     
                     if (list->data->visible && !list->data->ignoreVariableChange)
                     {
+                        list->data->PreCalculate(width, height);
                         list->data->constrains.Recalculate(*list->data, width, height);
                         list->data->Resize(width, height);
                         if (list->data->child != nullptr)
@@ -195,6 +196,20 @@ namespace ns
         {
             this->parent = parent;
         }
+        void GUISystem::ResetResize()
+        {
+            lastWidth = 0;
+            lastHeight = 0;
+            
+            List<GUIObject>* next = nullptr;
+            if (guiObjects != nullptr)
+                for (auto* list = guiObjects; list != nullptr; list = next)
+                {
+                    next = list->next;
+                    if (list->data->child != nullptr)
+                        list->data->child->ResetResize();
+                }
+        }
         
         
         
@@ -204,6 +219,8 @@ namespace ns
             //      Seperators: ',' '+' '-' '*' '/' etc
             std::wstring finalLine = L"";
             bool mustBeRecalculated{ false };
+            bool reallyOnlyScaled{ false };
+            bool onlyNeedsScaling{ true };
             bool dependVariable{ false };
             
             bool itsBeingSummed{ true };
@@ -257,7 +274,6 @@ namespace ns
                 
                 if (word.length() > 0)
                 {
-                    
                     //analyzing the "word"
                     if (itHasAPoint && !itWasANumber)
                     {
@@ -293,6 +309,7 @@ namespace ns
                                     if (possibleFunction == L".width")
                                     {
                                         mustBeRecalculated = true;
+                                        onlyNeedsScaling = false;
                                         if (possibleVariable.length() == 0)
                                         {
                                             if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
@@ -313,7 +330,11 @@ namespace ns
                                                 if (possibleVariable == L"@name")
                                                 {
                                                     if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->charText.getLocalBounds().width);
+                                                    {
+                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup->data->charText;
+                                                        text.setString(nvar->value.asString);
+                                                        replaceBy += std::to_wstring((int)text.getLocalBounds().width);
+                                                    }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
@@ -336,6 +357,8 @@ namespace ns
                                     else if (possibleFunction == L".height")
                                     {
                                         mustBeRecalculated = true;
+                                        onlyNeedsScaling = false;
+                                        
                                         if (possibleVariable.length() == 0)
                                         {
                                             if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
@@ -356,7 +379,11 @@ namespace ns
                                                 if (possibleVariable == L"@name")
                                                 {
                                                     if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->charText.getLocalBounds().height);
+                                                    {
+                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup->data->charText;
+                                                        text.setString(nvar->value.asString);
+                                                        replaceBy += std::to_wstring((int)text.getLocalBounds().height);
+                                                    }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
@@ -378,12 +405,14 @@ namespace ns
                                     }
                                     else if (possibleFunction == L".length")
                                     {
+                                        mustBeRecalculated = true;
+                                        onlyNeedsScaling = false;
+                                        
                                         if (possibleVariable.length() != 0)
                                             if (nvar->type == nvar->String)
                                             {
-                                                dependVariable = true;
                                                 dependOnVariables.insert({possibleVariable, true});
-                                                mustBeRecalculated = true;
+                                                dependVariable = true;
                                                 
                                                 replaceBy += std::to_wstring(std::wstring(nvar->value.asString).length());
                                             }
@@ -417,6 +446,9 @@ namespace ns
                             else if (nvar != nullptr)
                             {
                                 dependVariable = true;
+                                mustBeRecalculated = true;
+                                onlyNeedsScaling = false;
+                                
                                 dependOnVariables.insert({word, true});
                                 
                                 switch (nvar->type)
@@ -448,6 +480,9 @@ namespace ns
                         {
                             mustBeRecalculated = true;
                             
+                            if (onlyNeedsScaling)
+                                reallyOnlyScaled = true;
+                            
                             float left = base::ConvertToFloat(word);
                             left = left * ns::gs::scale;
                             finalLine += std::to_wstring(left);
@@ -457,136 +492,256 @@ namespace ns
                         }
                         else
                         {
-                            finalLine += word;
+                            if (!mustBeRecalculated)
+                            {
+                                for (int j = 0; j < word.length(); ++j)
+                                    if ((word[j] >= 48 && word[j] <= 57) || word[j] == '.')
+                                        finalLine += word[j];
+                            }
+                            else
+                                finalLine += word;
+                            
                             if (lastPos <= line.length() && lastPos > 0)
                                 finalLine += line[lastPos - 1];
                         }
                     }
-                    
                 }
+                else
+                    if (lastPos <= line.length() && lastPos > 0)
+                        finalLine += line[lastPos - 1];
             }
             
+            if (!onlyNeedsScaling)
+                reallyOnlyScaled = false;
+            
             float left = nss::MathParser(finalLine);
-            return GUIConstrainsResult(left, dependVariable, !mustBeRecalculated);
+            return GUIConstrainsResult(left, dependVariable, !mustBeRecalculated, reallyOnlyScaled);
         }
         void GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height)
         {
             GUIConstrainsResult res;
-            if (!leftC && leftS.length() != 0)
+            
+            left = 0;
+            right = 0;
+            bottom = 0;
+            top = 0;
+            this->width = 0;
+            this->height = 0;
+            posX = 0;
+            posY = 0;
+            
+            if (!notSet[0])
             {
-                res = Recalculate(guiObject, width, height, leftS);
-                left = res.result;
-                leftC = res.constant;
-                isDependsOnVariable[0] = res.dependsOnVariable;
-                
-                if (leftC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    left += guiObject.guiSystem->parent->constrains.left;
-            }
-            if (!rightC && rightS.length() != 0)
-            {
-                res = Recalculate(guiObject, width, height, rightS);
-                right = res.result;
-                rightC = res.constant;
-                isDependsOnVariable[1] = res.dependsOnVariable;
-                
-                if (rightC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    right += guiObject.guiSystem->parent->constrains.right;
-            }
-            if (!topC && topS.length() != 0)
-            {
-                res = Recalculate(guiObject, width, height, topS);
-                top = res.result;
-                topC = res.constant;
-                isDependsOnVariable[2] = res.dependsOnVariable;
-                
-                if (topC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    top += guiObject.guiSystem->parent->constrains.top;
-            }
-            if (!bottomC && bottomS.length() != 0)
-            {
-                res = Recalculate(guiObject, width, height, bottomS);
-                bottom = res.result;
-                bottomC = res.constant;
-                isDependsOnVariable[3] = res.dependsOnVariable;
-                
-                if (bottomC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    bottom += guiObject.guiSystem->parent->constrains.bottom;
+                if (constant[0])
+                    left = sleft;
+                else if (onlyNeedsToBeScaled[0])
+                    left = sleft * gs::scale;
+                else if (leftS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, leftS);
+                    left = res.result;
+                    
+                    constant[0] = res.constant;
+                    onlyNeedsToBeScaled[0] = res.needsToBeScaled;
+                    if (constant[0] || onlyNeedsToBeScaled[0])
+                        sleft = (float)left/gs::scale;
+                    isDependsOnVariable[0] = res.dependsOnVariable;
+                }
+                else
+                    notSet[0] = true;
             }
             
-            if (!widthC && widthS.length() != 0)
+            if (!notSet[1])
             {
-                res = Recalculate(guiObject, width, height, widthS);
-                this->width = res.result;
-                widthC = res.constant;
-                isDependsOnVariable[4] = res.dependsOnVariable;
-                
-                if (widthC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    width += guiObject.guiSystem->parent->constrains.width;
-            }
-            if (!heightC && heightS.length() != 0)
-            {
-                res = Recalculate(guiObject, width, height, heightS);
-                this->height = res.result;
-                heightC = res.constant;
-                isDependsOnVariable[5] = res.dependsOnVariable;
-                
-                if (heightC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    height += guiObject.guiSystem->parent->constrains.height;
+                if (constant[1])
+                    right = sright;
+                else if (onlyNeedsToBeScaled[1])
+                    right = sright * gs::scale;
+                else if (rightS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, rightS);
+                    right = res.result;
+                    
+                    constant[1] = res.constant;
+                    onlyNeedsToBeScaled[1] = res.needsToBeScaled;
+                    if (constant[1] || onlyNeedsToBeScaled[1])
+                        sright = (float)right/gs::scale;
+                    isDependsOnVariable[1] = res.dependsOnVariable;
+                }
+                else
+                    notSet[1] = true;
             }
             
-            if (!posXC && posXS.length() != 0)
+            if (!notSet[2])
             {
-                res = Recalculate(guiObject, width, height, posXS);
-                posX = res.result;
-                posXC = res.constant;
-                isDependsOnVariable[6] = res.dependsOnVariable;
-                
-                if (posXC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    posX += guiObject.guiSystem->parent->constrains.posX;
+                if (constant[2])
+                    bottom = sbottom;
+                else if (onlyNeedsToBeScaled[2])
+                    bottom = sbottom * gs::scale;
+                else if (bottomS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, bottomS);
+                    bottom = res.result;
+                    
+                    constant[2] = res.constant;
+                    onlyNeedsToBeScaled[2] = res.needsToBeScaled;
+                    if (constant[2] || onlyNeedsToBeScaled[2])
+                        sbottom = (float)bottom/gs::scale;
+                    isDependsOnVariable[2] = res.dependsOnVariable;
+                }
+                else
+                    notSet[2] = true;
             }
-            if (!posYC && posYS.length() != 0)
+            
+            if (!notSet[3])
             {
-                res = Recalculate(guiObject, width, height, posYS);
-                posY = res.result;
-                posYC = res.constant;
-                isDependsOnVariable[7] = res.dependsOnVariable;
-                
-                if (posYC && guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
-                    posY += guiObject.guiSystem->parent->constrains.posY;
+                if (constant[3])
+                    top = stop;
+                else if (onlyNeedsToBeScaled[3])
+                    top = stop * gs::scale;
+                else if (topS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, topS);
+                    top = res.result;
+                    
+                    constant[3] = res.constant;
+                    onlyNeedsToBeScaled[3] = res.needsToBeScaled;
+                    if (constant[3] || onlyNeedsToBeScaled[3])
+                        stop = (float)top/gs::scale;
+                    isDependsOnVariable[3] = res.dependsOnVariable;
+                }
+                else
+                    notSet[3] = true;
+            }
+            
+            if (!notSet[4])
+            {
+                if (constant[4])
+                    this->width = swidth;
+                else if (onlyNeedsToBeScaled[4])
+                    this->width = swidth * gs::scale;
+                else if (widthS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, widthS);
+                    this->width = res.result;
+                    
+                    constant[4] = res.constant;
+                    onlyNeedsToBeScaled[4] = res.needsToBeScaled;
+                    if (constant[4] || onlyNeedsToBeScaled[4])
+                        swidth = (float)(this->width)/gs::scale;
+                    isDependsOnVariable[4] = res.dependsOnVariable;
+                }
+                else
+                    notSet[4] = true;
+            }
+            
+            if (!notSet[5])
+            {
+                if (constant[5])
+                    this->height = sheight;
+                else if (onlyNeedsToBeScaled[5])
+                    this->height = sheight * gs::scale;
+                else if (heightS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, heightS);
+                    this->height = res.result;
+                    
+                    constant[5] = res.constant;
+                    onlyNeedsToBeScaled[5] = res.needsToBeScaled;
+                    if (constant[5] || onlyNeedsToBeScaled[5])
+                        sheight = (float)(this->height)/gs::scale;
+                    isDependsOnVariable[5] = res.dependsOnVariable;
+                }
+                else
+                    notSet[5] = true;
+            }
+            
+            if (!notSet[6])
+            {
+                if (constant[6])
+                    posX = sposX;
+                else if (onlyNeedsToBeScaled[6])
+                    posX = sposX * gs::scale;
+                else if (posXS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, posXS);
+                    posX = res.result;
+                    
+                    constant[6] = res.constant;
+                    onlyNeedsToBeScaled[6] = res.needsToBeScaled;
+                    if (constant[6] || onlyNeedsToBeScaled[6])
+                        sposX = (float)posX/gs::scale;
+                    isDependsOnVariable[6] = res.dependsOnVariable;
+                }
+                else
+                    notSet[6] = true;
+            }
+            
+            if (!notSet[7])
+            {
+                if (constant[7])
+                    posY = sposY;
+                else if (onlyNeedsToBeScaled[7])
+                    posY = sposY * gs::scale;
+                else if (posYS.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, posYS);
+                    posY = res.result;
+                    
+                    constant[7] = res.constant;
+                    onlyNeedsToBeScaled[7] = res.needsToBeScaled;
+                    if (constant[7] || onlyNeedsToBeScaled[7])
+                        sposY = (float)posY/gs::scale;
+                    isDependsOnVariable[7] = res.dependsOnVariable;
+                }
+                else
+                    notSet[7] = true;
             }
             
             if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
             {
-                if (!widthC && (this->width == 0 || widthS.length() == 0))
+                if (notSet[4] || this->width == 0)
                     this->width = guiObject.guiSystem->parent->constrains.width - right - left;
-                if (!heightC && (this->height || heightS.length() == 0) == 0)
+                if (notSet[5] || this->height == 0)
                     this->height = guiObject.guiSystem->parent->constrains.height - top - bottom;
                 
-                if (!posXC && posXS.length() == 0)
+                if (notSet[6])
                     posX = guiObject.guiSystem->parent->constrains.posX + left;
-                if (!posYC && posYS.length() == 0)
-                    posY = guiObject.guiSystem->parent->constrains.posY + guiObject.guiSystem->parent->constrains.height - bottom - this->height;
+                else
+                    posX += guiObject.guiSystem->parent->constrains.posX;
                 
-                if (!leftC)
-                    left += guiObject.guiSystem->parent->constrains.left;
-                if (!rightC)
-                    right += guiObject.guiSystem->parent->constrains.right;
-                if (!topC)
-                    top += guiObject.guiSystem->parent->constrains.top;
-                if (!bottomC)
-                    bottom += guiObject.guiSystem->parent->constrains.bottom;
+                if (notSet[7])
+                {
+                    if (!notSet[2] && notSet[3])
+                    {
+                        posY = guiObject.guiSystem->parent->constrains.posY + guiObject.guiSystem->parent->constrains.height - this->height - bottom;
+                        if (notSet[5])
+                            posY -= bottom;
+                    }
+                    else if (notSet[2] && !notSet[3])
+                        posY = guiObject.guiSystem->parent->constrains.posY + top;
+                    else
+                        posY = guiObject.guiSystem->parent->constrains.posY + top;
+                }
+                else
+                    posY += guiObject.guiSystem->parent->constrains.posY;
+                
+                left += guiObject.guiSystem->parent->constrains.left;
+                right += guiObject.guiSystem->parent->constrains.right;
+                top += guiObject.guiSystem->parent->constrains.top;
+                bottom += guiObject.guiSystem->parent->constrains.bottom;
             }
             else
             {
-                if (!widthC && (this->width == 0 || widthS.length() == 0))
+                if (notSet[4] || this->width == 0)
                     this->width = width - right - left;
-                if (!heightC && (this->height == 0 || heightS.length() == 0))
+                if (notSet[5] || this->height == 0)
                     this->height = height - top - bottom;
                 
-                if (!posXC && posXS.length() == 0)
+                if (notSet[6])
                     posX = left;
-                if (!posYC && posYS.length() == 0)
-                    posY = height - bottom - this->height;
+                if (notSet[7])
+                    posY = height - top - bottom - this->height;
             }
         }
         
@@ -712,10 +867,12 @@ namespace ns
                  }
                  }*/
                 
-                constrains.Recalculate(*this, ns::gs::width, ns::gs::height);
+                PreCalculate(gs::width, gs::height);
+                cout << "VariableResize's Resize" << endl;
+                constrains.Recalculate(*this, gs::width, gs::height);
                 if (child != nullptr)
-                    child->VariableResize(ns::gs::width, ns::gs::height);
-                Resize(ns::gs::width, ns::gs::height);
+                    child->VariableResize(gs::width, gs::height);
+                Resize(gs::width, gs::height);
                 
                 /*bool changed{ false };
                 if (!constrains.leftC && constrains.isDependsOnVariable[0] && constrains.leftS.length() != 0)
@@ -932,6 +1089,7 @@ namespace ns
                                         thatsAScope = false;
                                     else if (scope != nullptr)
                                     {
+                                        
                                         List<GUIObject>* next = scope->next;
                                         delete scope;
                                         scope = next;
@@ -951,6 +1109,10 @@ namespace ns
                                             knownType = 3;
                                         else if (nss::Command(command, L"image"))
                                             knownType = 4;
+                                        else if (nss::Command(command, L"@dialogue"))
+                                            knownType = 5;
+                                        else if (nss::Command(command, L"@name"))
+                                            knownType = 6;
                                         
                                         if (knownType != 0)
                                             forArgumentsParsing = line;
@@ -968,9 +1130,10 @@ namespace ns
                                         
                                         if (guiSystemToAddTo != nullptr)
                                         {
-                                            GUIObjects::Rectangle* rect;
-                                            GUIObjects::Image* img;
-                                            GUIObjects::Text* text;
+                                            GUIObjects::Rectangle* rect{ nullptr };
+                                            GUIObjects::Image* img{ nullptr };
+                                            GUIObjects::Text* text{ nullptr };
+                                            GUIObjects::DialogueConstrains* dconstr{ nullptr };
                                             switch (knownType)
                                             {
                                                 case 2:
@@ -986,6 +1149,16 @@ namespace ns
                                                 case 4:
                                                     img = guiSystemToAddTo->AddComponent<GUIObjects::Image>();
                                                     component = img;
+                                                    break;
+                                                case 5:
+                                                    dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
+                                                    component = dconstr;
+                                                    novel->skin.dialogue.textConstrains = component;
+                                                    break;
+                                                case 6:
+                                                    dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
+                                                    component = dconstr;
+                                                    novel->skin.dialogue.nameConstrains = component;
                                                     break;
                                                 default:
                                                     component = nullptr;
@@ -1005,6 +1178,8 @@ namespace ns
                                                     if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"image")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"text")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"@dialogue")) { /* ignoring */ }
+                                                    else if (nss::Command(argument, L"@name")) { /* ignoring */ }
                                                     else if (nss::Command(argument, L"\""))
                                                     {
                                                         if (knownType == 3 && text != nullptr)
@@ -1029,6 +1204,8 @@ namespace ns
                                                     }
                                                     else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
                                                         skin->dialogue.dialogueRect = component;
+                                                    else if (nss::Command(argument, L"choose") && guiScope == L"choose")
+                                                        skin->choose.chooseRect = component;
                                                     
                                                     delete arguments[i];
                                                 }
@@ -1060,6 +1237,16 @@ namespace ns
                                     {
                                         forArgumentsParsing = line;
                                         knownType = 4;
+                                    }
+                                    else if (nss::Command(command, L"@dialogue"))
+                                    {
+                                        forArgumentsParsing = line;
+                                        knownType = 5;
+                                    }
+                                    else if (nss::Command(command, L"@name"))
+                                    {
+                                        forArgumentsParsing = line;
+                                        knownType = 6;
                                     }
                                     else if (nss::ContainsUsefulInformation(command))
                                     {

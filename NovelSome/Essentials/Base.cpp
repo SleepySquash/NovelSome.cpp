@@ -96,13 +96,13 @@ namespace ns
         
         
         
-        size_t GetLengthWONewLines(const std::wstring& string)
+        size_t GetLengthWONewLinesAndSpaces(const std::wstring& string)
         {
             size_t size = 0;
             size_t i = 0;
             while (string[i] != '\0')
             {
-                if (string[i] != '\n')
+                if (string[i] != '\n' && string[i] != ' ')
                     size++;
                 i++;
             }
@@ -391,7 +391,7 @@ namespace ns
         {
             std::string parsingString = "";
             for (int i = 0; stringValue[i] != '\0'; i++)
-                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 44 || stringValue[i] == 46)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 44 || stringValue[i] == 46 || stringValue[i] == '-')
                     parsingString += (char)stringValue[i];
             
             return std::atof(parsingString.c_str());

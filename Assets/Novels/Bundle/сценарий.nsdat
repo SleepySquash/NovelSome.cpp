@@ -4,7 +4,7 @@ background "ItJyTkXF_n4.jpg" with appear:0.4 disappear:2.4 fit:fill
 wait 0.9
 background "DVa.jpg" with fit:fill alpha:160
 DVa "Привет, я Дива!"
-Никита "А я Никитос, йоптабля."
+Никита "А я Никитос, няняня :3"
 "Ня <3"
 background hide
 "Привет! Йа текст 私は食品を食べる" with appear:2 disappear:0.2

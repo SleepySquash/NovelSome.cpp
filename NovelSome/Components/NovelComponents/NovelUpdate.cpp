@@ -22,7 +22,11 @@ namespace ns
                 
                 if (!wif.eof())
                 {
-                    std::getline(wif, line);
+                    if (lines.IsEmpty())
+                        std::getline(wif, line);
+                    else
+                        line = lines.Pop();
+                    
                     command.Command(line);
                     
                     bool backgroundAddingMode{ false };
@@ -104,13 +108,257 @@ namespace ns
                         dialogueGroup->data = component;
                         component->SetGroup(dialogueGroup);
                         
-                        component->SetDialogue(dialogueLine);
+                        if (skin.dialogue.dialogueRect != nullptr)
+                            skin.dialogue.dialogueRect->ignoreVariableChange = true;
                         
                         if (std::wstring(localVariables.at(L"@name")->value.asString) != L"")
                             if (skin.dialogue.nameRect != nullptr)
                                 skin.dialogue.nameRect->SetFadings(GUIObject::disappearing, component->disappearTime);
                         LocalVariables_Set(L"@dialogue", dialogueLine);
                         LocalVariables_Set(L"@name", std::wstring(L""));
+                        
+                        if (skin.dialogue.dialogueRect != nullptr)
+                            skin.dialogue.dialogueRect->ignoreVariableChange = false;
+                        
+                        component->SetDialogue(dialogueLine);
+                    }
+                    else if (nss::Command(command, L"choose"))
+                    {
+                        int openedWithBracket{ 0 };
+                        int spacesCount{ 0 };
+                        for (int i = 0; i < line.length(); ++i)
+                        {
+                            if (line[i] == L'{')
+                                ++openedWithBracket;
+                            else if (line[i] == L'}')
+                                if (openedWithBracket > 0)
+                                    --openedWithBracket;
+                        }
+                        if (openedWithBracket == 0)
+                            spacesCount = command.lastPos - 6;
+                        else
+                            spacesCount = -1;
+                        
+                        bool mightBeOnNextLine{ (openedWithBracket == 0) };
+                        int lastChooseSpaces = -1;
+                        
+                        bool chooseEnded{ false };
+                        bool explicitChoose{ false };
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Choose>(10000, this);
+                        
+                        std::wstring question = L"";
+                        bool dialogueShouldBeStill{ false }; //TODO: Default to Skin
+                        
+                        wchar_t** arguments = nss::ParseArguments(command);
+                        if (arguments != nullptr)
+                            for (int i = 0; arguments[i] != nullptr; i++)
+                            {
+                                nss::CommandSettings argument;
+                                argument.Command(arguments[i]);
+                                
+                                if (nss::Command(argument, L"fade:"))
+                                {
+                                    float value = nss::ArgumentAsFloat(argument);
+                                    component->appearTime = value;
+                                    component->disappearTime = value;
+                                }
+                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                    component->appearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                    component->disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                    component->maxAlpha = nss::ArgumentAsInt(argument);
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                {
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                        component->sendMessageBack = component->atAppearance;
+                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        component->sendMessageBack = component->atDisappearing;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                        component->sendMessageBack = component->atDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                        component->sendMessageBack = component->noMessage;
+                                }
+                                else if (nss::Command(argument, L"still") || nss::Command(argument, L"dialogue"))
+                                    dialogueShouldBeStill = true;
+                                else
+                                    question = nss::ParseAsMaybeQuoteString(argument);
+                                
+                                delete arguments[i];
+                            }
+                        if (arguments != nullptr)
+                            delete arguments;
+                        
+                        cout << "openedWithBracket: " << openedWithBracket << "  spacesCount: " << spacesCount << "  question: " << ns::base::ConvertToUTF8(question) << endl;
+                        while (!chooseEnded && !eof)
+                        {
+                            if (wif.eof())
+                                eof = true;
+                            else
+                            {
+                                std::wstring parsed{ L"" };
+                                if (lines.IsEmpty())
+                                    std::getline(wif, parsed);
+                                else
+                                    parsed = lines.Pop();
+                                
+                                if (nss::Command(parsed, L"end"))
+                                    chooseEnded = true;
+                                else
+                                {
+                                    if (mightBeOnNextLine || openedWithBracket != 0)
+                                    {
+                                        for (int i = 0; i < parsed.length(); ++i)
+                                        {
+                                            if (parsed[i] == L'{')
+                                                ++openedWithBracket;
+                                            else if (parsed[i] == L'}')
+                                                --openedWithBracket = false;
+                                        }
+                                        
+                                        if (mightBeOnNextLine && openedWithBracket != 0)
+                                        {
+                                            std::wstring newParsed; bool found{ false };
+                                            for (int i = 0; i < parsed.length() && !found; ++i)
+                                            {
+                                                if (parsed[i] == L'{')
+                                                {
+                                                    found = true;
+                                                    for (int j = i + 1; j < parsed.length(); ++j)
+                                                        newParsed += parsed[j];
+                                                }
+                                            }
+                                            parsed = newParsed;
+                                            
+                                            spacesCount = -1;
+                                            mightBeOnNextLine = false;
+                                        }
+                                        
+                                        if (!mightBeOnNextLine && openedWithBracket == 0)
+                                        {
+                                            std::wstring newParsed; bool found{ false };
+                                            for (int i = parsed.length() - 1; i >= 0 && !found; --i)
+                                            {
+                                                if (parsed[i] == L'}')
+                                                {
+                                                    found = true;
+                                                    for (int j = 0; j < i; ++j)
+                                                        newParsed += parsed[j];
+                                                }
+                                            }
+                                            parsed = newParsed;
+                                            chooseEnded = true;
+                                        }
+                                    }
+                                    
+                                    if (openedWithBracket == 0 && spacesCount != -1)
+                                    {
+                                        int currentSpaces = -1;
+                                        for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
+                                            if (parsed[i] != L' ')
+                                                currentSpaces = i;
+                                        
+                                        if (currentSpaces != -1 && currentSpaces <= spacesCount)
+                                            chooseEnded = true;
+                                        
+                                        if (chooseEnded)
+                                            lines.Push(parsed), parsed = L"";
+                                    }
+                                    
+                                    if (parsed.length() != 0)
+                                    {
+                                        nss::CommandSettings settings;
+                                        settings.Command(parsed);
+                                        
+                                        if (nss::ContainsUsefulInformation(settings))
+                                        {
+                                            mightBeOnNextLine = false;
+                                            
+                                            if (nss::Command(settings, L"choice "))
+                                            {
+                                                int currentSpaces = -1;
+                                                for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
+                                                    if (parsed[i] != L' ')
+                                                        currentSpaces = i;
+                                                lastChooseSpaces = currentSpaces;
+                                                
+                                                explicitChoose = true;
+                                                component->AddChoice(nss::ParseAsMaybeQuoteStringFull(settings));
+                                            }
+                                            else
+                                            {
+                                                if (lastChooseSpaces == -1)
+                                                {
+                                                    int currentSpaces = -1;
+                                                    for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
+                                                        if (parsed[i] != L' ')
+                                                            currentSpaces = i;
+                                                    
+                                                    if (currentSpaces != -1 && currentSpaces > spacesCount)
+                                                    {
+                                                        lastChooseSpaces = currentSpaces;
+                                                        component->AddChoice(nss::ParseAsMaybeQuoteStringFull(settings));
+                                                    }
+                                                    else
+                                                        component->AddAction(parsed);
+                                                }
+                                                else
+                                                {
+                                                    int currentSpaces = -1;
+                                                    for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
+                                                        if (parsed[i] != L' ')
+                                                            currentSpaces = i;
+                                                    
+                                                    if (currentSpaces != -1 && currentSpaces > lastChooseSpaces)
+                                                        component->AddAction(parsed), explicitChoose = false;
+                                                    else if (currentSpaces != -1 && currentSpaces <= lastChooseSpaces)
+                                                    {
+                                                        if ((currentSpaces == lastChooseSpaces || currentSpaces > spacesCount) && !explicitChoose)
+                                                            component->AddChoice(nss::ParseAsMaybeQuoteStringFull(settings));
+                                                        else
+                                                            component->AddAction(parsed);
+                                                    }
+                                                    else
+                                                        component->AddAction(parsed);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (dialogueShouldBeStill)
+                        {
+                            if (dialogueGroup != nullptr)
+                            {
+                                List<Dialogue>* temp = dialogueGroup;
+                                while (temp != nullptr)
+                                {
+                                    if (temp->data != nullptr)
+                                    {
+                                        if (temp->data->mode != Dialogue::modeEnum::disappearing && temp->data->mode != Dialogue::modeEnum::deprecated)
+                                        {
+                                            if (temp->data->mode == Dialogue::modeEnum::appearing)
+                                                temp->data->afterAppearSwitchTo = Dialogue::modeEnum::waitingForChoose;
+                                            else
+                                                temp->data->SetStateMode(Dialogue::modeEnum::waitingForChoose);
+                                        }
+                                    }
+                                    temp = temp->next;
+                                }
+                            }
+                        }
+                        
+                        if (component->sendMessageBack != component->noMessage)
+                            OnHold(component);
+                        
+                        chooseGroup = ns::list::Insert<ns::NovelComponents::Choose>(chooseGroup);
+                        chooseGroup->data = component;
+                        component->SetGroup(chooseGroup);
+                        
+                        component->InitChoose();
                     }
                     ///----------------------------------------MISC----------------------------------------
                     ///----------------------------------------MISC----------------------------------------
@@ -148,6 +396,8 @@ namespace ns
                             wif.open(u8str);
 #endif
                             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                            
+                            lines.Clear();
                             
                             if (!(fileOpened = wif.is_open()))
                                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << filePath.toAnsiString() << endl;
@@ -1021,13 +1271,24 @@ namespace ns
                                         component->SetCharacterName(characterName);
                                         if (characterData != nullptr)
                                             component->SetCharacter(characterData);
-                                        component->SetDialogue(possibleDialogue);
+                                        
+                                        if (skin.dialogue.dialogueRect != nullptr)
+                                            skin.dialogue.dialogueRect->ignoreVariableChange = true;
+                                        if (skin.dialogue.nameRect != nullptr)
+                                            skin.dialogue.nameRect->ignoreVariableChange = true;
                                         
                                         if (std::wstring(localVariables.at(L"@name")->value.asString) == L"")
                                             if (skin.dialogue.nameRect != nullptr)
                                                 skin.dialogue.nameRect->SetFadings(GUIObject::appearing, component->appearTime);
                                         LocalVariables_Set(L"@dialogue", possibleDialogue);
                                         LocalVariables_Set(L"@name", characterName.toWideString());
+                                        
+                                        if (skin.dialogue.dialogueRect != nullptr)
+                                            skin.dialogue.dialogueRect->ignoreVariableChange = false;
+                                        if (skin.dialogue.nameRect != nullptr)
+                                            skin.dialogue.nameRect->ignoreVariableChange = false;
+                                        
+                                        component->SetDialogue(possibleDialogue);
                                     }
                                 }
                             }

@@ -50,11 +50,12 @@
 //TODO: Double clicking also calls Game Pause.
 //TODO: Individual scaling factor in Settings or stuff.
 //TODO: GUI class with buttons.
-//TODO: Correct scaling speed when ratio is big.
 
 //TODO: "dialogue hide" command hides all the dialogues with fade.
 //TODO: Argument after dialogue command CHAR "..." or just "..." named as "new" or "add" should make dialogues that have been already created not to destroy. Instead it should change their "after input/wait switch to mode" and set it to "waiting" until dialogue that will destroy every dialogue will appear or until "dialogue hide" will be called. However, every dialogue has to draw it's own GUI, so dialogue's GUI will be drawn the times dialogues are presented (before Draw() SetAlpha() event should be called as well). So that way you can create "bubble"-like dialogues near characters or stuff like that.
 //TODO: Make in every GUIConstrains array of bools that show dependence of other constrains (even of parent's constrains) or a variable.
+
+//TODO: Make it possible for someones' lines to be between specified characters, ([ and ]) or (" and ") for example.
 
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
@@ -76,6 +77,7 @@
 //DONE: Smart global scaling factor.
 //DONE: Getting the color and getting the alpha should have its own NSS functions.
 //      (usage in GUI parsing and in Skin parsing)
+//DONE: Correct scaling speed when ratio is big.
 
 // PARSINGS:
 //          NovelUpdate
@@ -132,31 +134,43 @@ void CalculateScaleRatios(unsigned int width, unsigned int height)
     float ratioFactorX = (float)width/(float)height;
     float ratioFactorY = (float)height/(float)width;
     
-    ns::GlobalSettings::scale = factorX > factorY ? factorX : factorY;
+    ns::gs::scale = factorX > factorY ? factorX : factorY;
     if (ratioFactorY > 1)
     {
-        if (ratioFactorY < 2)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (ratioFactorY - 1)*0.47;
+        float m = ns::gs::scale;
+        if (ratioFactorY < 1.2)
+            ns::gs::scale = ns::gs::scale - m*(ratioFactorY - 1)*0.72;
+        else if (ratioFactorY < 2)
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(ratioFactorY - 1.2)*0.17;
+        else if (ratioFactorY < 2.46)
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(ratioFactorY - 2)*0.12;
         else if (ratioFactorY < 3)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (2 - 1)*0.47 - (ratioFactorY - 2)*0.3;
-        else if (ratioFactorY < 4.6)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (2 - 1)*0.47 - (3 - 2)*0.3 - (ratioFactorY - 3)*0.14;
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
+        else if (ratioFactorY < 4.8)
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
+        else if (ratioFactorY < 8)
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
         else
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (2 - 1)*0.47 - (3 - 2)*0.3 - (4.6 - 3)*0.14;
+            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
     }
     else if (ratioFactorX > 1)
     {
+        float m = ns::gs::scale;
         if (ratioFactorX < 1.9)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (ratioFactorX - 1)*0.1;
-        else if (ratioFactorX < 4.6)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (ratioFactorX - 1)*0.1 - (ratioFactorX - 1.9)*0.45;
-        else if (ratioFactorX < 5)
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (ratioFactorX - 1)*0.1 - (ratioFactorX - 1.9)*0.45 - (ratioFactorX - 4.6)*0.05;
+            ns::gs::scale = ns::gs::scale - m*(ratioFactorX - 1)*0.175;
+        else if (ratioFactorX < 3)
+            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(ratioFactorX - 1.9)*0.27;
+        else if (ratioFactorX < 4.24)
+            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(ratioFactorX - 3)*0.15;
+        else if (ratioFactorX < 7)
+            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(ratioFactorX - 4.24)*0.05;
+        else if (ratioFactorX < 11)
+            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(ratioFactorX - 7)*0.02;
         else
-            ns::GlobalSettings::scale = ns::GlobalSettings::scale - (5 - 1)*0.1 - (5 - 1.9)*0.45;
+            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(11 - 7)*0.02;
     }
-    if (ns::GlobalSettings::scale < 0.32)
-        ns::GlobalSettings::scale = 0.32;
+    if (ns::gs::scale < 0.18)
+        ns::gs::scale = 0.18;
 }
 
 
@@ -169,22 +183,20 @@ int main()
 {
 #ifdef SFML_SYSTEM_IOS
     sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-    ns::GlobalSettings::width = sf::VideoMode::getDesktopMode().width;
-    ns::GlobalSettings::height = sf::VideoMode::getDesktopMode().height;
+    ns::gs::isParallaxEnabled = false;
 #else
     #ifdef SFML_SYSTEM_ANDROID
         sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-        ns::GlobalSettings::width = sf::VideoMode::getDesktopMode().width;
-        ns::GlobalSettings::height = sf::VideoMode::getDesktopMode().height;
+        ns::gs::isParallaxEnabled = false;
     #else
-        sf::RenderWindow window(sf::VideoMode(1280, 800), "NovelSome");
-        ns::GlobalSettings::window = &window;
-        ns::GlobalSettings::width = 1280;
-        ns::GlobalSettings::height = 800;
+    sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
     #endif
 #endif
-    ns::GlobalSettings::relativeWidth = 1280;
-    ns::GlobalSettings::relativeHeight = 800;
+    ns::gs::window = &window;
+    ns::gs::width = window.getSize().x;
+    ns::gs::height = window.getSize().y;
+    ns::gs::relativeWidth = 1280;
+    ns::gs::relativeHeight = 800;
     CalculateScaleRatios(ns::gs::width, ns::gs::height);
     
 #ifdef _WIN32
@@ -284,13 +296,11 @@ int main()
     ///----------------------------------------------------------
     ns::Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 15");
+        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 16");
 #ifdef SFML_SYSTEM_IOS
-        ns::gs::isParallaxEnabled = false;
         Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
 #endif
 #ifdef SFML_SYSTEM_ANDROID
-        ns::gs::isParallaxEnabled = false;
         Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
 #endif
     }
@@ -326,6 +336,10 @@ int main()
                     system.PollEvent(event);
                     break;
                     
+                case sf::Event::MouseButtonReleased:
+                    system.PollEvent(event);
+                    break;
+                    
                 case sf::Event::TouchBegan:
                     system.PollEvent(event);
                     break;
@@ -358,7 +372,7 @@ int main()
                             }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 15");
+                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 16");
 #ifdef SFML_SYSTEM_IOS
                                 Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
 #endif

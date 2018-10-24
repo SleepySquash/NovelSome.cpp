@@ -163,7 +163,7 @@ namespace ns
                             texture.setSmooth(true);
                             sprite.setTexture(texture);
                             
-                            //scale 1 = scale that makes image fit in height with 720 pixels
+                            //scale 1 = scale that makes image fit in height with 800 pixels
                             float scaleFactor = (float)ns::gs::relativeHeight / imagePtr->getSize().y;
                             scaleX *= scaleFactor;
                             scaleY *= scaleFactor;

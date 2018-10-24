@@ -26,6 +26,11 @@ namespace ns
                 characterSize = novel->skin.dialogue.characterSize;
                 characterInSecond = novel->skin.dialogue.characterInSecond;
                 fontName = novel->skin.dialogue.fontName;
+                
+                leftSpeechAddition = novel->skin.dialogue.leftSpeechAddition;
+                rightSpeechAddition = novel->skin.dialogue.rightSpeechAddition;
+                afterRedLineShift = novel->skin.dialogue.afterRedLineShift;
+                
                 switch (novel->skin.dialogue.textAppearMode)
                 {
                     case 0:
@@ -40,8 +45,6 @@ namespace ns
                 
                 forcePressInsideDialogue = novel->skin.dialogue.forcePressInsideDialogue && ns::gs::forcePressInsideDialogue;
             }
-            if (guiSystem != nullptr)
-                guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
@@ -57,7 +60,7 @@ namespace ns
                         ++textAppearPos;
                         elapsedCharacterSum -= characterInSecond;
                         
-                        while (printingString[textAppearI] == L'\n')
+                        while (printingString[textAppearI] == L'\n' || printingString[textAppearI] == L' ')
                             currentString += printingString[textAppearI++];
                         currentString += printingString[textAppearI++];
                         
@@ -87,6 +90,8 @@ namespace ns
                     if (guiSystem != nullptr)
                         guiSystem->SetAlphaIfBigger(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
+                    if (text.getOutlineThickness() != 0)
+                        text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, alpha));
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
@@ -115,6 +120,8 @@ namespace ns
                     if (guiSystem != nullptr)
                         guiSystem->SetAlpha(alpha);
                     text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
+                    if (text.getOutlineThickness() != 0)
+                        text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, alpha));
                     if (drawCharacterName)
                     {
                         charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
@@ -142,6 +149,11 @@ namespace ns
                     }
                     break;
                     
+                case waitingForChoose:
+                    if (novel == nullptr || novel->chooseGroup == nullptr)
+                        mode = disappearing;
+                    break;
+                    
                 default:
                     break;
             }
@@ -152,12 +164,11 @@ namespace ns
             {
                 if (visible && (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchEnded))
                 {
-                    //TODO: Working zone.
                     bool pressed{ false };
                     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-                        pressed = (!forcePressInsideDialogue || (event.mouseButton.x > 0 && event.mouseButton.x < ns::GlobalSettings::width && event.mouseButton.y < ns::GlobalSettings::height && event.mouseButton.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5));
+                        pressed = (!forcePressInsideDialogue || (event.mouseButton.x > workingArea_l && event.mouseButton.x < workingArea_r && event.mouseButton.y < workingArea_b && event.mouseButton.y > workingArea_t));
                     else if (event.type == sf::Event::TouchEnded)
-                        pressed = (!forcePressInsideDialogue || (event.touch.x > 0 && event.touch.x < ns::GlobalSettings::width && event.touch.y < ns::GlobalSettings::height && event.touch.y > ns::GlobalSettings::height - ns::GlobalSettings::height/5));
+                        pressed = (!forcePressInsideDialogue || (event.touch.x > workingArea_l && event.touch.x < workingArea_r && event.touch.y < workingArea_b && event.touch.y > workingArea_t));
                     
                     if (pressed)
                     {
@@ -175,9 +186,32 @@ namespace ns
                         }
                     }
                 }
-                else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-                    visible = !visible;
             }
+            else if (mode == waitingForChoose)
+            {
+                if (visible && (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchEnded))
+                {
+                    if (textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
+                    {
+                        bool pressed{ false };
+                        if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+                            pressed = (!forcePressInsideDialogue || (event.mouseButton.x > workingArea_l && event.mouseButton.x < workingArea_r && event.mouseButton.y < workingArea_b && event.mouseButton.y > workingArea_t));
+                        else if (event.type == sf::Event::TouchEnded)
+                            pressed = (!forcePressInsideDialogue || (event.touch.x > workingArea_l && event.touch.x < workingArea_r && event.touch.y < workingArea_b && event.touch.y > workingArea_t));
+                        
+                        if (pressed)
+                        {
+                            currentString = printingString;
+                            text.setString(currentString);
+                            textAppearPos = textAppearMax;
+                            
+                            event = sf::Event();
+                        }
+                    }
+                }
+            }
+            if ((mode == waitingForChoose || mode == waitingForInput) && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+                visible = !visible;
         }
         void Dialogue::Draw(sf::RenderWindow* window)
         {
@@ -205,36 +239,95 @@ namespace ns
             
             if (fontLoaded)
             {
+                if (novel != nullptr)
+                    if (novel->skin.dialogue.outlineThickness != 0)
+                        text.setOutlineThickness(novel->skin.dialogue.outlineThickness * gs::scale);
+                
+                if (drawCharacterName && character != nullptr && character->outlineThickness != 0)
+                    charText.setOutlineThickness(character->outlineThickness * gs::scale);
+                
+                if (guiSystem != nullptr)
+                {
+                    if (charString != "")
+                        guiSystem->ResetResize();
+                    guiSystem->Resize(width, height);
+                }
+                
+                int textWidth = width;
+                int textXOffset = 0;
+                int textYOffset = 0;
+                
+                int nameTextWidth = width;
+                int nameTextXOffset = 0;
+                int nameTextYOffset = 0;
+                
+                if (novel != nullptr)
+                {
+                    GUIObject* textConstrains = novel->skin.dialogue.textConstrains;
+                    if (textConstrains == nullptr)
+                        textConstrains = novel->skin.dialogue.dialogueRect;
+                    
+                    if (textConstrains != nullptr)
+                    {
+                        textWidth = textConstrains->constrains.width;
+                        textXOffset = textConstrains->constrains.posX;
+                        textYOffset = textConstrains->constrains.posY;
+                    }
+                    
+                    if (novel->skin.dialogue.dialogueRect != nullptr)
+                    {
+                        workingArea_l = novel->skin.dialogue.dialogueRect->constrains.posX;
+                        workingArea_r = workingArea_l + novel->skin.dialogue.dialogueRect->constrains.width;
+                        workingArea_t = novel->skin.dialogue.dialogueRect->constrains.posY;
+                        workingArea_b = workingArea_t + novel->skin.dialogue.dialogueRect->constrains.height;
+                    }
+                    else
+                    {
+                        workingArea_l = 0;
+                        workingArea_r = width;
+                        workingArea_t = 0;
+                        workingArea_b = height;
+                    }
+                    
+                    if (charString != "")
+                    {
+                        GUIObject* nameConstrains = novel->skin.dialogue.nameConstrains;
+                        if (nameConstrains == nullptr)
+                            nameConstrains = novel->skin.dialogue.nameRect;
+                        
+                        if (nameConstrains != nullptr)
+                        {
+                            nameTextWidth = nameConstrains->constrains.width;
+                            nameTextXOffset = nameConstrains->constrains.posX;
+                            nameTextYOffset = nameConstrains->constrains.posY;
+                        }
+                    }
+                }
+                
                 if (charString != "")
-                    nss::SetStringWithLineBreaks(charText, charString, width - (unsigned int)(skin->nameTextWidth*gs::scale));
+                    charText.setString(nss::GetStringWithLineBreaks(charText, charString, nameTextWidth, afterRedLineShift*gs::scale));
                 if (textString != L"")
                 {
                     if (textAppearMode ==  textAppearModeEnum::printing)
                     {
                         currentString = L""; textAppearI = 0;
-                        printingString = nss::GetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
+                        printingString = nss::GetStringWithLineBreaks(text, textString, textWidth, afterRedLineShift*gs::scale);
                         for (size_t i = 0; i < textAppearPos; ++i)
                         {
-                            while (printingString[textAppearI] == L'\n')
+                            while (printingString[textAppearI] == L'\n' || printingString[textAppearI] == L' ')
                                 currentString += printingString[textAppearI++];
                             currentString += printingString[textAppearI++];
                         }
                         text.setString(currentString);
                     }
                     else
-                        nss::SetStringWithLineBreaks(text, textString, width - (unsigned int)(skin->textWidth*gs::scale));
+                        text.setString(nss::GetStringWithLineBreaks(text, textString, textWidth, afterRedLineShift*gs::scale));
                 }
-            }
             
-            if (guiSystem != nullptr)
-                guiSystem->Resize(width, height);
-            text.setPosition(skin->textXOffset*gs::scale, height - height/5 + skin->textYOffset*gs::scale);
-            
-            if (drawCharacterName)
-            {
-                if (character != nullptr && character->outlineThickness != 0)
-                    charText.setOutlineThickness(character->outlineThickness * ns::gs::scale);
-                charText.setPosition(skin->nameTextXOffset*gs::scale, height - height/5 - skin->nameTextYOffset*gs::scale - charText.getLocalBounds().height);
+                text.setPosition(textXOffset, textYOffset);
+                
+                if (drawCharacterName)
+                    charText.setPosition(nameTextXOffset, nameTextYOffset);
             }
         }
         void Dialogue::SetCharacter(CharacterData* character)
@@ -270,10 +363,18 @@ namespace ns
         void Dialogue::SetDialogue(const sf::String& dialogue)
         {
             textString = dialogue;
+            if (charString.toWideString().length() != 0)
+            {
+                if (leftSpeechAddition != 0)
+                    textString.insert(0, leftSpeechAddition);
+                if (rightSpeechAddition != 0)
+                    textString += rightSpeechAddition;
+            }
+            
             printingString = textString;
             if (textAppearMode == textAppearModeEnum::printing)
             {
-                currentString = L"", textAppearMax = base::GetLengthWONewLines(textString);
+                currentString = L"", textAppearMax = base::GetLengthWONewLinesAndSpaces(textString);
                 text.setString(currentString);
             }
             else
@@ -284,6 +385,12 @@ namespace ns
             
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
+            if (novel != nullptr)
+            {
+                text.setFillColor(sf::Color(novel->skin.dialogue.fillColor.r, novel->skin.dialogue.fillColor.g, novel->skin.dialogue.fillColor.b, alpha));
+                if (novel->skin.dialogue.outlineThickness != 0)
+                    text.setOutlineColor(sf::Color(novel->skin.dialogue.outlineColor.r, novel->skin.dialogue.outlineColor.g, novel->skin.dialogue.outlineColor.b, alpha));
+            }
             
             Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
         }
@@ -298,6 +405,235 @@ namespace ns
         void Dialogue::SetGUISystem(GUISystem* system)
         {
             this->guiSystem = system;
+        }
+        
+        
+        
+        
+        
+        
+        
+        Choose::Choose(Novel* novel)
+        {
+            this->novel = novel;
+            if (novel != nullptr)
+            {
+                guiSystem = &(novel->skin.choose.guiChoose);
+                skin = &(novel->skin.dialogue);
+                
+                appearTime = novel->skin.choose.appearTime;
+                disappearTime = novel->skin.choose.disappearTime;
+                maxAlpha = novel->skin.choose.maxAlpha;
+                characterSize = novel->skin.choose.characterSize;
+                fontName = novel->skin.choose.fontName;
+            }
+            if (guiSystem != nullptr)
+                guiSystem->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+        }
+        void Choose::Update(const sf::Time& elapsedTime)
+        {
+            if (guiSystem != nullptr)
+                guiSystem->Update(elapsedTime);
+            
+            switch (mode)
+            {
+                case appearing:
+                    if (currentTime < appearTime)
+                        currentTime += elapsedTime.asSeconds();
+                    
+                    if (currentTime >= appearTime)
+                    {
+                        alpha = maxAlpha;
+                        currentTime = 0.f;
+                        mode = waitingForInput;
+                        
+                        if (novel != nullptr)
+                            if (sendMessageBack == atAppearance)
+                                novel->UnHold(this);
+                    }
+                    else
+                        alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    
+                    button.SetAlpha(alpha);
+                    break;
+                    
+                case disappearing:
+                    if (currentTime < disappearTime)
+                        currentTime += elapsedTime.asSeconds();
+                    
+                    if (currentTime >= disappearTime)
+                    {
+                        alpha = 0;
+                        currentTime = 0.f;
+                        mode = deprecated;
+                        
+                        if (novel != nullptr)
+                            if (sendMessageBack == atDeprecated)
+                                novel->UnHold(this);
+                    }
+                    else
+                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    
+                    button.SetAlpha(alpha);
+                    break;
+                    
+                case deprecated:
+                    this->GetNovelSystem()->PopComponent(this);
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+        void Choose::PollEvent(sf::Event& event)
+        {
+            if (mode == waitingForInput)
+            {
+                if (visible)
+                {
+                    if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchBegan)
+                        button.PollEvent(event);
+                    else if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded)
+                    {
+                        int yy = startingYY; bool found{ false };
+                        for (int i = 0; i < choices.size && !found; ++i)
+                        {
+                            button.SetString(choices[i]);
+                            button.SetPosition(640, yy);
+                            
+                            button.PollEvent(event);
+                            if ((found = button.Released()))
+                            {
+                                if (novel != nullptr)
+                                {
+                                    int until = i+1 < choices.size ? choiceStart[i+1] : actions.size;
+                                    for (int j = until - 1; j >= choiceStart[i]; --j)
+                                        novel->lines.Push(actions[j]);
+                                }
+                                
+                                mode = disappearing;
+                                if (novel != nullptr)
+                                    if (sendMessageBack == atDisappearing)
+                                    {
+                                        if (novel->dialogueGroup != nullptr)
+                                        {
+                                            List<Dialogue>* temp = novel->dialogueGroup;
+                                            while (temp != nullptr)
+                                            {
+                                                if (temp->data != nullptr && temp->data->mode == Dialogue::modeEnum::waitingForChoose)
+                                                    temp->data->SetStateMode(Dialogue::modeEnum::disappearing);
+                                                temp = temp->next;
+                                            }
+                                        }
+                                        novel->UnHold(this);
+                                    }
+                            }
+                            
+                            yy += button.text.getLocalBounds().height/gs::scale + 10;
+                        }
+                    }
+                }
+                
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+                    visible = !visible;
+            }
+        }
+        void Choose::Draw(sf::RenderWindow* window)
+        {
+            if (visible)
+            {
+                if (guiSystem != nullptr)
+                {
+                    guiSystem->SetAlpha(alpha);
+                    guiSystem->Draw(window);
+                }
+                
+                int yy = startingYY;
+                for (int i = 0; i < choices.size; ++i)
+                {
+                    button.SetString(choices[i]);
+                    button.SetPosition(640, yy);
+                    button.Draw(window);
+                    
+                    yy += button.text.getLocalBounds().height/gs::scale + 10;
+                }
+            }
+        }
+        void Choose::Destroy()
+        {
+            if (groupPointer != nullptr && novel != nullptr)
+                novel->RemoveFromGroup(groupPointer);
+        }
+        void Choose::Resize(unsigned int width, unsigned int height)
+        {
+            if (guiSystem != nullptr)
+                guiSystem->Resize(width, height);
+            
+            button.Resize(width, height);
+        }
+        void Choose::SetGroup(List<Choose>* element)
+        {
+            this->groupPointer = element;
+        }
+        void Choose::SetStateMode(modeEnum newMode)
+        {
+            if (mode != newMode)
+            {
+                currentTime = 0.f;
+                mode = newMode;
+            }
+        }
+        void Choose::SetGUISystem(GUISystem* system)
+        {
+            this->guiSystem = system;
+        }
+        void Choose::AddChoice(const std::wstring& line)
+        {
+            choices.PushBack(line);
+            choiceStart.PushBack(actions.size);
+        }
+        void Choose::AddAction(const std::wstring& line)
+        {
+            actions.PushBack(line);
+        }
+        void Choose::InitChoose()
+        {
+            /*cout << "   choices: " << endl;
+            for (int i = 0; i < choices.size; ++i)
+                cout << ns::base::ConvertToUTF8(choices[i]) << endl;
+            
+            cout << "   choicesStart: " << endl;
+            for (int i = 0; i < choiceStart.size; ++i)
+                cout << choiceStart[i] << endl;
+            
+            cout << "   actions: " << endl;
+            for (int i = 0; i < actions.size; ++i)
+                cout << ns::base::ConvertToUTF8(actions[i]) << endl;*/
+            
+            if (choices.size == 0)
+            {
+                if (novel != nullptr)
+                    if (sendMessageBack != noMessage)
+                        novel->UnHold(this);
+                this->GetNovelSystem()->PopComponent(this);
+            }
+            else
+            {
+                button.SetFont(fontName);
+                button.characterSize = characterSize;
+                button.halign = GUI::TextButton::halignEnum::center;
+                button.valign = GUI::TextButton::valignEnum::top;
+                
+                int yy = 0;
+                for (int i = 0; i < choices.size; ++i)
+                {
+                    button.SetString(choices[i]);
+                    yy += button.text.getLocalBounds().height + 10;
+                }
+                startingYY = 400 - yy/2;
+                
+                Resize(gs::width, gs::height);
+            }
         }
     }
 }

@@ -11,6 +11,14 @@ dialogue
     insecond: 0.03
     mode: insecond
 
+    ladd: "
+    radd: "
+    shift: 15
+
+    fill: white
+    outline: black
+    thickness: 1
+
     font: "NotoSansCJK-Regular.ttc"
     size: 30
 }
@@ -59,6 +67,29 @@ gui menu
     //...
 }
 
+gui choose
+{
+    rectangle as Choose
+    {
+        alpha: .8
+
+        posx: .width/2 - 280
+        posy: .height/2 - 160
+        width: 560
+        height: 320
+    }
+
+    text "СУДЬБОНОСНОЕ РЕШЕНИЕ"
+    {
+        posx: .width/2 - @text.width/2
+        posy: .height/4
+
+        fill: white
+        outline: magenta
+        thickness: 1
+        size: 48
+    }
+}
 
 
 gui gamepause
@@ -70,7 +101,7 @@ gui gamepause
 
     text "Game pause"
     {
-        posx: .width/2 - @text.width + 230
+        posx: .width/2 - @text.width/2
         posy: .height/4.5
 
         fill: white
@@ -91,19 +122,47 @@ gui dialogue
         left: 30
         right: 30
         bottom: 10
-        height: ".height/5 - 10"
+        //height: .height/2
+        //posy: .height/4
+        height: .height/4.6
+
+        @dialogue
+        {
+            left: 10
+            right: 10
+            top: 10
+            //width: ".width - 20"
+
+            alpha: .9
+            color: magenta
+        }
 
         rectangle as Name
         {
             maxAlpha: .66
 
             left: 10
+            //top: -15 - @name.height
             bottom: .height + 5
             width: @name.width + 20
             height: @name.height + 10
+
+            @name
+            {
+                left: 7
+                bottom: 5
+            }
         }
     }
 }
+
+
+//bottom: - это отступ от нижнего края вышестоящего объекта
+//top: - это отступ от верхнего края вышестоящего объекта
+//чтобы объект был за пределами вышестоящего, нужно:
+// 1) работать с posy
+// 2) или сделать отступ от верхнего края (top:) просто-напросто отрицательным
+// 3) или сделать отступ от нижнего края (bottom:) равным высоте вышестоящего объекта плюс какие-то значения
 
 
 //или просто dialogue {

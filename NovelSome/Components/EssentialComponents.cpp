@@ -68,9 +68,9 @@ namespace ns
         }
         void DebugComponent::Resize(unsigned int width, unsigned int height)
         {
-            buildText.setCharacterSize((unsigned int)(15 * ns::GlobalSettings::scale));
-            projectText.setCharacterSize((unsigned int)(23 * ns::GlobalSettings::scale));
-            performanceText.setCharacterSize((unsigned int)(15 * ns::GlobalSettings::scale));
+            buildText.setCharacterSize((unsigned int)(15 * gs::scale));
+            projectText.setCharacterSize((unsigned int)(23 * gs::scale));
+            performanceText.setCharacterSize((unsigned int)(15 * gs::scale));
             
             int yy = height - 10*gs::scale;
             buildText.setPosition(width - buildText.getLocalBounds().width - 10*gs::scale, yy - buildText.getLocalBounds().height);

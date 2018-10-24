@@ -34,6 +34,7 @@
 #include "../../Engine/EntitySystem.hpp"
 #include "../../Engine/NovelSystem.hpp"
 #include "../../Engine/StaticMethods.hpp"
+#include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
 using std::cin;
@@ -184,8 +185,7 @@ namespace ns
             bool visible{ true };
             
         public:
-            enum modeEnum {appearing, waiting, waitingForTime, waitingForInput, disappearing, deprecated};
-        private:
+            enum modeEnum {appearing, waiting, waitingForTime, waitingForInput, waitingForChoose, disappearing, deprecated};
             modeEnum mode{ appearing };
             
         public:
@@ -196,15 +196,25 @@ namespace ns
             unsigned int textAppearPos{ 0 };
             unsigned int textAppearMax{ 0 };
             unsigned int textAppearI{ 0 };
-            float characterInSecond{ 0.04 };
+            float characterInSecond{ 0.04f };
             float elapsedCharacterSum{ 0 };
             enum class textAppearModeEnum {fading, printing};
             textAppearModeEnum textAppearMode{ textAppearModeEnum::printing };
+            
+            unsigned int workingArea_l{ 0 };
+            unsigned int workingArea_r{ 0 };
+            unsigned int workingArea_t{ 0 };
+            unsigned int workingArea_b{ 0 };
             
             int maxAlpha = 255;
             bool forcePressInsideDialogue{ true };
             std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
             unsigned int characterSize{ 30 };
+            float outlineThickness{ 0.f };
+            
+            wchar_t leftSpeechAddition{ 0 };
+            wchar_t rightSpeechAddition{ 0 };
+            int afterRedLineShift{ 0 };
             
             float waitingTime{ 2.f };
             float appearTime{ 0.6f };
@@ -222,6 +232,65 @@ namespace ns
             void SetDialogue(const sf::String& dialogue);
             void SetStateMode(modeEnum newMode);
             void SetGUISystem(GUISystem* system);
+        };
+        
+        
+        
+        
+        
+        class Choose : public NovelObject
+        {
+        public:
+            sf::Text text;
+            sf::String textString{ "" };
+            
+        private:
+            GUISystem* guiSystem{ nullptr };
+            Skins::Dialogue* skin{ nullptr };
+            Novel* novel{ nullptr };
+            List<Choose>* groupPointer{ nullptr };
+            
+            GUI::TextButton button;
+            int startingYY{ 0 };
+            
+            UndirectedList<std::wstring> actions;
+            UndirectedList<std::wstring> choices;
+            UndirectedList<int> choiceStart;
+            
+            bool fontLoaded{ false };
+            sf::Int8 alpha{ 0 };
+            float currentTime{ 0.f };
+            
+            bool visible{ true };
+            
+        public:
+            enum modeEnum {appearing, waitingForInput, disappearing, deprecated};
+        private:
+            modeEnum mode{ appearing };
+            
+        public:
+            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
+            sendMessageBackEnum sendMessageBack{ atDisappearing };
+            
+            int maxAlpha = 255;
+            std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
+            unsigned int characterSize{ 42 };
+            
+            float appearTime{ 0.6f };
+            float disappearTime{ 0.6f };
+            
+            Choose(Novel* novel);
+            void Update(const sf::Time& elapsedTime) override;
+            void PollEvent(sf::Event& event) override;
+            void Draw(sf::RenderWindow* window) override;
+            void Destroy() override;
+            void Resize(unsigned int width, unsigned int height) override;
+            void SetGroup(List<Choose>* element);
+            void SetStateMode(modeEnum newMode);
+            void SetGUISystem(GUISystem* system);
+            void AddChoice(const std::wstring& line);
+            void AddAction(const std::wstring& line);
+            void InitChoose();
         };
         
         
@@ -450,6 +519,7 @@ namespace ns
             void SetParent(GUIObject* guiSystem);
             bool LoadFromFile(const std::wstring& fileName, Skin* skin = nullptr, std::wstring guiScope = L"");
             void PrintIerarchy();
+            void ResetResize();
         };
         
         
@@ -458,10 +528,11 @@ namespace ns
         {
             int result;
             bool dependsOnVariable;
+            bool needsToBeScaled;
             bool constant;
             
             GUIConstrainsResult() { }
-            GUIConstrainsResult(int res, bool depends, bool consta) : result(res), dependsOnVariable(depends), constant(consta) { }
+            GUIConstrainsResult(int res, bool depends = false, bool consta = false, bool needs = false) : result(res), dependsOnVariable(depends), constant(consta), needsToBeScaled(needs) { }
         };
         struct GUIConstrains
         {
@@ -478,16 +549,16 @@ namespace ns
             int posY{ 0 };
             
             
-            bool leftC{ false };
-            bool rightC{ false };
-            bool topC{ false };
-            bool bottomC{ false };
+            int sleft{ 0 };
+            int sright{ 0 };
+            int stop{ 0 };
+            int sbottom{ 0 };
             
-            bool widthC{ false };
-            bool heightC{ false };
+            int swidth{ 0 };
+            int sheight{ 0 };
             
-            bool posXC{ false };
-            bool posYC{ false };
+            int sposX{ 0 };
+            int sposY{ 0 };
             
             
             std::wstring leftS{ L"" };
@@ -503,6 +574,9 @@ namespace ns
             
             
             //std::wstring displayWhenVariableIsTrue{ L"" };
+            bool notSet[8] = { false, false, false, false,  false, false,  false, false };
+            bool constant[8] = { false, false, false, false,  false, false,  false, false };
+            bool onlyNeedsToBeScaled[8] = { false, false, false, false,  false, false,  false, false };
             bool isDependsOnVariable[8] = { false, false, false, false,  false, false,  false, false };
             bool isDependsOnConstrains[8] = { false, false, false, false,  false, false,  false, false };
             bool isDependsOnParent[8] = { false, false, false, false,  false, false,  false, false };
@@ -624,6 +698,11 @@ namespace ns
                 void SetColor(const sf::Color& fillColour) override;
                 void LoadImage(const std::wstring& path, int num);*/
             };
+            
+            struct DialogueConstrains : GUIObject
+            {
+                
+            };
         }
         
         
@@ -635,28 +714,42 @@ namespace ns
             struct Dialogue
             {
                 GUISystem gui;
+                
                 GUIObject* dialogueRect{ nullptr };
+                GUIObject* textConstrains{ nullptr };
+                
                 GUIObject* nameRect{ nullptr };
+                GUIObject* nameConstrains{ nullptr };
                 
                 unsigned int characterSize{ 30 };
                 int maxAlpha = 255;
                 bool forcePressInsideDialogue{ true };
-                float characterInSecond{ 0.04 };
+                float characterInSecond{ 0.04f };
                 unsigned int textAppearMode{ 0 };
+                std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
+                
+                wchar_t leftSpeechAddition{ 0 };
+                wchar_t rightSpeechAddition{ 0 };
+                int afterRedLineShift{ 0 };
+                
+                sf::Color fillColor{ sf::Color::White };
+                sf::Color outlineColor{ sf::Color::Black };
+                float outlineThickness{ 0.f };
+                
+                float appearTime{ 0.6f };
+                float disappearTime{ 0.6f };
+            };
+            struct Choose
+            {
+                GUISystem guiChoose;
+                GUIObject* chooseRect{ nullptr };
+                
+                unsigned int characterSize{ 36 };
+                int maxAlpha = 255;
                 std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
                 
                 float appearTime{ 0.6f };
                 float disappearTime{ 0.6f };
-                
-                int textXOffset = 40;
-                int textYOffset = 10;
-                int textWidth = 80;
-                
-                int nameBoxXOffset = 40;
-                int nameBoxYOffset = 15;
-                int nameTextXOffset = 45;
-                int nameTextYOffset = 20;
-                int nameTextWidth = 90;
             };
             struct Background
             {
@@ -703,6 +796,7 @@ namespace ns
             
             GUISystem gamePauseGUI;
             Skins::Dialogue dialogue;
+            Skins::Choose choose;
             Skins::Background background;
             Skins::Character character;
             Skins::Music music;
@@ -785,9 +879,12 @@ namespace ns
             NovelLibrary library;
             Skin skin;
             
+            Stack<std::wstring> lines;
+            
             List<Background>* backgroundGroup{ nullptr };
             List<Character>* characterGroup{ nullptr };
             List<Dialogue>* dialogueGroup{ nullptr };
+            List<Choose>* chooseGroup{ nullptr };
             List<SoundPlayer>* soundGroup{ nullptr };
             List<MusicPlayer>* musicGroup{ nullptr };
             List<GUISystem>* GUIGroup{ nullptr };
@@ -808,6 +905,7 @@ namespace ns
             void LocalVariables_Set(const std::wstring& name, int value);
             void RemoveFromGroup(List<Background>* groupPointer);
             void RemoveFromGroup(List<Dialogue>* groupPointer);
+            void RemoveFromGroup(List<Choose>* groupPointer);
             void RemoveFromGroup(List<Character>* groupPointer);
             void RemoveFromGroup(List<SoundPlayer>* groupPointer);
             void RemoveFromGroup(List<MusicPlayer>* groupPointer);

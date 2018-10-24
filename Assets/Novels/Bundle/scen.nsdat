@@ -5,6 +5,55 @@ var infoInteger = 123
 var booleanyeah = true
 
 Background "Неко.jpg"
+
+Юи "Nya :3"
+
+//choice "hi"
+//    "Yay, hi!"
+//choise "another."
+//    "nah"
+//    "oh no!"
+
+"Добро пожаловать в  В Ы Б О Р Ы. Вот пример выбора без уничтожения диалога. Да, такое возможно. А можно и с уничтожением диалога, следующий как раз таким и будет~" message:no
+choose still
+    "Мне нравится этот фон~"
+        "Мне тоже :3"
+        choose
+            "jump на 'сценарий.nsdata'!"
+                background hide
+                jump "сценарий.nsdat"
+            "Я здесь просто так."
+                "Звучит грустно :с"
+            "HIS NAME IS VASYA"
+                "ВАСЯЯЯЯЯЯ! ОН МОЩНЫЙ ЧЕЛОВЕЕЕК, БУЛЬДОЗЕР МЭЭЭЭЭН~"
+            "Верни меня назад >.<"
+        "Я нахожусь в первом выборе, но вне второго, дя~"
+    "Хочу задний фон Юи.jpg!"
+        background "Characters/d266890959ebbd6b808b7f3f00716edd.png"
+        "oh no!"
+    "Хочу задний фон DVa.jpg!"
+        background "DVa.jpg"
+        "Yay!"
+"Я нахожусь сразу после всех выборов! (если нет, то обращайся: vk.com/novelsome)"
+
+choose
+{
+choice "Больше выборов Богу выборов"
+"Угу, больше!"
+choice "Рей лучше Аски."
+"OH MY GODDDDDDDDDD!!1!111!"
+}
+
+//"nah" and "oh no!" considered to be choices as the spaced exists.
+//"choice" makes everything below be explicitly the actions, but if the spaces occure, then this explicity will be disabled.
+//choose
+//{
+//choice "hi"
+//    "Yay, hi!"
+//"nah"
+//"oh no!"
+//}
+
 Юи "Йей, йа Юи! <3"
 "Привет, я очень длинный текст. Такой длинный, что до невозможности длинный. ДжоДжо хочу смотреть, а ещё хочу шаверму очень сильно хочу есть шаверму ууу вкусная шаверма аааа вообще я хавать хочу сильно, так что пойду лучше есть, а не программировать этот ваш НовелСам."
 
