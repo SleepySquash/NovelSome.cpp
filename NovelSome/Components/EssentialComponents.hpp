@@ -3,7 +3,7 @@
 //  NovelSome
 //
 //  Created by Никита Исаенко on 08/09/2018.
-//  Copyright © 2018 Melanholy Hill. All rights reserved.
+//  Copyright © 2018 Melancholy Hill. All rights reserved.
 //
 
 #ifndef EssentialComponents_hpp
