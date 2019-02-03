@@ -208,24 +208,16 @@ namespace ns
                 layers.PollEvent(event);
             gamePause.PollEvent(event);
         }
-        void Novel::OnHold(NovelObject* component)
-        {
-            onHold.insert(onHold.begin(), component);
-            onHoldSize = onHold.size();
-        }
+        void Novel::OnHold(NovelObject* component) { onHold.insert(onHold.begin(), component); }
         void Novel::UnHold(NovelObject* component)
         {
             std::list<NovelObject*>::iterator it = std::find(onHold.begin(), onHold.end(), component);
             if (it != onHold.end())
             {
                 onHold.erase(it);
-                onHoldSize = onHold.size();
             }
         }
-        sf::String Novel::GetFolderPath()
-        {
-            return folderPath;
-        }
+        sf::String Novel::GetFolderPath() { return folderPath; }
         
         
         

@@ -12,45 +12,82 @@ namespace ns
 {
     namespace GUI
     {
-        void TextButton::SetPosition(const int& X, const int& Y)
+        TextButton::TextButton()
         {
-            x = X; y = Y;
-            text.setPosition(x * ((float)gs::width / gs::relativeWidth), y * ((float)gs::height / gs::relativeHeight));
+            text.setFillColor(sf::Color::White);
+            text.setOutlineColor(sf::Color::Black);
         }
-        void TextButton::SetString(const std::wstring& line)
+        void TextButton::Draw(sf::RenderTarget* window)
         {
-            textString = line;
-            text.setString(line);
-            
-            if (fontLoaded)
+            if (fontLoaded) window->draw(text);
+        }
+        void TextButton::Resize(unsigned int width, unsigned int height)
+        {
+            text.setCharacterSize(characterSize * gs::scale);
+            text.setOutlineThickness(thickness * gs::scale);
+        }
+        bool TextButton::PollEvent(sf::Event& event)
+        {
+            if ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) || event.type == sf::Event::TouchEnded)
             {
-                if (halign == halignEnum::left)
-                    text.setOrigin(0, text.getOrigin().y);
-                else if (halign == halignEnum::center)
-                    text.setOrigin(text.getLocalBounds().width/2, text.getOrigin().y);
-                else if (halign == halignEnum::right)
-                    text.setOrigin(text.getLocalBounds().width, text.getOrigin().y);
+                if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y };
+                else dot = { event.touch.x, event.touch.y };
                 
-                if (valign == valignEnum::top)
-                    text.setOrigin(text.getOrigin().x, 0);
-                else if (valign == valignEnum::middle)
-                    text.setOrigin(text.getOrigin().x, text.getLocalBounds().height/2);
-                else if (valign == valignEnum::bottom)
-                    text.setOrigin(text.getOrigin().x, text.getLocalBounds().height);
+                if (wasPressed || ignoreWasPressed)
+                {
+                    text.setFillColor(sf::Color::White);
+                    bool constains = text.getGlobalBounds().contains(dot.x, dot.y);
+                    if (constains) event = sf::Event(); // So that no button will be clicked being the underlaying.
+                    
+                    return constains;
+                }
+            }
+            else if ((event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) || event.type == sf::Event::TouchBegan)
+            {
+                if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y };
+                else dot = { event.touch.x, event.touch.y };
+                
+                wasPressed = text.getGlobalBounds().contains(dot.x, dot.y);
+                if (onPress) return wasPressed;
+                if (wasPressed) text.setFillColor(sf::Color::Yellow);
+            }
+            return false;
+        }
+        void TextButton::setPosition(float x, float y)
+        {
+            switch (halign)
+            {
+                case halignEnum::left: text.setPosition(x, text.getPosition().y); break;
+                case halignEnum::center: text.setPosition(x - text.getGlobalBounds().width/2, text.getPosition().y); break;
+                case halignEnum::right: text.setPosition(x - text.getGlobalBounds().width, text.getPosition().y); break;
+            }
+            switch (valign)
+            {
+                case valignEnum::top: text.setPosition(text.getPosition().x, y); break;
+                case valignEnum::center: text.setPosition(text.getPosition().x, y - text.getGlobalBounds().height/2); break;
+                case valignEnum::bottom: text.setPosition(text.getPosition().x, y - text.getGlobalBounds().height); break;
             }
         }
-        void TextButton::SetFont(const std::wstring& font)
+        void TextButton::setFont(const std::wstring& fontname)
         {
-            fontName = font;
-            if ((fontLoaded = (fc::GetFont(fontName) != nullptr)))
-                text.setFont(*fc::GetFont(fontName));
+            if ((fontLoaded = (fc::GetFont(fontname) != nullptr)))
+                text.setFont(*fc::GetFont(fontname));
         }
-        void TextButton::Draw(sf::RenderWindow* window)
+        void TextButton::setString(const std::wstring& string)
         {
-            if (fontLoaded)
-                window->draw(text);
+            text.setString(string);
+            if (!fontLoaded)
+            {
+                if ((fontLoaded = (fc::GetFont(L"NotoSansCJK-Regular.ttc") != nullptr)))
+                    text.setFont(*fc::GetFont(L"NotoSansCJK-Regular.ttc"));
+            }
         }
-        void TextButton::SetAlpha(const sf::Int8& alpha)
+        void TextButton::setCharacterSize(const unsigned int size)
+        {
+            characterSize = size;
+            text.setCharacterSize(size * gs::scale);
+        }
+        void TextButton::setAlpha(const sf::Int8& alpha)
         {
             if (fontLoaded)
             {
@@ -58,78 +95,6 @@ namespace ns
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
             }
-        }
-        void TextButton::Resize(unsigned int width, unsigned int height)
-        {
-            if (fontLoaded)
-            {
-                text.setCharacterSize((unsigned int)(characterSize * gs::scale));
-                text.setPosition(x * ((float)width / gs::relativeWidth), y * ((float)height / gs::relativeHeight));
-                
-                if (halign == halignEnum::left)
-                    text.setOrigin(0, text.getOrigin().y);
-                else if (halign == halignEnum::center)
-                    text.setOrigin(text.getLocalBounds().width/2, text.getOrigin().y);
-                else if (halign == halignEnum::right)
-                    text.setOrigin(text.getLocalBounds().width, text.getOrigin().y);
-                
-                if (valign == valignEnum::top)
-                    text.setOrigin(text.getOrigin().x, 0);
-                else if (valign == valignEnum::middle)
-                    text.setOrigin(text.getOrigin().x, text.getLocalBounds().height/2);
-                else if (valign == valignEnum::bottom)
-                    text.setOrigin(text.getOrigin().x, text.getLocalBounds().height);
-            }
-        }
-        void TextButton::PollEvent(sf::Event& event)
-        {
-            if (fontLoaded)
-            {
-                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-                {
-                    released = false;
-                }
-                else if (event.type == sf::Event::TouchBegan)
-                {
-                    released = false;
-                }
-                else if (event.type == sf::Event::TouchEnded)
-                {
-                    int left = text.getPosition().x - text.getOrigin().x;
-                    int top = text.getPosition().y - text.getOrigin().y;
-                    pressed = (event.touch.x >= left && event.touch.x <= left + text.getLocalBounds().width &&
-                               event.touch.y >= top && event.touch.y <= top + text.getLocalBounds().height);
-                    
-                    if (pressed)
-                        event = sf::Event();
-                    
-                    released = pressed;
-                    pressed = false;
-                }
-                else if ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left))
-                {
-                    int left = text.getPosition().x - text.getOrigin().x;
-                    int top = text.getPosition().y + text.getLocalBounds().height/2.5 - text.getOrigin().y;
-                    
-                    pressed = (event.mouseButton.x >= left && event.mouseButton.x <= (left + text.getLocalBounds().width) &&
-                               event.mouseButton.y >= top && event.mouseButton.y <= (top + text.getLocalBounds().height));
-                    
-                    if (pressed)
-                        event = sf::Event();
-                    
-                    released = pressed;
-                    pressed = false;
-                }
-            }
-        }
-        bool TextButton::Released()
-        {
-            if (released)
-            {
-                released = false;
-                return true;
-            }
-            return false;
         }
     }
 }

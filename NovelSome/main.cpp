@@ -222,50 +222,37 @@ void SetResolutionClass()
             height = sf::VideoMode::getDesktopMode().width;
         }
         
-        if (width <= 640 && height <= 480)
-            gs::resolutionClass = 0;
-        else if (width <= 1024 && height <= 768)
-            gs::resolutionClass = 1;
-        else if (width <= 1920 && height <= 1080)
-            gs::resolutionClass = 2;
-        else
-            gs::resolutionClass = 3;
+        if (width <= 640 && height <= 480) gs::resolutionClass = 0;
+        else if (width <= 1024 && height <= 768) gs::resolutionClass = 1;
+        else if (width <= 1920 && height <= 1080) gs::resolutionClass = 2;
+        else gs::resolutionClass = 3;
         
 #ifdef SFML_SYSTEM_IOS
         std::string device = iOSDeviceName();
         if (nss::Command(device, "iPhone"))
         {
             int version = base::ConvertToInt(nss::ParseUntil(device, ',', 6));
-            if (version <= 4)
-                gs::resolutionClass = 0;
-            else if (version <= 7)
-                gs::resolutionClass = 1;
+            if (version <= 4) gs::resolutionClass = 0;
+            else if (version <= 7) gs::resolutionClass = 1;
             else if (version == 8)
             {
                 int underVersion = base::ConvertToInt(nss::ParseUntil(device, '\0', 8));
-                if (underVersion == 4)
-                    gs::resolutionClass = 1;
-                else
-                    gs::resolutionClass = 2;
+                if (underVersion == 4) gs::resolutionClass = 1;
+                else gs::resolutionClass = 2;
             }
         }
         else if (nss::Command(device, "iPad"))
         {
             int version = base::ConvertToInt(nss::ParseUntil(device, ',', 4));
-            if (version <= 1)
-                gs::resolutionClass = 0;
-            else if (version <= 2)
-                gs::resolutionClass = 1;
+            if (version <= 1) gs::resolutionClass = 0;
+            else if (version <= 2) gs::resolutionClass = 1;
         }
         else if (nss::Command(device, "iPod"))
         {
             int version = base::ConvertToInt(nss::ParseUntil(device, ',', 4));
-            if (version <= 3)
-                gs::resolutionClass = 0;
-            else if (version <= 4)
-                gs::resolutionClass = 1;
-            else if (version <= 6)
-                gs::resolutionClass = 1;
+            if (version <= 3) gs::resolutionClass = 0;
+            else if (version <= 4) gs::resolutionClass = 1;
+            else if (version <= 6) gs::resolutionClass = 1;
         }
 #endif
         

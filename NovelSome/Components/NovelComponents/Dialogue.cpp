@@ -452,7 +452,7 @@ namespace ns
                     else
                         alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
                     
-                    button.SetAlpha(alpha);
+                    button.setAlpha(alpha);
                     break;
                     
                 case disappearing:
@@ -472,7 +472,7 @@ namespace ns
                     else
                         alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     
-                    button.SetAlpha(alpha);
+                    button.setAlpha(alpha);
                     break;
                     
                 case deprecated:
@@ -496,11 +496,10 @@ namespace ns
                         int yy = startingYY; bool found{ false };
                         for (int i = 0; i < choices.size() && !found; ++i)
                         {
-                            button.SetString(choices[i]);
-                            button.SetPosition(640, yy);
+                            button.setString(choices[i]);
+                            button.setPosition(640*gs::scalex, yy*gs::scaley);
                             
-                            button.PollEvent(event);
-                            if ((found = button.Released()))
+                            if ((found = button.PollEvent(event)))
                             {
                                 if (novel != nullptr)
                                 {
@@ -521,7 +520,7 @@ namespace ns
                                     }
                             }
                             
-                            yy += button.text.getLocalBounds().height/gs::scale + 10;
+                            yy += button.text.getGlobalBounds().height/gs::scale + 10;
                         }
                     }
                 }
@@ -543,11 +542,11 @@ namespace ns
                 int yy = startingYY;
                 for (int i = 0; i < choices.size(); ++i)
                 {
-                    button.SetString(choices[i]);
-                    button.SetPosition(640, yy);
+                    button.setString(choices[i]);
+                    button.setPosition(640*gs::scalex, yy*gs::scaley);
                     button.Draw(window);
                     
-                    yy += button.text.getLocalBounds().height/gs::scale + 10;
+                    yy += button.text.getGlobalBounds().height/gs::scale + 10;
                 }
             }
         }
@@ -610,16 +609,17 @@ namespace ns
             }
             else
             {
-                button.SetFont(fontName);
+                button.setFont(fontName);
                 button.characterSize = characterSize;
+                button.ignoreWasPressed = true;
                 button.halign = GUI::TextButton::halignEnum::center;
                 button.valign = GUI::TextButton::valignEnum::top;
                 
                 int yy = 0;
                 for (int i = 0; i < choices.size(); ++i)
                 {
-                    button.SetString(choices[i]);
-                    yy += button.text.getLocalBounds().height + 10;
+                    button.setString(choices[i]);
+                    yy += button.text.getGlobalBounds().height + 10;
                 }
                 startingYY = 400 - yy/2;
                 

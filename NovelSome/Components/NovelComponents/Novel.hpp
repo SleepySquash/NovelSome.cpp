@@ -862,8 +862,6 @@ namespace ns
             std::wstring line;
             
             list<NovelObject*> onHold;
-            unsigned int onHoldSize{ 0 };
-            
             std::wifstream wif;
             
         public:

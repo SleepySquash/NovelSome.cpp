@@ -24,37 +24,37 @@ namespace ns
 {
     namespace GUI
     {
-        class TextButton
+        struct TextButton
         {
-            std::wstring textString{ L"" };
-            
-            bool hovered{ false };
-            bool pressed{ false };
-            bool released{ false };
+        public:
             bool fontLoaded{ false };
             
-        public:
-            sf::Text text;
+            bool onPress{ false };
+            bool wasPressed{ false };
+            bool ignoreWasPressed{ false };
+            sf::Vector2i dot;
             
-            int maxAlpha = 255;
-            std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
+            sf::Text text;
+            sf::String string;
             unsigned int characterSize{ 30 };
+            float thickness{ 1.f };
+            int maxAlpha = 255;
             
             enum class halignEnum { left, center, right };
-            halignEnum halign = halignEnum::center;
-            enum class valignEnum { top, middle, bottom };
-            valignEnum valign = valignEnum::middle;
+            enum class valignEnum { top, center, bottom };
+            halignEnum halign{ halignEnum::center };
+            valignEnum valign{ valignEnum::top };
             
-            int x{ 0 }, y{ 0 };
-            
-            void SetPosition(const int& X, const int& Y);
-            void SetString(const std::wstring& line);
-            void SetFont(const std::wstring& font);
-            void Draw(sf::RenderWindow* window);
-            void SetAlpha(const sf::Int8& alpha);
+            TextButton();
+            void Update(const sf::Time& elapsedTime);
+            void Draw(sf::RenderTarget* window);
             void Resize(unsigned int width, unsigned int height);
-            void PollEvent(sf::Event& event);
-            bool Released();
+            bool PollEvent(sf::Event& event);
+            void setAlpha(const sf::Int8& alpha);
+            void setPosition(float x, float y);
+            void setFont(const std::wstring& fontname);
+            void setString(const std::wstring& string);
+            void setCharacterSize(const unsigned int size);
         };
     }
 }
