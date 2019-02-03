@@ -58,17 +58,15 @@ namespace nss
     {
         bool ReallyFound{ false };
         
-        if (command.length() <= line.length())
+        int lastPos{ 0 };
+        while (lastPos < line.length() && (line[lastPos] == L' ' || line[lastPos] == L'\t')) ++lastPos;
+        std::wstring commandLine = ns::base::LowercaseTheString(line);
+        if (command.length() <= commandLine.length())
         {
-            int skippedSpaces = 0; bool Found{ true };
-            for (; Found && skippedSpaces < command.length(); ++skippedSpaces)
-                if (line[skippedSpaces] != ' ' && line[skippedSpaces] != '\n' && line[skippedSpaces] != 13 && line[skippedSpaces] != '\t')
-                    Found = true;
-            
-            Found = (skippedSpaces < command.length());
-            for (int i = skippedSpaces; Found && i < command.length(); ++i)
-                Found = (line[i] == command[i]);
-            
+            bool Found{ true };
+            int i = lastPos;
+            for (int j = 0; Found && j < command.length(); i++, j++)
+                Found = (commandLine[i] == command[j]);
             ReallyFound = Found;
         }
         
@@ -106,7 +104,7 @@ namespace nss
     bool ContainsUsefulInformation(const std::wstring& wstr)
     {
         for (int i = 0; i < wstr.length(); i++)
-            if (wstr[i] != L' ' && wstr[i] != L'\t' && wstr[i] != L'\0' && wstr[i] != L'\n')
+            if (wstr[i] != L' ' && wstr[i] != L'\t' && wstr[i] != L'\0' && wstr[i] != L'\n' && wstr[i] != 13)
                 return true;
         return false;
     }
@@ -337,7 +335,7 @@ namespace nss
         
         return text;
     }
-    wchar_t** ParseArguments(CommandSettings& results)
+    /*wchar_t** ParseArguments(CommandSettings& results)
     {
         wchar_t** arguments{ nullptr };
         int parsedArguments{ 0 };
@@ -365,6 +363,16 @@ namespace nss
         arguments[parsedArguments] = nullptr;
         
         return arguments;
+    }*/
+    void ParseArguments(CommandSettings& results, std::vector<std::wstring>& vec)
+    {
+        while (results.lastPos+1 < results.line.length())
+        {
+            SkipSpaces(results);
+            std::wstring argument = nss::ParseArgument(results);
+            if (argument != L"with" && argument != L"as")
+                vec.push_back(argument);
+        }
     }
     std::wstring ArgumentAsString(CommandSettings& results)
     {
@@ -757,15 +765,15 @@ namespace nss
                         }
                         else
                         {
-                            cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::ConvertToUTF8(token) << "'." << endl;
+                            cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::utf8(token) << "'." << endl;
                             values.Push(roperand);
                         }
                     }
                     else
-                        cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::ConvertToUTF8(token) << "'." << endl;
+                        cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::utf8(token) << "'." << endl;
                 }
                 else
-                    cout << "Error :: MathParser :: Operation is not supported: '" << ns::base::ConvertToUTF8(token) << "'." << endl;
+                    cout << "Error :: MathParser :: Operation is not supported: '" << ns::base::utf8(token) << "'." << endl;
             }
             else
                 values.Push(token);

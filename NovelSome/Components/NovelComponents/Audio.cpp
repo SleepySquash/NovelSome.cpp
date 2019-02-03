@@ -67,20 +67,14 @@ namespace ns
                         sound.setVolume(volume);
                         break;
                         
-                    case deprecated:
-                        this->GetNovelSystem()->PopComponent(this);
-                        break;
-                        
-                    default:
-                        break;
+                    case deprecated: this->GetNovelSystem()->PopComponent(this); break;
+                    default: break;
                 }
             }
         }
-        void SoundPlayer::Destroy()
-        {
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
-        }
+        void SoundPlayer::Destroy() {
+            if (novel != nullptr) sc::DeleteSound(novel->GetFolderPath() + audioPath);
+            if (novel != nullptr) novel->RemoveFromGroup(groupPointer); }
         void SoundPlayer::SetNovel(Novel* novel)
         {
             this->novel = novel;
@@ -91,16 +85,32 @@ namespace ns
                 maxVolume = novel->skin.sound.maxVolume * ns::gs::maxVolumeGlobal * ns::gs::maxVolumeSound;
             }
         }
-        void SoundPlayer::SetGroup(List<SoundPlayer>* element)
-        {
-            this->groupPointer = element;
-        }
-        void SoundPlayer::LoadFromFile(sf::String fileName)
+        void SoundPlayer::SetGroup(const list<SoundPlayer*>::iterator& element) { this->groupPointer = element; }
+        void SoundPlayer::LoadFromFile(const sf::String& fileName)
         {
             audioLoaded = false;
             if (novel != nullptr)
             {
-                std::wstring fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
+                sf::SoundBuffer* buffer = sc::LoadSound(novel->GetFolderPath() + fileName);
+                if ((audioLoaded = (buffer != nullptr)))
+                {
+                    audioPath = fileName;
+                    sound.setBuffer(*buffer);
+                    sound.setLoop(loop);
+                    sound.setVolume(0);
+                    sound.setPlayingOffset(playingOffset);
+                    sound.play();
+                    
+                    timeToStartDisappearing = (*buffer).getDuration().asSeconds() - disappearTime;
+                    
+                    currentTime = 0.f;
+                }
+                else
+                {
+                    if (sendMessageBack != noMessage) novel->UnHold(this);
+                    this->GetNovelSystem()->PopComponent(this);
+                }
+                /*std::wstring fullPath = sf::String(resourcePath() + novel->GetFolderPath() + fileName);
                 
                 if (!base::FileExists(fullPath))
                 {
@@ -141,7 +151,7 @@ namespace ns
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
                 std::string u8str = converter.to_bytes(fullPath);
                 if (!(audioLoaded = soundBuffer.loadFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
 #endif
                 
                 if (audioLoaded)
@@ -162,7 +172,7 @@ namespace ns
                     if (sendMessageBack != noMessage)
                         novel->UnHold(this);
                     this->GetNovelSystem()->PopComponent(this);
-                }
+                }*/
             }
             else
                 cout << "Error :: SoundPlayer :: LoadFromFile :: No novel was loaded, pointer is NULL" << endl;
@@ -179,14 +189,8 @@ namespace ns
                             novel->UnHold(this);
             }
         }
-        void SoundPlayer::SetLoop(bool setLoop)
-        {
-            loop = setLoop;
-        }
-        void SoundPlayer::SetPlayingOffset(sf::Time timeOffset)
-        {
-            playingOffset = timeOffset;
-        }
+        void SoundPlayer::SetLoop(bool setLoop) { loop = setLoop; }
+        void SoundPlayer::SetPlayingOffset(sf::Time timeOffset) { playingOffset = timeOffset; }
         
         
         
@@ -249,20 +253,12 @@ namespace ns
                         music.setVolume(volume);
                         break;
                         
-                    case deprecated:
-                        this->GetNovelSystem()->PopComponent(this);
-                        break;
-                        
-                    default:
-                        break;
+                    case deprecated: this->GetNovelSystem()->PopComponent(this); break;
+                    default: break;
                 }
             }
         }
-        void MusicPlayer::Destroy()
-        {
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
-        }
+        void MusicPlayer::Destroy() { if (novel != nullptr) novel->RemoveFromGroup(groupPointer); }
         void MusicPlayer::SetNovel(Novel* novel)
         {
             this->novel = novel;
@@ -273,11 +269,8 @@ namespace ns
                 maxVolume = novel->skin.music.maxVolume * ns::gs::maxVolumeGlobal * ns::gs::maxVolumeMusic;
             }
         }
-        void MusicPlayer::SetGroup(List<MusicPlayer>* element)
-        {
-            this->groupPointer = element;
-        }
-        void MusicPlayer::LoadFromFile(sf::String fileName)
+        void MusicPlayer::SetGroup(const list<MusicPlayer*>::iterator& element) { this->groupPointer = element; }
+        void MusicPlayer::LoadFromFile(const sf::String& fileName)
         {
             audioLoaded = false;
             if (novel != nullptr)
@@ -322,7 +315,7 @@ namespace ns
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
                 std::string u8str = converter.to_bytes(fullPath);
                 if (!(audioLoaded = music.openFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
 #endif
                 
                 if (audioLoaded)
@@ -359,13 +352,7 @@ namespace ns
                             novel->UnHold(this);
             }
         }
-        void MusicPlayer::SetLoop(bool setLoop)
-        {
-            loop = setLoop;
-        }
-        void MusicPlayer::SetPlayingOffset(sf::Time timeOffset)
-        {
-            playingOffset = timeOffset;
-        }
+        void MusicPlayer::SetLoop(bool setLoop) { loop = setLoop; }
+        void MusicPlayer::SetPlayingOffset(sf::Time timeOffset) { playingOffset = timeOffset; }
     }
 }

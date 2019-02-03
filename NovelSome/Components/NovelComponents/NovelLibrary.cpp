@@ -70,7 +70,7 @@ namespace ns
             
             bool fileOpened{ false };
             if (!((fileOpened = wif.is_open())))
-                cout << "Error :: Skin :: File couldn't be opened, path: " << base::ConvertToUTF8(fileName) << endl;
+                cout << "Error :: Skin :: File couldn't be opened, path: " << base::utf8(fileName) << endl;
             else
             {
                 bool eof{ false };
@@ -127,6 +127,8 @@ namespace ns
                                     character.appearTime = possibleValue;
                                 else if (settingScope == L"dialogue")
                                     dialogue.appearTime = possibleValue;
+                                else if (settingScope == L"choose")
+                                    choose.appearTime = possibleValue;
                             }
                         }
                         else if (nss::Command(command, L"disappeartime:") || nss::Command(command, L"disappeartime "))
@@ -147,6 +149,8 @@ namespace ns
                                     character.disappearTime = possibleValue;
                                 else if (settingScope == L"dialogue")
                                     dialogue.disappearTime = possibleValue;
+                                else if (settingScope == L"choose")
+                                    choose.disappearTime = possibleValue;
                             }
                         }
                         else if (nss::Command(command, L"maxalpha:") || nss::Command(command, L"maxalpha ") ||
@@ -161,6 +165,8 @@ namespace ns
                                     character.maxAlpha = possibleValue;
                                 else if (settingScope == L"dialogue")
                                     dialogue.maxAlpha = possibleValue;
+                                else if (settingScope == L"choose")
+                                    choose.maxAlpha = possibleValue;
                             }
                         }
                         else if (nss::Command(command, L"maxvolume:") || nss::Command(command, L"maxvolume ") ||
@@ -340,6 +346,8 @@ namespace ns
                             settingScope = L"sound";
                         else if (nss::Command(command, L"dialogue"))
                             settingScope = L"dialogue";
+                        else if (nss::Command(command, L"choose"))
+                            settingScope = L"choose";
                         else if (nss::Command(command, L"background"))
                             settingScope = L"background";
                         else if (nss::Command(command, L"ambient"))
@@ -448,18 +456,12 @@ namespace ns
                 
                 sf::String novelPath{ executablePath() + novel->GetFolderPath() };
                 
-                List<sf::String>* folders{ nullptr };
-                List<sf::String>* lastFolders{ nullptr };
-                folders = new List<sf::String>();
-                folders->data = new sf::String("");
-                folders->prev = nullptr;
-                folders->next = nullptr;
-                lastFolders = folders;
+                list<sf::String> folders;
+                folders.push_back("");
                 
-                List<sf::String>* currentFolder = folders;
-                while (currentFolder != nullptr)
+                for (list<sf::String>::iterator currentFolder = folders.begin(); currentFolder != folders.end(); ++currentFolder)
                 {
-                    sf::String fullpath{ novelPath + *currentFolder->data};
+                    sf::String fullpath{ novelPath + *currentFolder };
 #ifdef _WIN32
                     if ((dir = _opendir(fullpath.toWideString().c_str())) != NULL)
 #else
@@ -472,19 +474,11 @@ namespace ns
                                 if (entryName != L"." && entryName != L"..")
                                 {
                                     std::wstring extention = ns::base::GetExtentionFromString(entryName);
-                                    if (extention == L"")
-                                    {
-                                        List<sf::String>* newFolder = new List<sf::String>();
-                                        newFolder->data = new sf::String(*currentFolder->data + entryName + L"/");
-                                        newFolder->prev = lastFolders;
-                                        newFolder->next = nullptr;
-                                        lastFolders->next = newFolder;
-                                        lastFolders = newFolder;
-                                    }
+                                    if (extention == L"") folders.push_back(*currentFolder + entryName + L"/");
                                     else if (extention == L".nschar")
                                     {
                                         std::wifstream wif;
-                                        sf::String filePath = (fullpath + L"/" + entryName);
+                                        sf::String filePath = (fullpath + entryName);
 #ifdef _WIN32
                                         wif.open(filePath.toWideString());
 #else
@@ -572,7 +566,7 @@ namespace ns
                                             if (charData->displayName == L"")
                                                 charData->displayName = charData->name;
                                             
-                                            charData->filePath = *currentFolder->data + L"/" + entryName;
+                                            charData->filePath = *currentFolder + entryName;
                                             
                                             if (novel->library.characterLibrary.find(charData->name) != novel->library.characterLibrary.end())
                                             {
@@ -600,16 +594,6 @@ namespace ns
                         }
                         else
                             std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Could not open directory: '" << fullpath.toAnsiString() << '\'' << std::endl;
-                    currentFolder = currentFolder->next;
-                }
-                
-                List<sf::String>* next{ nullptr };
-                for (; folders != nullptr; folders = next)
-                {
-                    next = folders->next;
-                    
-                    delete folders->data;
-                    delete folders;
                 }
             }
             else
@@ -685,7 +669,7 @@ namespace ns
                     os << (Var.value.asBoolean ? "true" : "false");
                     break;
                 case NovelVariable::String:
-                    os << base::ConvertToUTF8(std::wstring(Var.value.asString));
+                    os << base::utf8(std::wstring(Var.value.asString));
                     break;
             }
             return os;

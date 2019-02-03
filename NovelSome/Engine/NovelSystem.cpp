@@ -17,156 +17,70 @@ namespace ns
     void NovelObject::Resize(unsigned int width, unsigned int height) { }
     void NovelObject::PollEvent(sf::Event& event) { }
     void NovelObject::Destroy() { }
-    void NovelObject::SetPriority(int priority)
-    {
-        this->priority = priority;
-        //TODO: Sorting
-    }
-    void NovelObject::ChangePriority(int priority)
-    {
+    void NovelObject::SetPriority(int priority) { this->priority = priority; /* TODO: Sorting */ }
+    void NovelObject::ChangePriority(int priority) {
         if (novelSystem != nullptr)
-            novelSystem->ChangePriorityOf(this, priority);
-    }
-    void NovelObject::SetNovelSystem(NovelSystem* novelSystem)
-    {
-        this->novelSystem = novelSystem;
-    }
-    NovelSystem* NovelObject::GetNovelSystem()
-    {
-        return novelSystem;
-    }
+            novelSystem->ChangePriorityOf(this, priority); }
+    void NovelObject::SetNovelSystem(NovelSystem* novelSystem) { this->novelSystem = novelSystem; }
+    NovelSystem* NovelObject::GetNovelSystem() { return novelSystem; }
     
     
     
-    NovelSystem::NovelSystem()
-    {
-        objects = nullptr;
-        lastObject = nullptr;
-    }
+    NovelSystem::NovelSystem() { }
     void NovelSystem::Update(const sf::Time& elapsedTime)
     {
-        List<NovelObject>* next = nullptr;
-        if (objects != nullptr)
-            for (auto* list = objects; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Update(elapsedTime);
-            }
+        list<NovelObject*>::iterator it = objects.begin();
+        while (it != objects.end())
+        {
+            if ((*it)->offline) { delete (*it); objects.erase(it++); }
+            else { (*it)->Update(elapsedTime); ++it; }
+        }
     }
     void NovelSystem::Draw(sf::RenderWindow* window)
     {
-        List<NovelObject>* next = nullptr;
-        if (objects != nullptr)
-            for (auto* list = objects; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Draw(window);
-            }
+        if (objects.size())
+            for (auto e : objects)
+                if (!e->offline) e->Draw(window);
     }
     void NovelSystem::Resize(unsigned int width, unsigned int height)
     {
-        List<NovelObject>* next = nullptr;
-        if (objects != nullptr)
-            for (auto* list = objects; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Resize(width, height);
-            }
+        if (objects.size())
+            for (auto e : objects)
+                if (!e->offline) e->Resize(width, height);
     }
     void NovelSystem::PollEvent(sf::Event& event)
     {
-        List<NovelObject>* next = nullptr;
-        if (lastObject != nullptr)
-            for (auto* list = lastObject; list != nullptr; list = next)
-            {
-                next = list->prev;
-                list->data->PollEvent(event);
-            }
+        if (objects.size())
+            for (auto e : objects)
+                if (!e->offline) e->PollEvent(event);
     }
     void NovelSystem::PopComponent(NovelObject* component)
     {
-        List<NovelObject>* current = objects;
-        List<NovelObject>* before = objects;
-        
-        while (current != nullptr)
-        {
-            if (current->data != component)
-            {
-                before = current;
-                current = current->next;
-            }
-            else
-                break;
-        }
-        
-        if (current != nullptr)
-        {
-            current->data->Destroy();
-            
-            if (before == current)
-            {
-                objects = current->next;
-                if (objects != nullptr)
-                    objects->prev = nullptr;
-                if (current == lastObject)
-                    lastObject = nullptr;
-            }
-            else
-            {
-                before->next = current->next;
-                if (current->next != nullptr)
-                    current->next->prev = before;
-                if (current == lastObject)
-                    lastObject = before;
-            }
-            
-            delete current->data;
-            delete current;
-        }
+        component->offline = true;
+        component->Destroy();
     }
-    void NovelSystem::Destroy()
+    void NovelSystem::clear()
     {
-        List<NovelObject>* next = nullptr;
-        if (objects != nullptr)
-            for (auto* list = objects; list != nullptr; list = next)
-            {
-                next = list->next;
-                
-                list->data->Destroy();
-                delete list->data;
-                delete list;
-            }
+        list<NovelObject*>::iterator it = objects.begin();
+        while (it != objects.end()) { (*it)->Destroy(); delete (*it); objects.erase(it++); }
+        objects.clear();
     }
     void NovelSystem::ChangePriorityOf(NovelObject* component, int priority)
     {
-        bool found{ false };
-        List<NovelObject>* obj{ nullptr };
-        for (auto* list = objects; list != nullptr && !found; list = list->next)
+        std::list<NovelObject*>::iterator it = std::find(objects.begin(), objects.end(), component);
+        if (it != objects.end())
         {
-            if ((found = (list->data == component)))
-            {
-                if (list->prev != nullptr)
-                    list->prev->next = list->next;
-                if (list->next != nullptr)
-                    list->next->prev = list->prev;
-                obj = list;
-            }
-        }
-        
-        if (found && obj != nullptr)
-        {
-            for (auto* list = objects; list != nullptr; list = list->next)
-            {
-                if (list->data->priority > priority)
+            objects.erase(it);
+            
+            bool done{ false };
+            for (list<NovelObject*>::iterator it = objects.begin(); it != objects.end() && !done; ++it)
+                if ((*it)->priority > priority)
                 {
-                    if (list->prev != nullptr)
-                        list->prev->next = obj;
-                    obj->next = list;
-                    obj->prev = list->prev;
-                    list->prev = obj;
-                    obj->data->priority = priority;
+                    objects.insert(it, component);
+                    done = true;
                 }
-            }
+            if (!done)
+                objects.push_back(component);
         }
     }
 }

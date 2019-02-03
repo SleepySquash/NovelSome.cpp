@@ -14,18 +14,25 @@ namespace ns
     {
         void Novel::Update(const sf::Time& elapsedTime)
         {
-            while (fileOpened && !eof && (onHold == nullptr || onHoldSize == 0) &&
+            while (fileOpened && !eof && onHold.size() == 0 &&
                    !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
             {
-                if (wif.fail() || wif.bad())
+                if ((wif.fail() || wif.bad()) && lines.empty())
                     cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << nsdataPath.toAnsiString() << endl;
                 
-                if (!wif.eof())
+                if (!wif.eof() || !lines.empty())
                 {
-                    if (lines.IsEmpty())
-                        std::getline(wif, line);
+                    if (lines.empty())
+                    {
+                        ResourcesPreloading(lines, line);
+                        if (!lines.empty()) { line = lines.back(); lines.pop_back(); } else line = L"";
+                    }
                     else
-                        line = lines.Pop();
+                    {
+                        if (!nss::Command(lines.front(), L"choose"))
+                            ResourcesPreloading(lines, line);
+                        line = lines.back(); lines.pop_back();
+                    }
                     
                     command.Command(line);
                     
@@ -38,75 +45,60 @@ namespace ns
                     {
                         command.lastPos = command.lastPos - 1;
                         std::wstring dialogueLine = nss::ParseAsQuoteString(command);
-                        wchar_t** arguments = nss::ParseArguments(command);
                         
-                        if (dialogueGroup != nullptr)
-                        {
-                            List<Dialogue>* temp = dialogueGroup;
-                            while (temp != nullptr)
+                        if (dialogueGroup.size() != 0)
+                            for (auto d : dialogueGroup)
                             {
-                                if (temp->data != nullptr)
-                                {
-                                    temp->data->priority++;
-                                    temp->data->SetGUISystem(nullptr);
-                                }
-                                temp = temp->next;
+                                ++d->priority;
+                                d->SetGUISystem(nullptr);
                             }
-                        }
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000, this);
                         
-                        if (arguments != nullptr)
-                            for (int i = 0; arguments[i] != nullptr; i++)
+                        vector<std::wstring> arguments;
+                        nss::ParseArguments(command, arguments);
+                        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                        {
+                            nss::CommandSettings argument; argument.Command(*it);
+                            
+                            if (nss::Command(argument, L"fade:"))
                             {
-                                nss::CommandSettings argument;
-                                argument.Command(arguments[i]);
-                                
-                                if (nss::Command(argument, L"fade:"))
-                                {
-                                    float value = nss::ArgumentAsFloat(argument);
-                                    component->appearTime = value;
-                                    component->disappearTime = value;
-                                }
-                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                    component->maxAlpha = nss::ArgumentAsInt(argument);
-                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                        component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        component->sendMessageBack = component->noMessage;
-                                }
-                                else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"waitingforinput" || stringValue == L"input")
-                                        component->afterAppearSwitchTo = component->waitingForInput;
-                                    else if (stringValue == L"waitingfortime" || stringValue == L"time")
-                                        component->afterAppearSwitchTo = component->waitingForTime;
-                                }
-                                else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
-                                    component->waitingTime = nss::ArgumentAsFloat(argument);
-                                
-                                delete arguments[i];
+                                float value = nss::ArgumentAsFloat(argument);
+                                component->appearTime = value;
+                                component->disappearTime = value;
                             }
-                        if (arguments != nullptr)
-                            delete arguments;
+                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                component->appearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                component->maxAlpha = nss::ArgumentAsInt(argument);
+                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                    component->sendMessageBack = component->atAppearance;
+                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                    component->sendMessageBack = component->atDisappearing;
+                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                    component->sendMessageBack = component->atDeprecated;
+                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                    component->sendMessageBack = component->noMessage;
+                            }
+                            else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"waitingforinput" || stringValue == L"input")
+                                    component->afterAppearSwitchTo = component->waitingForInput;
+                                else if (stringValue == L"waitingfortime" || stringValue == L"time")
+                                    component->afterAppearSwitchTo = component->waitingForTime;
+                            }
+                            else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
+                                component->waitingTime = nss::ArgumentAsFloat(argument);
+                        }
                         
-                        if (component->sendMessageBack != component->noMessage)
-                            OnHold(component);
+                        if (component->sendMessageBack != component->noMessage) OnHold(component);
                         
-                        dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
-                        dialogueGroup->data = component;
-                        component->SetGroup(dialogueGroup);
+                        component->SetGroup(dialogueGroup.insert(dialogueGroup.begin(), component));
                         
                         if (skin.dialogue.dialogueRect != nullptr)
                             skin.dialogue.dialogueRect->ignoreVariableChange = true;
@@ -149,48 +141,43 @@ namespace ns
                         std::wstring question = L"";
                         bool dialogueShouldBeStill{ false }; //TODO: Default to Skin
                         
-                        wchar_t** arguments = nss::ParseArguments(command);
-                        if (arguments != nullptr)
-                            for (int i = 0; arguments[i] != nullptr; i++)
+                        vector<std::wstring> arguments;
+                        nss::ParseArguments(command, arguments);
+                        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                        {
+                            nss::CommandSettings argument;
+                            argument.Command(*it);
+                            
+                            if (nss::Command(argument, L"fade:"))
                             {
-                                nss::CommandSettings argument;
-                                argument.Command(arguments[i]);
-                                
-                                if (nss::Command(argument, L"fade:"))
-                                {
-                                    float value = nss::ArgumentAsFloat(argument);
-                                    component->appearTime = value;
-                                    component->disappearTime = value;
-                                }
-                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                    component->maxAlpha = nss::ArgumentAsInt(argument);
-                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                        component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        component->sendMessageBack = component->noMessage;
-                                }
-                                else if (nss::Command(argument, L"still") || nss::Command(argument, L"dialogue"))
-                                    dialogueShouldBeStill = true;
-                                else
-                                    question = nss::ParseAsMaybeQuoteString(argument);
-                                
-                                delete arguments[i];
+                                float value = nss::ArgumentAsFloat(argument);
+                                component->appearTime = value;
+                                component->disappearTime = value;
                             }
-                        if (arguments != nullptr)
-                            delete arguments;
+                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                component->appearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                component->maxAlpha = nss::ArgumentAsInt(argument);
+                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                    component->sendMessageBack = component->atAppearance;
+                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                    component->sendMessageBack = component->atDisappearing;
+                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                    component->sendMessageBack = component->atDeprecated;
+                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                    component->sendMessageBack = component->noMessage;
+                            }
+                            else if (nss::Command(argument, L"still") || nss::Command(argument, L"dialogue"))
+                                dialogueShouldBeStill = true;
+                            else question = nss::ParseAsMaybeQuoteString(argument);
+                        }
                         
-                        cout << "openedWithBracket: " << openedWithBracket << "  spacesCount: " << spacesCount << "  question: " << ns::base::ConvertToUTF8(question) << endl;
+                        cout << "openedWithBracket: " << openedWithBracket << "  spacesCount: " << spacesCount << "  question: " << ns::base::utf8(question) << endl;
                         while (!chooseEnded && !eof)
                         {
                             if (wif.eof())
@@ -198,10 +185,8 @@ namespace ns
                             else
                             {
                                 std::wstring parsed{ L"" };
-                                if (lines.IsEmpty())
-                                    std::getline(wif, parsed);
-                                else
-                                    parsed = lines.Pop();
+                                if (lines.empty()) std::getline(wif, parsed);
+                                else { parsed = lines.back(); lines.pop_back(); }
                                 
                                 if (nss::Command(parsed, L"end"))
                                     chooseEnded = true;
@@ -262,8 +247,7 @@ namespace ns
                                         if (currentSpaces != -1 && currentSpaces <= spacesCount)
                                             chooseEnded = true;
                                         
-                                        if (chooseEnded)
-                                            lines.Push(parsed), parsed = L"";
+                                        if (chooseEnded) { lines.push_back(parsed); parsed = L""; }
                                     }
                                     
                                     if (parsed.length() != 0)
@@ -311,7 +295,7 @@ namespace ns
                                                             currentSpaces = i;
                                                     
                                                     if (currentSpaces != -1 && currentSpaces > lastChooseSpaces)
-                                                        component->AddAction(parsed), explicitChoose = false;
+                                                        { component->AddAction(parsed); explicitChoose = false; }
                                                     else if (currentSpaces != -1 && currentSpaces <= lastChooseSpaces)
                                                     {
                                                         if ((currentSpaces == lastChooseSpaces || currentSpaces > spacesCount) && !explicitChoose)
@@ -329,35 +313,22 @@ namespace ns
                             }
                         }
                         
-                        if (dialogueShouldBeStill)
+                        if (dialogueShouldBeStill && dialogueGroup.size() != 0)
                         {
-                            if (dialogueGroup != nullptr)
-                            {
-                                List<Dialogue>* temp = dialogueGroup;
-                                while (temp != nullptr)
+                            for (auto d : dialogueGroup)
+                                if (d->mode != Dialogue::modeEnum::disappearing && d->mode != Dialogue::modeEnum::deprecated)
                                 {
-                                    if (temp->data != nullptr)
-                                    {
-                                        if (temp->data->mode != Dialogue::modeEnum::disappearing && temp->data->mode != Dialogue::modeEnum::deprecated)
-                                        {
-                                            if (temp->data->mode == Dialogue::modeEnum::appearing)
-                                                temp->data->afterAppearSwitchTo = Dialogue::modeEnum::waitingForChoose;
-                                            else
-                                                temp->data->SetStateMode(Dialogue::modeEnum::waitingForChoose);
-                                        }
-                                    }
-                                    temp = temp->next;
+                                    if (d->mode == Dialogue::modeEnum::appearing)
+                                        d->afterAppearSwitchTo = Dialogue::modeEnum::waitingForChoose;
+                                    else
+                                        d->SetStateMode(Dialogue::modeEnum::waitingForChoose);
                                 }
-                            }
                         }
                         
                         if (component->sendMessageBack != component->noMessage)
                             OnHold(component);
                         
-                        chooseGroup = ns::list::Insert<ns::NovelComponents::Choose>(chooseGroup);
-                        chooseGroup->data = component;
-                        component->SetGroup(chooseGroup);
-                        
+                        component->SetGroup(chooseGroup.insert(chooseGroup.begin(), component));
                         component->InitChoose();
                     }
                     ///----------------------------------------MISC----------------------------------------
@@ -397,7 +368,7 @@ namespace ns
 #endif
                             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
                             
-                            lines.Clear();
+                            lines.clear();
                             
                             if (!(fileOpened = wif.is_open()))
                                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << filePath.toAnsiString() << endl;
@@ -410,170 +381,134 @@ namespace ns
                     ///--------------------------------------BACKGROUND--------------------------------------
                     else if (nss::Command(command, L"background hide"))
                     {
-                        if (backgroundGroup != nullptr)
+                        if (backgroundGroup.size() != 0)
                         {
-                            List<Background>* temp = backgroundGroup;
-                            wchar_t** arguments = nss::ParseArguments(command);
-                            
                             float disappearTime{ -1.f };
                             enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
                             sendMessageBackEnum sendMessageBack{ atDeprecated };
-                            if (arguments != nullptr)
-                                for (int i = 0; arguments[i] != nullptr; i++)
-                                {
-                                    nss::CommandSettings argument;
-                                    argument.Command(arguments[i]);
-                                    
-                                    if (nss::Command(argument, L"fade:")||
-                                        nss::Command(argument, L"fadeout:") ||
-                                        nss::Command(argument, L"disappear:"))
-                                        disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                    {
-                                        std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                            sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                            sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"nomessage" || stringValue == L"no")
-                                            sendMessageBack = noMessage;
-                                    }
-                                    
-                                    free(arguments[i]);
-                                }
-                            if (arguments != nullptr)
-                                free(arguments);
                             
-                            while (temp != nullptr)
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(command, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
                             {
-                                if (temp->data != nullptr)
+                                nss::CommandSettings argument;
+                                argument.Command(*it);
+                                
+                                if (nss::Command(argument, L"fade:")||
+                                    nss::Command(argument, L"fadeout:") ||
+                                    nss::Command(argument, L"disappear:"))
+                                    disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
-                                    if (sendMessageBack != noMessage)
-                                        OnHold(temp->data);
-                                    switch (sendMessageBack)
-                                    {
-                                        case atDeprecated:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                        case atDisappearing:
-                                            temp->data->sendMessageBack = temp->data->atDisappearing;
-                                            break;
-                                        case noMessage:
-                                            temp->data->sendMessageBack = temp->data->noMessage;
-                                            break;
-                                        default:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                    }
-                                    temp->data->SetStateMode(temp->data->disappearing);
-                                    if (disappearTime >= 0)
-                                        temp->data->disappearTime = disappearTime;
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        sendMessageBack = atDisappearing;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                        sendMessageBack = atDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                        sendMessageBack = noMessage;
                                 }
-                                temp = temp->next;
+                            }
+                            
+                            for (auto b : backgroundGroup)
+                            {
+                                if (sendMessageBack != noMessage) OnHold(b);
+                                switch (sendMessageBack)
+                                {
+                                    case atDeprecated: b->sendMessageBack = b->atDeprecated; break;
+                                    case atDisappearing: b->sendMessageBack = b->atDisappearing; break;
+                                    case noMessage: b->sendMessageBack = b->noMessage; break;
+                                    default: b->sendMessageBack = b->atDeprecated; break;
+                                }
+                                b->SetStateMode(b->disappearing);
+                                if (disappearTime >= 0) b->disappearTime = disappearTime;
                             }
                         }
                     }
                     else if ((backgroundAddingMode = nss::Command(command, L"background add ")) || nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                     {
                         std::wstring filePath = nss::ParseAsQuoteString(command);
-                        wchar_t** arguments = nss::ParseArguments(command);
-                        
-                        if (!backgroundAddingMode)
-                            if (backgroundGroup != nullptr)
+                        if (!backgroundAddingMode && backgroundGroup.size() != 0)
+                            for (auto b : backgroundGroup)
                             {
-                                List<Background>* temp = backgroundGroup;
-                                while (temp != nullptr)
-                                {
-                                    if (temp->data != nullptr)
-                                    {
-                                        temp->data->sendMessageBack = temp->data->noMessage;
-                                        temp->data->SetStateMode(temp->data->disappearing);
-                                    }
-                                    temp = temp->next;
-                                }
+                                b->sendMessageBack = b->noMessage;
+                                b->SetStateMode(b->disappearing);
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::Background>(0);
                         component->SetNovel(this);
                         component->fitMode = component->fillCentre;
                         
-                        if (arguments != nullptr)
-                            for (int i = 0; arguments[i] != nullptr; i++)
+                        vector<std::wstring> arguments;
+                        nss::ParseArguments(command, arguments);
+                        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                        {
+                            nss::CommandSettings argument;
+                            argument.Command(*it);
+                            
+                            if (nss::Command(argument, L"fade:"))
                             {
-                                nss::CommandSettings argument;
-                                argument.Command(arguments[i]);
-                                
-                                if (nss::Command(argument, L"fade:"))
-                                {
-                                    float value = nss::ArgumentAsFloat(argument);
-                                    component->appearTime = value;
-                                    component->disappearTime = value;
-                                }
-                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                    component->maxAlpha = nss::ArgumentAsInt(argument);
-                                else if (nss::Command(argument, L"fit:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"fill")
-                                        component->fitMode = component->fillCentre;
-                                    else if (stringValue == L"center")
-                                        component->fitMode = component->fillCentre;
-                                    else if (stringValue == L"fillcenter")
-                                        component->fitMode = component->fillCentre;
-                                    else if (stringValue == L"default")
-                                        component->fitMode = component->defaultFit;
-                                    else if (stringValue == L"no")
-                                        component->fitMode = component->noFit;
-                                    else if (stringValue == L"nofit")
-                                        component->fitMode = component->noFit;
-                                    else if (stringValue == L"stretch")
-                                        component->fitMode = component->stretch;
-                                }
-                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                        component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        component->sendMessageBack = component->noMessage;
-                                }
-                                else if (nss::Command(argument, L"parallax:"))
-                                {
-                                    std::wstring possibleParallax = nss::ArgumentAsString(argument);
-                                    if (possibleParallax == L"normal" || possibleParallax == L"n")
-                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
-                                    else if (possibleParallax == L"close" || possibleParallax == L"c")
-                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxClose;
-                                    else if (possibleParallax == L"far" || possibleParallax == L"f")
-                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxFar;
-                                    else if (possibleParallax == L"background" || possibleParallax == L"back" || possibleParallax == L"b")
-                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
-                                    else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
-                                        component->parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
-                                    else
-                                        component->parallaxPower = base::ConvertToFloat(possibleParallax);
-                                }
-                                
-                                free(arguments[i]);
+                                float value = nss::ArgumentAsFloat(argument);
+                                component->appearTime = value;
+                                component->disappearTime = value;
                             }
-                        if (arguments != nullptr)
-                            free(arguments);
+                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                component->appearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                component->maxAlpha = nss::ArgumentAsInt(argument);
+                            else if (nss::Command(argument, L"fit:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"fill")
+                                    component->fitMode = component->fillCentre;
+                                else if (stringValue == L"center")
+                                    component->fitMode = component->fillCentre;
+                                else if (stringValue == L"fillcenter")
+                                    component->fitMode = component->fillCentre;
+                                else if (stringValue == L"default")
+                                    component->fitMode = component->defaultFit;
+                                else if (stringValue == L"no")
+                                    component->fitMode = component->noFit;
+                                else if (stringValue == L"nofit")
+                                    component->fitMode = component->noFit;
+                                else if (stringValue == L"stretch")
+                                    component->fitMode = component->stretch;
+                            }
+                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                    component->sendMessageBack = component->atAppearance;
+                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                    component->sendMessageBack = component->atDisappearing;
+                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                    component->sendMessageBack = component->atDeprecated;
+                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                    component->sendMessageBack = component->noMessage;
+                            }
+                            else if (nss::Command(argument, L"parallax:"))
+                            {
+                                std::wstring possibleParallax = nss::ArgumentAsString(argument);
+                                if (possibleParallax == L"normal" || possibleParallax == L"n")
+                                    component->parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
+                                else if (possibleParallax == L"close" || possibleParallax == L"c")
+                                    component->parallaxPower = ns::GlobalSettings::defaultParallaxClose;
+                                else if (possibleParallax == L"far" || possibleParallax == L"f")
+                                    component->parallaxPower = ns::GlobalSettings::defaultParallaxFar;
+                                else if (possibleParallax == L"background" || possibleParallax == L"back" || possibleParallax == L"b")
+                                    component->parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
+                                else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
+                                    component->parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
+                                else
+                                    component->parallaxPower = base::ConvertToFloat(possibleParallax);
+                            }
+                        }
                         
-                        if (component->sendMessageBack != component->noMessage)
-                            OnHold(component);
+                        if (component->sendMessageBack != component->noMessage) OnHold(component);
                         
-                        backgroundGroup = ns::list::Insert<ns::NovelComponents::Background>(backgroundGroup);
-                        backgroundGroup->data = component;
-                        component->SetGroup(backgroundGroup);
-                        
+                        component->SetGroup(backgroundGroup.insert(backgroundGroup.begin(), component));
                         component->LoadImage(filePath);
                     }
                     ///---------------------------------------CHARACTER--------------------------------------
@@ -586,8 +521,6 @@ namespace ns
                         {
                             if (library.characterLibrary.find(possibleName) != library.characterLibrary.end())
                             {
-                                wchar_t** arguments = nss::ParseArguments(command);
-                                
                                 auto* component = layers.PrioritizeComponent<ns::NovelComponents::Character>(5000);
                                 component->SetNovel(this);
                                 component->SetCharacterData(library.characterLibrary.at(possibleName));
@@ -595,139 +528,112 @@ namespace ns
                                 
                                 std::wstring state{ L"" };
                                 
-                                if (arguments != nullptr)
-                                    for (int i = 0; arguments[i] != nullptr; i++)
+                                vector<std::wstring> arguments;
+                                nss::ParseArguments(command, arguments);
+                                for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                                {
+                                    nss::CommandSettings argument;
+                                    argument.Command(*it);
+                                    
+                                    if (nss::Command(argument, L"fade:"))
                                     {
-                                        nss::CommandSettings argument;
-                                        argument.Command(arguments[i]);
+                                        float value = nss::ArgumentAsFloat(argument);
+                                        component->appearTime = value;
+                                        component->disappearTime = value;
+                                    }
+                                    else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                        component->appearTime = nss::ArgumentAsFloat(argument);
+                                    else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                        component->disappearTime = nss::ArgumentAsFloat(argument);
+                                    else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                        component->maxAlpha = nss::ArgumentAsInt(argument);
+                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                    {
+                                        std::wstring stringValue = nss::ArgumentAsString(argument);
+                                        if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                            component->sendMessageBack = component->atAppearance;
+                                        else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                            component->sendMessageBack = component->atDisappearing;
+                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                            component->sendMessageBack = component->atDeprecated;
+                                        else if (stringValue == L"nomessage" || stringValue == L"no")
+                                            component->sendMessageBack = component->noMessage;
+                                    }
+                                    else
+                                    {
+                                        std::wstring possibleStateOrPos;
+                                        if (argument.line[0] == L'"')
+                                            possibleStateOrPos = nss::ParseAsQuoteString(argument);
+                                        else possibleStateOrPos = argument.line;
                                         
-                                        if (nss::Command(argument, L"fade:"))
-                                        {
-                                            float value = nss::ArgumentAsFloat(argument);
-                                            component->appearTime = value;
-                                            component->disappearTime = value;
-                                        }
-                                        else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                            component->appearTime = nss::ArgumentAsFloat(argument);
-                                        else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                            component->disappearTime = nss::ArgumentAsFloat(argument);
-                                        else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                            component->maxAlpha = nss::ArgumentAsInt(argument);
-                                        else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                        {
-                                            std::wstring stringValue = nss::ArgumentAsString(argument);
-                                            if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                                component->sendMessageBack = component->atAppearance;
-                                            else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                                component->sendMessageBack = component->atDisappearing;
-                                            else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                                component->sendMessageBack = component->atDeprecated;
-                                            else if (stringValue == L"nomessage" || stringValue == L"no")
-                                                component->sendMessageBack = component->noMessage;
-                                        }
+                                        if (state.length() == 0) state = possibleStateOrPos;
                                         else
                                         {
-                                            std::wstring possibleStateOrPos;
-                                            if (argument.line[0] == L'"')
-                                                possibleStateOrPos = nss::ParseAsQuoteString(argument);
-                                            else
-                                                possibleStateOrPos = argument.line;
-                                            
-                                            if (state.length() == 0)
-                                                state = possibleStateOrPos;
-                                            else
-                                            {
-                                                if (possibleStateOrPos == L"l" || possibleStateOrPos == L"left")
-                                                    component->position = component->left;
-                                                else if (possibleStateOrPos == L"cl" || possibleStateOrPos == L"cleft")
-                                                    component->position = component->cleft;
-                                                else if (possibleStateOrPos == L"c" || possibleStateOrPos == L"center")
-                                                    component->position = component->center;
-                                                else if (possibleStateOrPos == L"cr" || possibleStateOrPos == L"cright")
-                                                    component->position = component->cright;
-                                                else if (possibleStateOrPos == L"r" || possibleStateOrPos == L"right")
-                                                    component->position = component->right;
-                                            }
+                                            if (possibleStateOrPos == L"l" || possibleStateOrPos == L"left")
+                                                component->position = component->left;
+                                            else if (possibleStateOrPos == L"cl" || possibleStateOrPos == L"cleft")
+                                                component->position = component->cleft;
+                                            else if (possibleStateOrPos == L"c" || possibleStateOrPos == L"center")
+                                                component->position = component->center;
+                                            else if (possibleStateOrPos == L"cr" || possibleStateOrPos == L"cright")
+                                                component->position = component->cright;
+                                            else if (possibleStateOrPos == L"r" || possibleStateOrPos == L"right")
+                                                component->position = component->right;
                                         }
-                                        
-                                        free(arguments[i]);
                                     }
-                                if (arguments != nullptr)
-                                    free(arguments);
+                                }
                                 
-                                if (component->sendMessageBack != component->noMessage)
-                                    OnHold(component);
+                                if (component->sendMessageBack != component->noMessage) OnHold(component);
                                 
-                                characterGroup = ns::list::Insert<ns::NovelComponents::Character>(characterGroup);
-                                characterGroup->data = component;
-                                component->SetGroup(characterGroup);
                                 
+                                component->SetGroup(characterGroup.insert(characterGroup.begin(), component));
                                 component->LoadState(state);
                             }
                         }
                     }
                     else if (nss::Command(command, L"hide all"))
                     {
-                        if (characterGroup != nullptr)
+                        if (characterGroup.size() != 0)
                         {
-                            List<Character>* temp = characterGroup;
-                            wchar_t** arguments = nss::ParseArguments(command);
-                            
                             float disappearTime{ -1.f };
                             enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
                             sendMessageBackEnum sendMessageBack{ atDeprecated };
-                            if (arguments != nullptr)
-                                for (int i = 0; arguments[i] != nullptr; i++)
-                                {
-                                    nss::CommandSettings argument;
-                                    argument.Command(arguments[i]);
-                                    
-                                    if (nss::Command(argument, L"fade:")||
-                                        nss::Command(argument, L"fadeout:") ||
-                                        nss::Command(argument, L"disappear:"))
-                                        disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                    {
-                                        std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                            sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                            sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"nomessage" || stringValue == L"no")
-                                            sendMessageBack = noMessage;
-                                    }
-                                    
-                                    free(arguments[i]);
-                                }
-                            if (arguments != nullptr)
-                                free(arguments);
                             
-                            while (temp != nullptr)
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(command, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
                             {
-                                if (temp->data != nullptr)
+                                nss::CommandSettings argument;
+                                argument.Command(*it);
+                                
+                                if (nss::Command(argument, L"fade:")||
+                                    nss::Command(argument, L"fadeout:") ||
+                                    nss::Command(argument, L"disappear:"))
+                                    disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
-                                    if (sendMessageBack != noMessage)
-                                        OnHold(temp->data);
-                                    switch (sendMessageBack)
-                                    {
-                                        case atDeprecated:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                        case atDisappearing:
-                                            temp->data->sendMessageBack = temp->data->atDisappearing;
-                                            break;
-                                        case noMessage:
-                                            temp->data->sendMessageBack = temp->data->noMessage;
-                                            break;
-                                        default:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                    }
-                                    temp->data->SetStateMode(temp->data->disappearing);
-                                    if (disappearTime >= 0)
-                                        temp->data->disappearTime = disappearTime;
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        sendMessageBack = atDisappearing;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                        sendMessageBack = atDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                        sendMessageBack = noMessage;
                                 }
-                                temp = temp->next;
+                            }
+                            
+                            for (auto c : characterGroup)
+                            {
+                                if (sendMessageBack != noMessage) OnHold(c);
+                                switch (sendMessageBack)
+                                {
+                                    case atDeprecated: c->sendMessageBack = c->atDeprecated; break;
+                                    case atDisappearing: c->sendMessageBack = c->atDisappearing; break;
+                                    case noMessage: c->sendMessageBack = c->noMessage; break;
+                                    default: c->sendMessageBack = c->atDeprecated; break;
+                                }
+                                c->SetStateMode(c->disappearing);
+                                if (disappearTime >= 0) c->disappearTime = disappearTime;
                             }
                         }
                     }
@@ -738,69 +644,49 @@ namespace ns
                         {
                             if (library.characterLibrary.find(possibleName) != library.characterLibrary.end())
                             {
-                                if (characterGroup != nullptr)
+                                if (characterGroup.size() != 0)
                                 {
-                                    List<Character>* temp = characterGroup;
-                                    wchar_t** arguments = nss::ParseArguments(command);
-                                    
                                     float disappearTime{ -1.f };
                                     enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
                                     sendMessageBackEnum sendMessageBack{ atDeprecated };
-                                    if (arguments != nullptr)
-                                        for (int i = 0; arguments[i] != nullptr; i++)
-                                        {
-                                            nss::CommandSettings argument;
-                                            argument.Command(arguments[i]);
-                                            
-                                            if (nss::Command(argument, L"fade:")||
-                                                nss::Command(argument, L"fadeout:") ||
-                                                nss::Command(argument, L"disappear:"))
-                                                disappearTime = nss::ArgumentAsFloat(argument);
-                                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                            {
-                                                std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                                    sendMessageBack = atDisappearing;
-                                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                                    sendMessageBack = atDeprecated;
-                                                else if (stringValue == L"nomessage" || stringValue == L"no")
-                                                    sendMessageBack = noMessage;
-                                            }
-                                            
-                                            free(arguments[i]);
-                                        }
-                                    if (arguments != nullptr)
-                                        free(arguments);
-                                    
-                                    while (temp != nullptr)
+                                    vector<std::wstring> arguments;
+                                    nss::ParseArguments(command, arguments);
+                                    for (auto it = arguments.begin(); it != arguments.end(); ++it)
                                     {
-                                        if (temp->data != nullptr)
+                                        nss::CommandSettings argument;
+                                        argument.Command(*it);
+                                        
+                                        if (nss::Command(argument, L"fade:")||
+                                            nss::Command(argument, L"fadeout:") ||
+                                            nss::Command(argument, L"disappear:"))
+                                            disappearTime = nss::ArgumentAsFloat(argument);
+                                        else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                         {
-                                            if (temp->data->GetCharacterData() != nullptr && temp->data->GetCharacterData()->name == possibleName)
-                                            {
-                                                if (sendMessageBack != noMessage)
-                                                    OnHold(temp->data);
-                                                switch (sendMessageBack)
-                                                {
-                                                    case atDeprecated:
-                                                        temp->data->sendMessageBack = temp->data->atDeprecated;
-                                                        break;
-                                                    case atDisappearing:
-                                                        temp->data->sendMessageBack = temp->data->atDisappearing;
-                                                        break;
-                                                    case noMessage:
-                                                        temp->data->sendMessageBack = temp->data->noMessage;
-                                                        break;
-                                                    default:
-                                                        temp->data->sendMessageBack = temp->data->atDeprecated;
-                                                        break;
-                                                }
-                                                temp->data->SetStateMode(temp->data->disappearing);
-                                                if (disappearTime >= 0)
-                                                    temp->data->disappearTime = disappearTime;
-                                            }
+                                            std::wstring stringValue = nss::ArgumentAsString(argument);
+                                            if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                                sendMessageBack = atDisappearing;
+                                            else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                                sendMessageBack = atDeprecated;
+                                            else if (stringValue == L"nomessage" || stringValue == L"no")
+                                                sendMessageBack = noMessage;
                                         }
-                                        temp = temp->next;
+                                    }
+                                    
+                                    for (auto c : characterGroup)
+                                    {
+                                        if (c->GetCharacterData() != nullptr && c->GetCharacterData()->name == possibleName)
+                                        {
+                                            if (sendMessageBack != noMessage) OnHold(c);
+                                            switch (sendMessageBack)
+                                            {
+                                                case atDeprecated: c->sendMessageBack = c->atDeprecated; break;
+                                                case atDisappearing: c->sendMessageBack = c->atDisappearing; break;
+                                                case noMessage: c->sendMessageBack = c->noMessage; break;
+                                                default: c->sendMessageBack = c->atDeprecated; break;
+                                            }
+                                            c->SetStateMode(c->disappearing);
+                                            if (disappearTime >= 0) c->disappearTime = disappearTime;
+                                        }
                                     }
                                 }
                             }
@@ -809,248 +695,193 @@ namespace ns
                     ///----------------------------------------AUDIO----------------------------------------
                     ///----------------------------------------AUDIO----------------------------------------
                     ///----------------------------------------AUDIO----------------------------------------
-                    else if (nss::Command(command, L"music stop") || nss::Command(command, L"ambient stop"))
+                    else if (nss::Command(command, L"music stop") || nss::Command(command, L"ambient stop") || nss::Command(command, L"stop"))
                     {
-                        if (musicGroup != nullptr)
+                        if (musicGroup.size() != 0)
                         {
-                            List<MusicPlayer>* temp = musicGroup;
-                            wchar_t** arguments = nss::ParseArguments(command);
-                            
                             float disappearTime{ -1.f };
                             enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
                             sendMessageBackEnum sendMessageBack{ atDeprecated };
-                            if (arguments != nullptr)
-                                for (int i = 0; arguments[i] != nullptr; i++)
-                                {
-                                    nss::CommandSettings argument;
-                                    argument.Command(arguments[i]);
-                                    
-                                    if (nss::Command(argument, L"fade:")||
-                                        nss::Command(argument, L"fadeout:") ||
-                                        nss::Command(argument, L"disappear:"))
-                                        disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                    {
-                                        std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                            sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                            sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"nomessage" || stringValue == L"no")
-                                            sendMessageBack = noMessage;
-                                    }
-                                    
-                                    free(arguments[i]);
-                                }
-                            if (arguments != nullptr)
-                                free(arguments);
                             
-                            while (temp != nullptr)
-                            {
-                                if (temp->data != nullptr)
-                                {
-                                    if (sendMessageBack != noMessage)
-                                        OnHold(temp->data);
-                                    switch (sendMessageBack)
-                                    {
-                                        case atDeprecated:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                        case atDisappearing:
-                                            temp->data->sendMessageBack = temp->data->atDisappearing;
-                                            break;
-                                        case noMessage:
-                                            temp->data->sendMessageBack = temp->data->noMessage;
-                                            break;
-                                        default:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                    }
-                                    temp->data->SetStateMode(temp->data->disappearing);
-                                    if (disappearTime >= 0)
-                                        temp->data->disappearTime = disappearTime;
-                                }
-                                temp = temp->next;
-                            }
-                        }
-                    }
-                    else if (nss::Command(command, L"music ") || nss::Command(command, L"ambient "))
-                    {
-                        std::wstring filePath = nss::ParseAsQuoteString(command);
-                        wchar_t** arguments = nss::ParseArguments(command);
-                        
-                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
-                        component->SetNovel(this);
-                        
-                        if (arguments != nullptr)
-                            for (int i = 0; arguments[i] != nullptr; i++)
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(command, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
                             {
                                 nss::CommandSettings argument;
-                                argument.Command(arguments[i]);
+                                argument.Command(*it);
                                 
-                                if (nss::Command(argument, L"fade:"))
-                                {
-                                    float value = nss::ArgumentAsFloat(argument);
-                                    component->appearTime = value;
-                                    component->disappearTime = value;
-                                }
-                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
-                                    component->maxVolume = nss::ArgumentAsFloat(argument);
+                                if (nss::Command(argument, L"fade:")||
+                                    nss::Command(argument, L"fadeout:") ||
+                                    nss::Command(argument, L"disappear:"))
+                                    disappearTime = nss::ArgumentAsFloat(argument);
                                 else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                        component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        component->sendMessageBack = component->atDisappearing;
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        sendMessageBack = atDisappearing;
                                     else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        component->sendMessageBack = component->atDeprecated;
+                                        sendMessageBack = atDeprecated;
                                     else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        component->sendMessageBack = component->noMessage;
+                                        sendMessageBack = noMessage;
                                 }
-                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
-                                    component->SetLoop(nss::ArgumentAsBool(argument));
-                                else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
-                                    component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
-                                
-                                free(arguments[i]);
                             }
-                        if (arguments != nullptr)
-                            free(arguments);
+                            
+                            for (auto m : musicGroup)
+                            {
+                                if (sendMessageBack != noMessage) OnHold(m);
+                                switch (sendMessageBack)
+                                {
+                                    case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
+                                    case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
+                                    case noMessage: m->sendMessageBack = m->noMessage; break;
+                                    default: m->sendMessageBack = m->atDeprecated; break;
+                                }
+                                m->SetStateMode(m->disappearing);
+                                if (disappearTime >= 0) m->disappearTime = disappearTime;
+                            }
+                        }
+                    }
+                    else if (nss::Command(command, L"music ") || nss::Command(command, L"ambient ") || nss::Command(command, L"play "))
+                    {
+                        std::wstring filePath = nss::ParseAsQuoteString(command);
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
+                        component->SetNovel(this);
                         
-                        if (component->sendMessageBack != component->noMessage)
-                            OnHold(component);
+                        vector<std::wstring> arguments;
+                        nss::ParseArguments(command, arguments);
+                        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                        {
+                            nss::CommandSettings argument;
+                            argument.Command(*it);
+                            
+                            if (nss::Command(argument, L"fade:"))
+                            {
+                                float value = nss::ArgumentAsFloat(argument);
+                                component->appearTime = value;
+                                component->disappearTime = value;
+                            }
+                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                component->appearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
+                                component->maxVolume = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                    component->sendMessageBack = component->atAppearance;
+                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                    component->sendMessageBack = component->atDisappearing;
+                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                    component->sendMessageBack = component->atDeprecated;
+                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                    component->sendMessageBack = component->noMessage;
+                            }
+                            else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
+                                component->SetLoop(nss::ArgumentAsBool(argument));
+                            else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
+                                component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
+                        }
                         
-                        musicGroup = ns::list::Insert<ns::NovelComponents::MusicPlayer>(musicGroup);
-                        musicGroup->data = component;
-                        component->SetGroup(musicGroup);
+                        if (component->sendMessageBack != component->noMessage) OnHold(component);
                         
+                        component->SetGroup(musicGroup.insert(musicGroup.begin(), component));
                         component->LoadFromFile(filePath);
                     }
                     else if (nss::Command(command, L"sound stop"))
                     {
-                        if (soundGroup != nullptr)
+                        if (soundGroup.size() != 0)
                         {
-                            List<SoundPlayer>* temp = soundGroup;
-                            wchar_t** arguments = nss::ParseArguments(command);
-                            
                             float disappearTime{ -1.f };
                             enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
                             sendMessageBackEnum sendMessageBack{ noMessage };
-                            if (arguments != nullptr)
-                                for (int i = 0; arguments[i] != nullptr; i++)
-                                {
-                                    nss::CommandSettings argument;
-                                    argument.Command(arguments[i]);
-                                    
-                                    if (nss::Command(argument, L"fade:")||
-                                        nss::Command(argument, L"fadeout:") ||
-                                        nss::Command(argument, L"disappear:"))
-                                        disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                    {
-                                        std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                            sendMessageBack = atDisappearing;
-                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                            sendMessageBack = atDeprecated;
-                                        else if (stringValue == L"nomessage" || stringValue == L"no")
-                                            sendMessageBack = noMessage;
-                                    }
-                                    
-                                    free(arguments[i]);
-                                }
-                            if (arguments != nullptr)
-                                free(arguments);
                             
-                            while (temp != nullptr)
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(command, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
                             {
-                                if (temp->data != nullptr)
+                                nss::CommandSettings argument;
+                                argument.Command(*it);
+                                
+                                if (nss::Command(argument, L"fade:")||
+                                    nss::Command(argument, L"fadeout:") ||
+                                    nss::Command(argument, L"disappear:"))
+                                    disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
-                                    if (sendMessageBack != noMessage)
-                                        OnHold(temp->data);
-                                    switch (sendMessageBack)
-                                    {
-                                        case atDeprecated:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                        case atDisappearing:
-                                            temp->data->sendMessageBack = temp->data->atDisappearing;
-                                            break;
-                                        case noMessage:
-                                            temp->data->sendMessageBack = temp->data->noMessage;
-                                            break;
-                                        default:
-                                            temp->data->sendMessageBack = temp->data->atDeprecated;
-                                            break;
-                                    }
-                                    temp->data->SetStateMode(temp->data->disappearing);
-                                    if (disappearTime >= 0)
-                                        temp->data->disappearTime = disappearTime;
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        sendMessageBack = atDisappearing;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                        sendMessageBack = atDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                        sendMessageBack = noMessage;
                                 }
-                                temp = temp->next;
+                            }
+                            
+                            for (auto m : soundGroup)
+                            {
+                                if (sendMessageBack != noMessage) OnHold(m);
+                                switch (sendMessageBack)
+                                {
+                                    case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
+                                    case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
+                                    case noMessage: m->sendMessageBack = m->noMessage; break;
+                                    default: m->sendMessageBack = m->atDeprecated; break;
+                                }
+                                m->SetStateMode(m->disappearing);
+                                if (disappearTime >= 0) m->disappearTime = disappearTime;
                             }
                         }
                     }
                     else if (nss::Command(command, L"sound "))
                     {
                         std::wstring filePath = nss::ParseAsQuoteString(command);
-                        wchar_t** arguments = nss::ParseArguments(command);
-                        
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::SoundPlayer>(0);
                         component->SetNovel(this);
                         
-                        if (arguments != nullptr)
-                            for (int i = 0; arguments[i] != nullptr; i++)
+                        vector<std::wstring> arguments;
+                        nss::ParseArguments(command, arguments);
+                        for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                        {
+                            nss::CommandSettings argument;
+                            argument.Command(*it);
+                            
+                            if (nss::Command(argument, L"fade:"))
                             {
-                                nss::CommandSettings argument;
-                                argument.Command(arguments[i]);
-                                
-                                if (nss::Command(argument, L"fade:"))
-                                {
-                                    float value = nss::ArgumentAsFloat(argument);
-                                    component->appearTime = value;
-                                    component->disappearTime = value;
-                                }
-                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
-                                    component->maxVolume = nss::ArgumentAsFloat(argument);
-                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                {
-                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                        component->sendMessageBack = component->atAppearance;
-                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        component->sendMessageBack = component->atDisappearing;
-                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        component->sendMessageBack = component->atDeprecated;
-                                    else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        component->sendMessageBack = component->noMessage;
-                                }
-                                else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
-                                    component->SetLoop(nss::ArgumentAsBool(argument));
-                                else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
-                                    component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
-                                
-                                free(arguments[i]);
+                                float value = nss::ArgumentAsFloat(argument);
+                                component->appearTime = value;
+                                component->disappearTime = value;
                             }
-                        if (arguments != nullptr)
-                            free(arguments);
+                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                component->appearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"volume:") || nss::Command(argument, L"maxvolume:"))
+                                component->maxVolume = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                            {
+                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                    component->sendMessageBack = component->atAppearance;
+                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                    component->sendMessageBack = component->atDisappearing;
+                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                    component->sendMessageBack = component->atDeprecated;
+                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                    component->sendMessageBack = component->noMessage;
+                            }
+                            else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
+                                component->SetLoop(nss::ArgumentAsBool(argument));
+                            else if (nss::Command(argument, L"from:") || nss::Command(argument, L"start:"))
+                                component->SetPlayingOffset(sf::seconds(nss::ArgumentAsFloat(argument)));
+                        }
                         
                         if (component->sendMessageBack != component->noMessage)
                             OnHold(component);
                         
-                        soundGroup = ns::list::Insert<ns::NovelComponents::SoundPlayer>(soundGroup);
-                        soundGroup->data = component;
-                        component->SetGroup(soundGroup);
-                        
+                        component->SetGroup(soundGroup.insert(soundGroup.begin(), component));
                         component->LoadFromFile(filePath);
                     }
                     ///----------------------------------------LOGIC----------------------------------------
@@ -1126,10 +957,15 @@ namespace ns
                     ///----------------------------------------DEBUG----------------------------------------
                     else if (nss::Command(command, L"debug::outputvariables"))
                     {
+                        ic::PreloadImage(GetFolderPath() + L"ItJyTkXF_n4.jpg", 1);
+                        ic::PreloadImage(GetFolderPath() + L"Неко.jpg", 1);
+                        ic::PreloadImage(GetFolderPath() + L"Characters/d266890959ebbd6b808b7f3f00716edd.png", 2);
+                        ic::PreloadImage(GetFolderPath() + L"Characters/d266890959ebbd6b808b7f3f00716ede.png", 2);
+                        
                         cout << endl;
                         for (const auto& key : localVariables)
                             if (key.second != nullptr)
-                                cout << base::ConvertToUTF8(key.first) << ": " << (key.second->type == key.second->String ? "\"" : "") << *key.second << (key.second->type == key.second->String ? "\"" : "") << endl;
+                                cout << base::utf8(key.first) << ": " << (key.second->type == key.second->String ? "\"" : "") << *key.second << (key.second->type == key.second->String ? "\"" : "") << endl;
                     }
                     ///---------------------------------------SPECIFIC---------------------------------------
                     ///---------------------------------------SPECIFIC---------------------------------------
@@ -1198,76 +1034,62 @@ namespace ns
                                     {
                                         CharacterData* characterData = (library.characterLibrary.find(possibleName) != library.characterLibrary.end()) ? library.characterLibrary.at(possibleName) : nullptr;
                                         sf::String characterName = (characterData != nullptr) ? characterData->displayName : sf::String(possibleName);
-                                        wchar_t** arguments = nss::ParseArguments(command);
                                         
-                                        if (dialogueGroup != nullptr)
-                                        {
-                                            List<Dialogue>* temp = dialogueGroup;
-                                            while (temp != nullptr)
+                                        if (dialogueGroup.size() != 0)
+                                            for (auto d : dialogueGroup)
                                             {
-                                                if (temp->data != nullptr)
-                                                {
-                                                    temp->data->priority++;
-                                                    temp->data->SetGUISystem(nullptr);
-                                                }
-                                                temp = temp->next;
+                                                ++d->priority;
+                                                d->SetGUISystem(nullptr);
                                             }
-                                        }
                                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::Dialogue>(10000, this);
                                         
-                                        if (arguments != nullptr)
-                                            for (int i = 0; arguments[i] != nullptr; i++)
+                                        vector<std::wstring> arguments;
+                                        nss::ParseArguments(command, arguments);
+                                        for (auto arg : arguments)
+                                        {
+                                            nss::CommandSettings argument;
+                                            argument.Command(arg);
+                                            
+                                            if (nss::Command(argument, L"fade:"))
                                             {
-                                                nss::CommandSettings argument;
-                                                argument.Command(arguments[i]);
-                                                
-                                                if (nss::Command(argument, L"fade:"))
-                                                {
-                                                    float value = nss::ArgumentAsFloat(argument);
-                                                    component->appearTime = value;
-                                                    component->disappearTime = value;
-                                                }
-                                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                                    component->appearTime = nss::ArgumentAsFloat(argument);
-                                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                                    component->disappearTime = nss::ArgumentAsFloat(argument);
-                                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                                    component->maxAlpha = nss::ArgumentAsInt(argument);
-                                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                                {
-                                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                    if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                                        component->sendMessageBack = component->atAppearance;
-                                                    else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                                        component->sendMessageBack = component->atDisappearing;
-                                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                                        component->sendMessageBack = component->atDeprecated;
-                                                    else if (stringValue == L"nomessage" || stringValue == L"no")
-                                                        component->sendMessageBack = component->noMessage;
-                                                }
-                                                else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
-                                                {
-                                                    std::wstring stringValue = nss::ArgumentAsString(argument);
-                                                    if (stringValue == L"waitingforinput" || stringValue == L"input")
-                                                        component->afterAppearSwitchTo = component->waitingForInput;
-                                                    else if (stringValue == L"waitingfortime" || stringValue == L"time")
-                                                        component->afterAppearSwitchTo = component->waitingForTime;
-                                                }
-                                                else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
-                                                    component->waitingTime = nss::ArgumentAsFloat(argument);
-                                                
-                                                delete arguments[i];
+                                                float value = nss::ArgumentAsFloat(argument);
+                                                component->appearTime = value;
+                                                component->disappearTime = value;
                                             }
-                                        if (arguments != nullptr)
-                                            delete arguments;
+                                            else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                                component->appearTime = nss::ArgumentAsFloat(argument);
+                                            else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                                component->disappearTime = nss::ArgumentAsFloat(argument);
+                                            else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                                component->maxAlpha = nss::ArgumentAsInt(argument);
+                                            else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                            {
+                                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                                if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                                    component->sendMessageBack = component->atAppearance;
+                                                else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                                    component->sendMessageBack = component->atDisappearing;
+                                                else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                                    component->sendMessageBack = component->atDeprecated;
+                                                else if (stringValue == L"nomessage" || stringValue == L"no")
+                                                    component->sendMessageBack = component->noMessage;
+                                            }
+                                            else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
+                                            {
+                                                std::wstring stringValue = nss::ArgumentAsString(argument);
+                                                if (stringValue == L"waitingforinput" || stringValue == L"input")
+                                                    component->afterAppearSwitchTo = component->waitingForInput;
+                                                else if (stringValue == L"waitingfortime" || stringValue == L"time")
+                                                    component->afterAppearSwitchTo = component->waitingForTime;
+                                            }
+                                            else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
+                                                component->waitingTime = nss::ArgumentAsFloat(argument);
+                                        }
                                         
                                         if (component->sendMessageBack != component->noMessage)
                                             OnHold(component);
                                         
-                                        dialogueGroup = ns::list::Insert<ns::NovelComponents::Dialogue>(dialogueGroup);
-                                        dialogueGroup->data = component;
-                                        component->SetGroup(dialogueGroup);
-                                        
+                                        component->SetGroup(dialogueGroup.insert(dialogueGroup.begin(), component));
                                         component->SetCharacterName(characterName);
                                         if (characterData != nullptr)
                                             component->SetCharacter(characterData);

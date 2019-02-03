@@ -12,13 +12,22 @@ namespace ns
 {
     namespace NovelComponents
     {
-        void Background::LoadImage(sf::String path)
+        void Background::LoadImage(const sf::String& path)
         {
             spriteLoaded = false;
             backgroundLoaded = false;
             if (novel != nullptr)
             {
-                sf::Image* imagePtr = ic::LoadImage(novel->GetFolderPath() + path, 1);
+                sf::Texture* texturePtr = ic::LoadTexture(novel->GetFolderPath() + path, 1);
+                if (texturePtr != nullptr)
+                {
+                    imagePath = novel->GetFolderPath() + sf::String(path);
+                    spriteLoaded = true;
+                    sprite.setTexture(*texturePtr);
+                    
+                    Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                }
+                /*sf::Image* imagePtr = ic::LoadImage(novel->GetFolderPath() + path, 1);
                 if (imagePtr != nullptr)
                 {
                     imagePath = novel->GetFolderPath() + sf::String(path);
@@ -36,7 +45,7 @@ namespace ns
                         
                         Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
                     }
-                }
+                }*/
                 
                 if (!spriteLoaded)
                 {
@@ -96,12 +105,8 @@ namespace ns
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case deprecated:
-                    this->GetNovelSystem()->PopComponent(this);
-                    break;
-                    
-                default:
-                    break;
+                case deprecated: this->GetNovelSystem()->PopComponent(this); break;
+                default: break;
             }
         }
         void Background::Draw(sf::RenderWindow* window)
@@ -113,8 +118,7 @@ namespace ns
         {
             if (imagePath.toWideString().length() != 0)
                 ic::DeleteImage(imagePath);
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
+            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
         }
         void Background::PollEvent(sf::Event& event)
         {
@@ -142,17 +146,14 @@ namespace ns
                 parallaxPower = novel->skin.background.parallaxPower;
             }
         }
-        void Background::SetGroup(List<Background>* element)
-        {
-            this->groupPointer = element;
-        }
+        void Background::SetGroup(const list<Background*>::iterator& element) { this->groupPointer = element; }
         void Background::CalculateScale(unsigned int width, unsigned int height)
         {
             if (spriteLoaded)
             {
                 float scaleFactorX, scaleFactorY, scaleFactor;
-                scaleFactorX = (float)width / (texture.getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
-                scaleFactorY = (float)height / (texture.getSize().y) * (doParallax? 1 + parallaxPower : 1) * scaleY;
+                scaleFactorX = (float)width / (sprite.getTexture()->getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
+                scaleFactorY = (float)height / (sprite.getTexture()->getSize().y) * (doParallax? 1 + parallaxPower : 1) * scaleY;
                 switch (fitMode)
                 {
                     case defaultFit:
@@ -168,12 +169,8 @@ namespace ns
                         sprite.setPosition(defaultPositionX, defaultPositionY);
                         break;
                         
-                    case stretch:
-                        sprite.setScale(scaleFactorX, scaleFactorY);
-                        break;
-                        
-                    default:
-                        break;
+                    case stretch: sprite.setScale(scaleFactorX, scaleFactorY); break;
+                    default: break;
                 }
             }
         }

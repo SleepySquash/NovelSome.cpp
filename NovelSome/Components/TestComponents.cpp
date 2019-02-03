@@ -66,9 +66,9 @@ namespace ns
         void EntityListComponent::Draw(sf::RenderWindow* window)
         {
             int yy = 0; int i = 0;
-            for (List<ns::Entity>* entity = system.GetEntitiesListHead(); entity != nullptr; entity = entity->next)
+            for (std::list<ns::Entity*>::iterator it = system.entities.begin(); it != system.entities.end(); ++it)
             {
-                std::string string = "Entity №" + std::to_string(i) + " with Components: " + std::to_string(entity->data->GetComponentsCount());
+                std::string string = "Entity №" + std::to_string(i) + " with Components: " + std::to_string((*it)->components.size());
                 text.setPosition(0, yy);
                 text.setString(string);
                 if (fontLoaded)

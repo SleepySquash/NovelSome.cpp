@@ -10,12 +10,13 @@
 #define EntitySystem_hpp
 
 #include <iostream>
+#include <list>
+using std::list;
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "List.hpp"
 #include "StaticMethods.hpp"
 
 namespace ns
@@ -26,10 +27,9 @@ namespace ns
     
     class Component
     {
-    private:
-        Entity* entity{ nullptr };
-        
     public:
+        Entity* entity{ nullptr };
+        bool offline{ false };
         int priority{ 0 };
         
         virtual ~Component();
@@ -46,12 +46,9 @@ namespace ns
     
     class Entity
     {
-    private:
-        EntitySystem* system = nullptr;
-        List<Component>* components = nullptr;
-        List<Component>* lastComponent = nullptr;
-        
     public:
+        EntitySystem* system{ nullptr };
+        list<Component*> components;
         
         Entity();
         Entity(EntitySystem* system);
@@ -62,88 +59,44 @@ namespace ns
         void PopComponent(Component* component);
         void Destroy();
         void SetEntitySystem(EntitySystem* system);
-        
-        //for some reason putting this code in .cpp crashes the linker, so it has to remain in definition's .hpp file
         template<typename T, typename ...Args> T* AddComponent(Args... args)
         {
             T* component = new T(args...);
-            List<Component>* element = (List<Component>*)malloc(sizeof(List<Component>));
-            element->data = component;
-            element->next = nullptr;
-            element->prev = lastComponent;
-            
-            if (lastComponent == nullptr)
-                components = element;
-            else
-                lastComponent->next = element;
-            lastComponent = element;
+            components.push_back(component);
             
             component->SetEntity(this);
             component->Init();
-            component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+            component->Resize(gs::width, gs::height);
             
             return component;
         }
         template<typename T, typename ...Args> T* PrioritizeComponent(int priority, Args... args)
         {
             T* component = new T(args...);
-            List<Component>* element = (List<Component>*)malloc(sizeof(List<Component>));
-            element->data = component;
-            element->data->priority = priority;
-            element->next = nullptr;
-            element->prev = nullptr;
+            component->priority = priority;
             
-            List<Component>* temp = components;
-            bool Done{ false };
-            while (!Done && temp != nullptr)
-            {
-                if (temp->data->priority > priority)
+            bool done{ false };
+            for (list<Component*>::iterator it = components.begin(); it != components.end() && !done; ++it)
+                if ((*it)->priority > priority)
                 {
-                    if (temp->prev != nullptr)
-                    {
-                        temp->prev->next = element;
-                        element->prev = temp->prev;
-                        element->next = temp;
-                        temp->prev = element;
-                    }
-                    else
-                    {
-                        components->prev = element;
-                        element->next = components;
-                        components = element;
-                    }
-                    Done = true;
+                    components.insert(it, component);
+                    done = true;
                 }
-                temp = temp->next;
-            }
-            if (!Done && temp == nullptr)
-            {
-                element->prev = lastComponent;
-                if (lastComponent == nullptr)
-                    components = element;
-                else
-                    lastComponent->next = element;
-                lastComponent = element;
-            }
+            if (!done)
+                components.push_back(component);
             
             component->SetEntity(this);
             component->Init();
-            component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+            component->Resize(gs::width, gs::height);
             
             return component;
         }
-        
-        int GetComponentsCount();
-        List<Component>* GetComponentsListHead();
     };
     
     class EntitySystem
     {
-    private:
-        List<Entity>* entities = nullptr;
-        List<Entity>* lastEntity = nullptr;
-        
     public:
+        list<Entity*> entities;
         
         EntitySystem();
         void Update(const sf::Time& elapsedTime);
@@ -152,10 +105,7 @@ namespace ns
         void PollEvent(sf::Event& event);
         Entity* AddEntity();
         void PopEntity(Entity* entity);
-        void Destroy();
-        int GetEntityCount();
-        List<Entity>* GetEntitiesListHead();
-        
+        void clear();
     };
 }
 

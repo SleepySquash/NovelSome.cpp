@@ -47,7 +47,7 @@
 //TODO: Make game pause's fingers be blocked from touching something on the screen.
 //TODO: There is should be Text's scaling factor, which will be diffrent from the usual gs::scale to make text more readble on the big devices and screens.
 
-//TODO: Double clicking also calls Game Pause.
+//TODO: Double clicking also calls Game Pause (only with touch).
 //TODO: Individual scaling factor in Settings or stuff.
 //TODO: GUI class with buttons.
 
@@ -57,6 +57,14 @@
 
 //TODO: Make it possible for someones' lines to be between specified characters, ([ and ]) or (" and ") for example.
 
+
+//TODO: Make choices be dependent on the "as choose" GUIObject.
+//TODO: Properly make GUISystem's images adding, showing etc.
+//TODO: Adding the main menu and the novel select screen.
+//TODO: If one wants to make their own choices, them should use GUISystem => adding HUDs. NovelSome's "choose" command only supports list-like choosing (for now) and skin marked as "as choose" is only for limiting the space list will take.
+//TODO: Settings in the GamePause (and in the menu for future): changing the ResolutionClass.
+
+
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
 //DONE: Text's new line when exceed the screen's width
@@ -64,7 +72,7 @@
 //DONE: Variables in unordered_map that can be string, int, float, bool etc.
 //      The type should be specified somewhere? So it's be own-made structure, I guess.
 //      Ability to seamlessly declare and even use without declaring variables.
-//DONE: Text's outline rescaling with ns::gs::scale
+//DONE: Text's outline rescaling with gs::scale
 //DONE: Dialogue's GUI
 //DONE: Ownership change in Dialogues
 //DONE: Name box in GUI system
@@ -106,6 +114,7 @@
 
 #include "Components/EssentialComponents.hpp"
 #include "Components/NovelComponents/Novel.hpp"
+//#include "Components/NekoComponents/NekoNinja.hpp"
 
 #include <SFML/Config.hpp>
 
@@ -113,9 +122,11 @@ using std::cin;
 using std::cout;
 using std::endl;
 
+using namespace ns;
 
 
-void DrawInParallel(sf::RenderWindow* window, ns::EntitySystem* system)
+
+void DrawInParallel(sf::RenderWindow* window, EntitySystem* system)
 {
     window->setActive();
     
@@ -128,83 +139,74 @@ void DrawInParallel(sf::RenderWindow* window, ns::EntitySystem* system)
 
 void CalculateScaleRatios(unsigned int width, unsigned int height)
 {
-    float factorX = (float)width / ns::gs::relativeWidth;
-    float factorY = (float)height / ns::gs::relativeHeight;
+    float factorX = (float)width / gs::relativeWidth; gs::scalex = factorX;
+    float factorY = (float)height / gs::relativeHeight; gs::scaley = factorY;
     
     float ratioFactorX = (float)width/(float)height;
     float ratioFactorY = (float)height/(float)width;
     
-    ns::gs::scale = factorX > factorY ? factorX : factorY;
+    gs::scale = factorX > factorY ? factorX : factorY;
+    gs::scScale = gs::scale;
     if (ratioFactorY > 1)
     {
-        float m = ns::gs::scale;
+        float m = gs::scale;
         if (ratioFactorY < 1.2)
-            ns::gs::scale = ns::gs::scale - m*(ratioFactorY - 1)*0.72;
+            gs::scale = gs::scale - m*(ratioFactorY - 1)*1.5;
         else if (ratioFactorY < 2)
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(ratioFactorY - 1.2)*0.17;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(ratioFactorY - 1.2)*0.17;
         else if (ratioFactorY < 2.46)
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(ratioFactorY - 2)*0.12;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(ratioFactorY - 2)*0.12;
         else if (ratioFactorY < 3)
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
         else if (ratioFactorY < 4.8)
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
         else if (ratioFactorY < 8)
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
         else
-            ns::gs::scale = ns::gs::scale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
+        
+        m = gs::scScale;
+        if (ratioFactorY < 1.2)
+            gs::scScale = gs::scScale - m*(ratioFactorY - 1)*0.72;
+        else if (ratioFactorY < 2)
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(ratioFactorY - 1.2)*0.17;
+        else if (ratioFactorY < 2.46)
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(ratioFactorY - 2)*0.12;
+        else if (ratioFactorY < 3)
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
+        else if (ratioFactorY < 4.8)
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
+        else if (ratioFactorY < 8)
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
+        else
+            gs::scScale = gs::scScale - m*(1.2 - 1)*0.72 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
     }
     else if (ratioFactorX > 1)
     {
-        float m = ns::gs::scale;
+        float m = gs::scale;
         if (ratioFactorX < 1.9)
-            ns::gs::scale = ns::gs::scale - m*(ratioFactorX - 1)*0.175;
+            gs::scale = gs::scale - m*(ratioFactorX - 1)*0.175;
         else if (ratioFactorX < 3)
-            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(ratioFactorX - 1.9)*0.27;
+            gs::scale = gs::scale - m*(1.9 - 1)*0.175 - m*(ratioFactorX - 1.9)*0.27;
         else if (ratioFactorX < 4.24)
-            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(ratioFactorX - 3)*0.15;
+            gs::scale = gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(ratioFactorX - 3)*0.15;
         else if (ratioFactorX < 7)
-            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(ratioFactorX - 4.24)*0.05;
+            gs::scale = gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(ratioFactorX - 4.24)*0.05;
         else if (ratioFactorX < 11)
-            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(ratioFactorX - 7)*0.02;
+            gs::scale = gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(ratioFactorX - 7)*0.02;
         else
-            ns::gs::scale = ns::gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(11 - 7)*0.02;
+            gs::scale = gs::scale - m*(1.9 - 1)*0.175 - m*(3 - 1.9)*0.27 - m*(4.24 - 3)*0.15 - m*(7 - 4.24)*0.05 - m*(11 - 7)*0.02;
+        gs::scScale = gs::scale;
     }
-    if (ns::gs::scale < 0.18)
-        ns::gs::scale = 0.18;
+    if (gs::scale < 0.18) gs::scale = 0.18;
+    if (gs::scScale < 0.18) gs::scScale = 0.18;
 }
 
 
 
-#ifdef _MSC_VER
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
-#else
-int main()
-#endif
+void SetResolutionClass()
 {
-#ifdef SFML_SYSTEM_IOS
-    sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-    ns::gs::isParallaxEnabled = false;
-#else
-    #ifdef SFML_SYSTEM_ANDROID
-        sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-        ns::gs::isParallaxEnabled = false;
-    #else
-    sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
-    #endif
-#endif
-    ns::gs::window = &window;
-    ns::gs::width = window.getSize().x;
-    ns::gs::height = window.getSize().y;
-    ns::gs::relativeWidth = 1280;
-    ns::gs::relativeHeight = 800;
-    CalculateScaleRatios(ns::gs::width, ns::gs::height);
-    
-#ifdef _WIN32
-    if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
-        window.setPosition({- ns::GlobalSettings::windowPositionOffset, window.getPosition().y});
-#endif
-    
-    if (ns::gs::resolutionClassSetting == -1)
+    if (gs::resolutionClassSetting == -1)
     {
         unsigned int width;
         unsigned int height;
@@ -221,59 +223,108 @@ int main()
         }
         
         if (width <= 640 && height <= 480)
-            ns::gs::resolutionClass = 0;
+            gs::resolutionClass = 0;
         else if (width <= 1024 && height <= 768)
-            ns::gs::resolutionClass = 1;
+            gs::resolutionClass = 1;
         else if (width <= 1920 && height <= 1080)
-            ns::gs::resolutionClass = 2;
+            gs::resolutionClass = 2;
         else
-            ns::gs::resolutionClass = 3;
+            gs::resolutionClass = 3;
         
-        #ifdef SFML_SYSTEM_IOS
-            std::string device = iOSDeviceName();
-            if (nss::Command(device, "iPhone"))
+#ifdef SFML_SYSTEM_IOS
+        std::string device = iOSDeviceName();
+        if (nss::Command(device, "iPhone"))
+        {
+            int version = base::ConvertToInt(nss::ParseUntil(device, ',', 6));
+            if (version <= 4)
+                gs::resolutionClass = 0;
+            else if (version <= 7)
+                gs::resolutionClass = 1;
+            else if (version == 8)
             {
-                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 6));
-                if (version <= 4)
-                    ns::gs::resolutionClass = 0;
-                else if (version <= 7)
-                    ns::gs::resolutionClass = 1;
-                else if (version == 8)
-                {
-                    int underVersion = ns::base::ConvertToInt(nss::ParseUntil(device, '\0', 8));
-                    if (underVersion == 4)
-                        ns::gs::resolutionClass = 1;
-                    else
-                        ns::gs::resolutionClass = 2;
-                }
+                int underVersion = base::ConvertToInt(nss::ParseUntil(device, '\0', 8));
+                if (underVersion == 4)
+                    gs::resolutionClass = 1;
+                else
+                    gs::resolutionClass = 2;
             }
-            else if (nss::Command(device, "iPad"))
-            {
-                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 4));
-                if (version <= 2)
-                    ns::gs::resolutionClass = 0;
-            }
-            else if (nss::Command(device, "iPod"))
-            {
-                int version = ns::base::ConvertToInt(nss::ParseUntil(device, ',', 4));
-                if (version <= 3)
-                    ns::gs::resolutionClass = 0;
-                else if (version <= 4)
-                    ns::gs::resolutionClass = 1;
-                else if (version <= 6)
-                    ns::gs::resolutionClass = 1;
-            }
-        #endif
+        }
+        else if (nss::Command(device, "iPad"))
+        {
+            int version = base::ConvertToInt(nss::ParseUntil(device, ',', 4));
+            if (version <= 1)
+                gs::resolutionClass = 0;
+            else if (version <= 2)
+                gs::resolutionClass = 1;
+        }
+        else if (nss::Command(device, "iPod"))
+        {
+            int version = base::ConvertToInt(nss::ParseUntil(device, ',', 4));
+            if (version <= 3)
+                gs::resolutionClass = 0;
+            else if (version <= 4)
+                gs::resolutionClass = 1;
+            else if (version <= 6)
+                gs::resolutionClass = 1;
+        }
+#endif
         
-        cout << "main :: GlobalSettings :: Autocomputed ResolutionClass is " << ns::gs::resolutionClass << "@x." << endl;
+        cout << "main :: GlobalSettings :: Autocomputed ResolutionClass is " << gs::resolutionClass << "@x." << endl;
     }
     else
-        ns::gs::resolutionClass = ns::gs::resolutionClassSetting;
+        gs::resolutionClass = gs::resolutionClassSetting;
+}
+
+
+
+#ifdef _MSC_VER
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+#else
+int main()
+#endif
+{
+#ifdef SFML_SYSTEM_IOS
+    sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
+    gs::isParallaxEnabled = false;
+#else
+    #ifdef SFML_SYSTEM_ANDROID
+        sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
+        gs::isParallaxEnabled = false;
+    #else
+    sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
+    #endif
+#endif
+    gs::window = &window;
+    gs::width = window.getSize().x;
+    gs::height = window.getSize().y;
     
-    window.setFramerateLimit(ns::gs::framerateLimit);
-    window.setVerticalSyncEnabled(ns::gs::isVerticalSyncEnabled);
+    gs::relativeWidth = 1280;
+    gs::relativeHeight = 800;
+    CalculateScaleRatios(gs::width, gs::height);
     
-    ns::EntitySystem system;
+#ifdef _WIN32
+    if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
+        window.setPosition({- GlobalSettings::windowPositionOffset, window.getPosition().y});
+#endif
+    SetResolutionClass();
+    
+    window.setFramerateLimit(gs::framerateLimit);
+    window.setVerticalSyncEnabled(gs::isVerticalSyncEnabled);
+    
+    EntitySystem system;
+    
+    ///----------------------------------------------------------
+    /// \brief Entity to hold Neko Ninja components
+    ///
+    /// Entity holds components like Neko Ninja controller, its background etc.
+    ///
+    ///----------------------------------------------------------
+    /*Entity* Chocola = system.AddEntity();
+    {
+        Chocola->AddComponent<NekoNinja::SceneBackground>();
+        auto* control = Chocola->AddComponent<NekoNinja::Controller>();
+        Chocola->AddComponent<NekoNinja::GUIOverlay>(control);
+    }*/
     
     ///----------------------------------------------------------
     /// \brief Entity to hold novel and stuff it depends on
@@ -282,9 +333,9 @@ int main()
     /// It also may hold some libraries etc that novel depends on.
     ///
     ///----------------------------------------------------------
-    ns::Entity* Elizabeth = system.AddEntity();
+    Entity* Elizabeth = system.AddEntity();
     {
-        Elizabeth->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+        Elizabeth->AddComponent<NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
     }
     
     ///----------------------------------------------------------
@@ -294,20 +345,18 @@ int main()
     /// It also may hold components like NovelComponent that runs the novel, cuz it has to be essential component.
     ///
     ///----------------------------------------------------------
-    ns::Entity* Shimakaze = system.AddEntity();
+    Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 16");
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 17");
 #ifdef SFML_SYSTEM_IOS
-        Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
+        Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
 #ifdef SFML_SYSTEM_ANDROID
-        Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
+        Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
     }
     
     sf::Clock clock;
-    sf::FloatRect visibleArea;
-    
     window.setActive();
     while (window.isOpen())
     {
@@ -316,34 +365,14 @@ int main()
         {
             switch (event.type)
             {
-                case sf::Event::Closed:
-                    window.close();
-                    break;
-                    
-                case sf::Event::GainedFocus:
-                    window.setFramerateLimit(ns::gs::framerateLimit);
-                    break;
-                    
-                case sf::Event::LostFocus:
-                    window.setFramerateLimit(ns::gs::framerateNoFocus);
-                    break;
+                case sf::Event::Closed: window.close(); break;
+                case sf::Event::GainedFocus: window.setFramerateLimit(gs::framerateLimit); break;
+                case sf::Event::LostFocus: window.setFramerateLimit(gs::framerateNoFocus); break;
                     
                 case sf::Event::MouseMoved:
-                    system.PollEvent(event);
-                    break;
-                    
                 case sf::Event::MouseButtonPressed:
-                    system.PollEvent(event);
-                    break;
-                    
                 case sf::Event::MouseButtonReleased:
-                    system.PollEvent(event);
-                    break;
-                    
                 case sf::Event::TouchBegan:
-                    system.PollEvent(event);
-                    break;
-                    
                 case sf::Event::TouchEnded:
                     system.PollEvent(event);
                     break;
@@ -368,16 +397,16 @@ int main()
                                 system.PopEntity(Elizabeth);
                             Elizabeth = system.AddEntity();
                             {
-                                Elizabeth->AddComponent<ns::NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+                                Elizabeth->AddComponent<NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
                             }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<ns::EssentialComponents::DebugComponent>("Update 0 build 16");
+                                Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 16");
 #ifdef SFML_SYSTEM_IOS
-                                Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
+                                Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
 #ifdef SFML_SYSTEM_ANDROID
-                                Shimakaze->AddComponent<ns::EssentialComponents::GyroscopeParallax>();
+                                Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
                             }
                             break;
@@ -388,13 +417,11 @@ int main()
                     break;
                     
                 case sf::Event::Resized:
-                    ns::GlobalSettings::width = event.size.width;
-                    ns::GlobalSettings::height = event.size.height;
+                    gs::width = event.size.width;
+                    gs::height = event.size.height;
                     CalculateScaleRatios(event.size.width, event.size.height);
                     system.Resize(event.size.width, event.size.height);
-                    
-                    visibleArea = sf::FloatRect(0, 0, event.size.width, event.size.height);
-                    window.setView(sf::View(visibleArea));
+                    window.setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
                     break;
                     
                 default:
@@ -409,7 +436,7 @@ int main()
         window.display();
     }
     
-    system.Destroy();
+    system.clear();
 
     return EXIT_SUCCESS;
 }

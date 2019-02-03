@@ -17,296 +17,99 @@ namespace ns
     void Component::Resize(unsigned int, unsigned int) { }
     void Component::PollEvent(sf::Event&) { }
     void Component::Destroy() { }
-    void Component::SetEntity(Entity* entity)
-    {
-        this->entity = entity;
-    }
-    Entity* Component::GetEntity()
-    {
-        return entity;
-    }
-    void Component::SetPriority(int priority)
-    {
-        this->priority = priority;
-    }
+    void Component::SetEntity(Entity* entity) { this->entity = entity; }
+    Entity* Component::GetEntity() { return entity; }
+    void Component::SetPriority(int priority) { this->priority = priority; }
     
     
-    Entity::Entity()
-    {
-        system = nullptr;
-        components = nullptr;
-        lastComponent = nullptr;
-    }
-    
-    Entity::Entity(EntitySystem* system)
-    {
-        this->system = system;
-        components = nullptr;
-        lastComponent = nullptr;
-    }
-    
+    Entity::Entity() { }
+    Entity::Entity(EntitySystem* system) { this->system = system; }
     void Entity::Update(const sf::Time& elapsedTime)
     {
-        List<Component>* next = nullptr;
-        if (components != nullptr)
-            for (auto* list = components; list != nullptr; list = next)
-            {
-                next = list->next; //cuz current element could be destroyed it that exact Update() method
-                list->data->Update(elapsedTime);
-            }
+        list<Component*>::iterator it = components.begin();
+        while (it != components.end())
+        {
+            if ((*it)->offline) { delete (*it); components.erase(it++); }
+            else { (*it)->Update(elapsedTime); ++it; }
+        }
     }
-    
     void Entity::Draw(sf::RenderWindow* window)
     {
-        List<Component>* next = nullptr;
-        if (components != nullptr)
-            for (auto* list = components; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Draw(window);
-            }
+        if (components.size())
+            for (auto c : components)
+                if (!c->offline) c->Draw(window);
     }
-    
     void Entity::Resize(unsigned int width, unsigned int height)
     {
-        List<Component>* next = nullptr;
-        if (components != nullptr)
-            for (auto* list = components; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Resize(width, height);
-            }
+        if (components.size())
+            for (auto c : components)
+                if (!c->offline) c->Resize(width, height);
     }
-    
     void Entity::PollEvent(sf::Event& event)
     {
-        List<Component>* next = nullptr;
-        if (lastComponent != nullptr)
-            for (auto* list = lastComponent; list != nullptr; list = next)
-            {
-                next = list->prev;
-                list->data->PollEvent(event);
-            }
+        if (components.size())
+            for (auto c : components)
+                if (!c->offline) c->PollEvent(event);
     }
-    
     void Entity::PopComponent(Component* component)
     {
-        List<Component>* current = components;
-        List<Component>* before = components;
-        
-        while (current != nullptr)
-        {
-            if (current->data != component)
-            {
-                before = current;
-                current = current->next;
-            }
-            else
-                break;
-        }
-        
-        if (current != nullptr)
-        {
-            current->data->Destroy();
-            
-            if (before == current)
-            {
-                components = current->next;
-                if (components != nullptr)
-                    components->prev = nullptr;
-                if (current == lastComponent)
-                    lastComponent = nullptr;
-            }
-            else
-            {
-                before->next = current->next;
-                if (current->next != nullptr)
-                    current->next->prev = before;
-                if (current == lastComponent)
-                    lastComponent = before;
-            }
-            
-            delete current->data;
-            delete current;
-        }
+        component->offline = true;
+        component->Destroy();
     }
-    
     void Entity::Destroy()
     {
-        List<Component>* next = nullptr;
-        if (components != nullptr)
-            for (auto* list = components; list != nullptr; list = next)
-            {
-                next = list->next;
-                
-                list->data->Destroy();
-                delete list->data;
-                delete list;
-            }
+        list<Component*>::iterator it = components.begin();
+        while (it != components.end()) { (*it)->Destroy(); delete (*it); components.erase(it++); }
     }
-    
-    void Entity::SetEntitySystem(EntitySystem* system)
-    {
-        this->system = system;
-    }
-    
-    int Entity::GetComponentsCount()
-    {
-        List<Component>* list = components;
-        int count = 0;
-        
-        while (list != nullptr)
-        {
-            list = list->next;
-            count++;
-        }
-        
-        return count;
-    }
-    
-    List<Component>* Entity::GetComponentsListHead()
-    {
-        return components;
-    }
+    void Entity::SetEntitySystem(EntitySystem* system) { this->system = system; }
     
     
     
-    EntitySystem::EntitySystem()
-    {
-        entities = nullptr;
-        lastEntity = nullptr;
-    }
-    
+    EntitySystem::EntitySystem() { }
     void EntitySystem::Update(const sf::Time& elapsedTime)
     {
-        List<Entity>* next = nullptr;
-        if (entities != nullptr)
-            for (auto* list = entities; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Update(elapsedTime);
-            }
+        if (entities.size())
+            for (auto e : entities)
+                e->Update(elapsedTime);
     }
-    
     void EntitySystem::Draw(sf::RenderWindow* window)
     {
-        List<Entity>* next = nullptr;
-        if (entities != nullptr)
-            for (auto* list = entities; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Draw(window);
-            }
+        if (entities.size())
+            for (auto e : entities)
+                e->Draw(window);
     }
-    
     void EntitySystem::Resize(unsigned int width, unsigned int height)
     {
-        List<Entity>* next = nullptr;
-        if (entities != nullptr)
-            for (auto* list = entities; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Resize(width, height);
-            }
+        if (entities.size())
+            for (auto e : entities)
+                e->Resize(width, height);
     }
-    
     void EntitySystem::PollEvent(sf::Event& event)
     {
-        List<Entity>* next = nullptr;
-        if (lastEntity != nullptr)
-            for (auto* list = lastEntity; list != nullptr; list = next)
-            {
-                next = list->prev;
-                list->data->PollEvent(event);
-            }
+        if (entities.size())
+            for (auto e : entities)
+                e->PollEvent(event);
     }
-    
     Entity* EntitySystem::AddEntity()
     {
-        Entity* entity = new Entity(this); //Using "new" instead of malloc just to call the constractor (malloc doesn't do that, but "new" does)
-        List<Entity>* element = (List<Entity>*)malloc(sizeof(List<Entity>));
-        element->data = entity;
-        element->next = nullptr;
-        element->prev = lastEntity;
-        
-        if (lastEntity == nullptr)
-            entities = element;
-        else
-            lastEntity->next = element;
-        lastEntity = element;
-        
-        return entity;
+        Entity* entity = new Entity(this);
+        entities.push_back(std::move(entity));
+        return entities.back();
     }
-    
     void EntitySystem::PopEntity(Entity* entity)
     {
-        List<Entity>* current = entities;
-        List<Entity>* before = entities;
-        
-        while (current != nullptr)
+        std::list<Entity*>::iterator it = std::find(entities.begin(), entities.end(), entity);
+        if (it != entities.end())
         {
-            if (current->data != entity)
-            {
-                before = current;
-                current = current->next;
-            }
-            else
-                break;
-        }
-        
-        if (current != nullptr)
-        {
-            current->data->Destroy();
-            
-            if (before == current)
-            {
-                entities = current->next;
-                if (entities != nullptr)
-                    entities->prev = nullptr;
-                if (current == lastEntity)
-                    lastEntity = nullptr;
-            }
-            else
-            {
-                before->next = current->next;
-                if (current->next != nullptr)
-                    current->next->prev = before;
-                if (current == lastEntity)
-                    lastEntity = before;
-            }
-            
-            delete current->data;
-            delete current;
+            (*it)->Destroy();
+            delete (*it);
+            entities.erase(it);
         }
     }
-    
-    void EntitySystem::Destroy()
+    void EntitySystem::clear()
     {
-        List<Entity>* next = nullptr;
-        if (entities != nullptr)
-            for (auto* list = entities; list != nullptr; list = next)
-            {
-                next = list->next;
-                list->data->Destroy();
-            }
-    }
-    
-    int EntitySystem::GetEntityCount()
-    {
-        List<Entity>* list = entities;
-        int count = 0;
-        
-        while (list != nullptr)
-        {
-            list = list->next;
-            count++;
-        }
-        
-        return count;
-    }
-    
-    List<Entity>* EntitySystem::GetEntitiesListHead()
-    {
-        return entities;
+        list<Entity*>::iterator it = entities.begin();
+        while (it != entities.end()) { (*it)->Destroy(); delete (*it); entities.erase(it++); }
+        entities.clear();
     }
 }

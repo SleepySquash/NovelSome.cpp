@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 //nss::SetStringWithLineBreaks
 #include <SFML/Graphics/Text.hpp>
@@ -80,7 +81,8 @@ namespace nss
     
     //TODO: Documentation
     std::wstring ParseArgument(CommandSettings& results);
-    wchar_t** ParseArguments(CommandSettings& results);
+    //wchar_t** ParseArguments(CommandSettings& results);
+    void ParseArguments(CommandSettings& results, std::vector<std::wstring>& vec);
     std::wstring ArgumentAsString(CommandSettings& results);
     std::wstring ArgumentAsStringWOLowerCase(CommandSettings& results);
     bool ArgumentAsBool(CommandSettings& results);

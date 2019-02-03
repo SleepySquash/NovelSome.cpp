@@ -150,8 +150,7 @@ namespace ns
                     break;
                     
                 case waitingForChoose:
-                    if (novel == nullptr || novel->chooseGroup == nullptr)
-                        mode = disappearing;
+                    if (novel == nullptr || novel->chooseGroup.size() == 0) mode = disappearing;
                     break;
                     
                 default:
@@ -229,8 +228,7 @@ namespace ns
         }
         void Dialogue::Destroy()
         {
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
+            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
         }
         void Dialogue::Resize(unsigned int width, unsigned int height)
         {
@@ -356,7 +354,7 @@ namespace ns
             if (charText.getOutlineThickness() != 0)
                 charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
         }
-        void Dialogue::SetGroup(List<Dialogue>* element)
+        void Dialogue::SetGroup(const list<Dialogue*>::iterator& element)
         {
             this->groupPointer = element;
         }
@@ -496,7 +494,7 @@ namespace ns
                     else if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded)
                     {
                         int yy = startingYY; bool found{ false };
-                        for (int i = 0; i < choices.size && !found; ++i)
+                        for (int i = 0; i < choices.size() && !found; ++i)
                         {
                             button.SetString(choices[i]);
                             button.SetPosition(640, yy);
@@ -506,25 +504,19 @@ namespace ns
                             {
                                 if (novel != nullptr)
                                 {
-                                    int until = i+1 < choices.size ? choiceStart[i+1] : actions.size;
+                                    int until = i+1 < choices.size() ? choiceStart[i+1] : actions.size();
                                     for (int j = until - 1; j >= choiceStart[i]; --j)
-                                        novel->lines.Push(actions[j]);
+                                        novel->lines.push_back(actions[j]);
                                 }
                                 
                                 mode = disappearing;
                                 if (novel != nullptr)
                                     if (sendMessageBack == atDisappearing)
                                     {
-                                        if (novel->dialogueGroup != nullptr)
-                                        {
-                                            List<Dialogue>* temp = novel->dialogueGroup;
-                                            while (temp != nullptr)
-                                            {
-                                                if (temp->data != nullptr && temp->data->mode == Dialogue::modeEnum::waitingForChoose)
-                                                    temp->data->SetStateMode(Dialogue::modeEnum::disappearing);
-                                                temp = temp->next;
-                                            }
-                                        }
+                                        if (novel->dialogueGroup.size() != 0)
+                                            for (auto d : novel->dialogueGroup)
+                                                if (d->mode == Dialogue::modeEnum::waitingForChoose)
+                                                    d->SetStateMode(Dialogue::modeEnum::disappearing);
                                         novel->UnHold(this);
                                     }
                             }
@@ -549,7 +541,7 @@ namespace ns
                 }
                 
                 int yy = startingYY;
-                for (int i = 0; i < choices.size; ++i)
+                for (int i = 0; i < choices.size(); ++i)
                 {
                     button.SetString(choices[i]);
                     button.SetPosition(640, yy);
@@ -561,8 +553,7 @@ namespace ns
         }
         void Choose::Destroy()
         {
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
+            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
         }
         void Choose::Resize(unsigned int width, unsigned int height)
         {
@@ -571,7 +562,7 @@ namespace ns
             
             button.Resize(width, height);
         }
-        void Choose::SetGroup(List<Choose>* element)
+        void Choose::SetGroup(const list<Choose*>::iterator& element)
         {
             this->groupPointer = element;
         }
@@ -589,12 +580,12 @@ namespace ns
         }
         void Choose::AddChoice(const std::wstring& line)
         {
-            choices.PushBack(line);
-            choiceStart.PushBack(actions.size);
+            choices.push_back(line);
+            choiceStart.push_back(actions.size());
         }
         void Choose::AddAction(const std::wstring& line)
         {
-            actions.PushBack(line);
+            actions.push_back(line);
         }
         void Choose::InitChoose()
         {
@@ -610,7 +601,7 @@ namespace ns
             for (int i = 0; i < actions.size; ++i)
                 cout << ns::base::ConvertToUTF8(actions[i]) << endl;*/
             
-            if (choices.size == 0)
+            if (choices.size() == 0)
             {
                 if (novel != nullptr)
                     if (sendMessageBack != noMessage)
@@ -625,7 +616,7 @@ namespace ns
                 button.valign = GUI::TextButton::valignEnum::top;
                 
                 int yy = 0;
-                for (int i = 0; i < choices.size; ++i)
+                for (int i = 0; i < choices.size(); ++i)
                 {
                     button.SetString(choices[i]);
                     yy += button.text.getLocalBounds().height + 10;

@@ -14,7 +14,7 @@ namespace ns
     {
         Novel::Novel(sf::String path) : nsdataPath(path)
         {
-            ns::ic::FreeImages();
+            //ns::ic::FreeImages();
             
             folderPath = ns::base::GetFolderPath(path);
             
@@ -45,7 +45,7 @@ namespace ns
         Novel::~Novel()
         {
             wif.close();
-            layers.Destroy();
+            layers.clear();
             skin.dialogue.gui.Clear();
             skin.gamePauseGUI.Clear();
             ns::ic::FreeImages();
@@ -62,6 +62,133 @@ namespace ns
             FreeGroup<GUISystem>(GUIGroup);
             
             FreeGroup<NovelObject>(onHold);
+        }
+        // TODO: Make it possible to ignore some lines of novel
+        void Novel::ResourcesPreloading(list<std::wstring>& lines, std::wstring& line)
+        {
+            while (lines.size() <= preloadLinesAmount && !wif.eof())
+            {
+                std::getline(wif, line); //cout << "ANALYZING " << base::utf8(line);
+                nss::CommandSettings settings;
+                settings.Command(line);
+                
+                bool shouldPush{ true };
+                if (nss::Command(settings, L"choose")) { lines.push_front(line); break; }
+                else if (nss::Command(settings, L"//")) shouldPush = false;
+                else if (!nss::ContainsUsefulInformation(line)) shouldPush = false;
+                else if (nss::Command(settings, L"background hide")) { }
+                else if (nss::Command(settings, L"hide ")) { }
+                else if (nss::Command(settings, L"background add ") || nss::Command(settings, L"background "))
+                {
+                    std::wstring filePath = nss::ParseAsQuoteString(settings);
+                    ic::PreloadTexture(folderPath + filePath, 1);
+                    //cout << ">>>>> background preload" << endl;
+                }
+                else if (nss::Command(settings, L"show "))
+                {
+                    //cout << ">>>>> character preload" << endl;
+                    std::wstring possibleName = nss::ParseUntil(settings, ' ');
+                    if (possibleName.length() != 0)
+                    {
+                        if (library.characterLibrary.find(possibleName) != library.characterLibrary.end())
+                        {
+                            std::wstring state{ L"" };
+                            
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(settings, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                            {
+                                nss::CommandSettings argument;
+                                argument.Command(*it);
+                                
+                                if (nss::Command(argument, L"fade:")) { }
+                                else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:")) { }
+                                else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:")) { }
+                                else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:")) { }
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:")) { }
+                                else
+                                {
+                                    std::wstring possibleStateOrPos;
+                                    if (argument.line[0] == L'"')
+                                        possibleStateOrPos = nss::ParseAsQuoteString(argument);
+                                    else possibleStateOrPos = argument.line;
+                                    
+                                    if (state.length() == 0) state = possibleStateOrPos;
+                                }
+                            }
+                            
+                            CharacterData* characterData = library.characterLibrary[possibleName];
+                            sf::String fullPath = sf::String(resourcePath()) + folderPath + characterData->filePath;
+                            std::wstring lookForSpritePath = base::GetFolderPath(folderPath + characterData->filePath);
+                            std::wstring spritePath{ L"" };
+                            
+                            std::wifstream wifc;
+#ifdef _WIN32
+                            wifc.open(fullPath.toWideString());
+#else
+                            std::wstring _wpath = fullPath;
+                            std::string _path(_wpath.begin(), _wpath.end());
+                            wifc.open(_path);
+#endif
+                            wifc.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                            
+                            if (wifc.is_open())
+                            {
+                                bool eofc{ false };
+                                std::wstring linec;
+                                nss::CommandSettings commandc;
+                                bool stateReading{ false };
+                                
+                                while (!eofc)
+                                {
+                                    if (!wifc.eof())
+                                    {
+                                        std::getline(wifc, linec); commandc.Command(linec);
+                                        if (!stateReading)
+                                        {
+                                            if (nss::Command(commandc, L"state ") || nss::Command(commandc, L"sprite "))
+                                            {
+                                                nss::SkipSpaces(commandc); std::wstring stateName;
+                                                if (commandc.line[commandc.lastPos] == L'"')
+                                                    stateName = nss::ParseAsQuoteString(commandc);
+                                                else stateName = nss::ParseUntil(commandc, ' ');
+                                                
+                                                stateReading = (stateName == state) ? true : false;
+                                            }
+                                        } else {
+                                            if (nss::Command(commandc, L"state ") || nss::Command(commandc, L"end") || nss::Command(commandc, L"}"))
+                                                stateReading = false;
+                                            else if (nss::Command(commandc, L"image ") || nss::Command(commandc, L"sprite "))
+                                                spritePath = nss::ParseAsQuoteString(commandc);
+                                            else if (nss::Command(commandc, L"\""))
+                                            {
+                                                commandc.lastPos--;
+                                                spritePath = nss::ParseAsQuoteString(commandc);
+                                            }
+                                            
+                                            eofc = stateReading ? false : true;
+                                        }
+                                    } else eofc = true;
+                                }
+                            }
+                            wifc.close();
+                            if (spritePath.length() != 0) ic::PreloadTexture(lookForSpritePath + spritePath, 2);
+                        }
+                    }
+                }
+                else if (nss::Command(settings, L"sound "))
+                {
+                    std::wstring filePath = nss::ParseAsQuoteString(settings);
+                    sc::PreloadSound(folderPath + filePath);
+                    //cout << ">>>>> sound preload" << endl;
+                }
+                
+                if (shouldPush)
+                {
+                    lines.push_front(line);
+                    //cout << "ADDING " << base::utf8(line);
+                }
+            }
         }
         void Novel::Draw(sf::RenderWindow* window)
         {
@@ -83,32 +210,16 @@ namespace ns
         }
         void Novel::OnHold(NovelObject* component)
         {
-            onHold = ns::list::Insert<ns::NovelObject>(onHold);
-            onHold->data = component;
-            
-            onHoldSize++;
+            onHold.insert(onHold.begin(), component);
+            onHoldSize = onHold.size();
         }
         void Novel::UnHold(NovelObject* component)
         {
-            List<NovelObject>* temp = onHold;
-            while (temp != nullptr)
+            std::list<NovelObject*>::iterator it = std::find(onHold.begin(), onHold.end(), component);
+            if (it != onHold.end())
             {
-                List<NovelObject>* next = temp->next;
-                if (temp->data == component)
-                {
-                    if (temp == onHold)
-                        onHold = temp->next;
-                    if (temp->next != nullptr)
-                        temp->next->prev = temp->prev;
-                    if (temp->prev != nullptr)
-                        temp->prev->next = temp->next;
-                    delete temp;
-                    
-                    onHoldSize--;
-                    next = nullptr;
-                }
-                
-                temp = next;
+                onHold.erase(it);
+                onHoldSize = onHold.size();
             }
         }
         sf::String Novel::GetFolderPath()
@@ -130,16 +241,9 @@ namespace ns
             skin.dialogue.gui.VariableChange(name);
             skin.choose.guiChoose.VariableChange(name);
             skin.gamePauseGUI.VariableChange(name);
-            if (GUIGroup != nullptr)
-            {
-                List<GUISystem>* temp = GUIGroup;
-                while (temp != nullptr)
-                {
-                    if (temp->data != nullptr)
-                        temp->data->VariableChange(name);
-                    temp = temp->next;
-                }
-            }
+            if (GUIGroup.size() != 0)
+                for (auto g : GUIGroup)
+                    g->VariableChange(name);
         }
         void Novel::LocalVariables_Set(const std::wstring& name, std::wstring value)
         {
@@ -211,146 +315,13 @@ namespace ns
         
         
         
-        void Novel::RemoveFromGroup(List<Background>* groupPointer)
-        {
-            if (groupPointer == backgroundGroup)
-            {
-                backgroundGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<Dialogue>* groupPointer)
-        {
-            if (groupPointer == dialogueGroup)
-            {
-                dialogueGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<Choose>* groupPointer)
-        {
-            if (groupPointer == chooseGroup)
-            {
-                chooseGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<Character>* groupPointer)
-        {
-            if (groupPointer == characterGroup)
-            {
-                characterGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<SoundPlayer>* groupPointer)
-        {
-            if (groupPointer == soundGroup)
-            {
-                soundGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<MusicPlayer>* groupPointer)
-        {
-            if (groupPointer == musicGroup)
-            {
-                musicGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
-        void Novel::RemoveFromGroup(List<GUISystem>* groupPointer)
-        {
-            if (groupPointer == GUIGroup)
-            {
-                GUIGroup = groupPointer->next;
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = nullptr;
-                
-                delete groupPointer;
-            }
-            else
-            {
-                if (groupPointer->next != nullptr)
-                    groupPointer->next->prev = groupPointer->prev;
-                if (groupPointer->prev != nullptr)
-                    groupPointer->prev->next = groupPointer->next;
-                
-                delete groupPointer;
-            }
-        }
+        void Novel::RemoveFromGroup(const list<Background*>::iterator& groupPointer) { backgroundGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<Dialogue*>::iterator& groupPointer) { dialogueGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<Choose*>::iterator& groupPointer) { chooseGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<Character*>::iterator& groupPointer) { characterGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<SoundPlayer*>::iterator& groupPointer) { soundGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<MusicPlayer*>::iterator& groupPointer) { musicGroup.erase(groupPointer); }
+        void Novel::RemoveFromGroup(const list<GUISystem*>::iterator& groupPointer) { GUIGroup.erase(groupPointer); }
     }
 }
 

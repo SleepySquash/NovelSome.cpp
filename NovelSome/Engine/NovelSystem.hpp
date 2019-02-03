@@ -10,13 +10,18 @@
 #define NovelSystem_hpp
 
 #include <iostream>
+#include <list>
+using std::list;
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "List.hpp"
 #include "StaticMethods.hpp"
+
+using std::cout;
+using std::cin;
+using std::endl;
 
 namespace ns
 {
@@ -25,10 +30,9 @@ namespace ns
     
     class NovelObject
     {
-    private:
-        NovelSystem* novelSystem{ nullptr };
-        
     public:
+        NovelSystem* novelSystem{ nullptr };
+        bool offline{ false };
         int priority{ 0 };
         
         virtual ~NovelObject();
@@ -46,11 +50,8 @@ namespace ns
     
     class NovelSystem
     {
-    private:
-        List<NovelObject>* objects = nullptr;
-        List<NovelObject>* lastObject = nullptr;
-        
     public:
+        list<NovelObject*> objects;
         
         NovelSystem();
         void Update(const sf::Time& elapsedTime);
@@ -58,54 +59,38 @@ namespace ns
         void Resize(unsigned int width, unsigned int height);
         void PollEvent(sf::Event& event);
         void PopComponent(NovelObject* component);
-        void Destroy();
+        void clear();
         void ChangePriorityOf(NovelObject* component, int priority);
         
-        template<typename T, typename ...Args> T* PrioritizeComponent(int priority, Args... args)
+        template<typename T, typename ...Args> T* AddComponent(Args... args)
         {
             T* component = new T(args...);
-            List<NovelObject>* element = new List<NovelObject>;
-            element->data = component;
-            element->data->priority = priority;
-            element->next = nullptr;
-            element->prev = nullptr;
-            
-            List<NovelObject>* temp = objects;
-            bool Done{ false };
-            while (!Done && temp != nullptr)
-            {
-                if (temp->data->priority > priority)
-                {
-                    if (temp->prev != nullptr)
-                    {
-                        temp->prev->next = element;
-                        element->prev = temp->prev;
-                        element->next = temp;
-                        temp->prev = element;
-                    }
-                    else
-                    {
-                        objects->prev = element;
-                        element->next = objects;
-                        objects = element;
-                    }
-                    Done = true;
-                }
-                temp = temp->next;
-            }
-            if (!Done && temp == nullptr)
-            {
-                element->prev = lastObject;
-                if (lastObject == nullptr)
-                    objects = element;
-                else
-                    lastObject->next = element;
-                lastObject = element;
-            }
+            objects.push_back(component);
             
             component->SetNovelSystem(this);
             component->Init();
-            component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+            component->Resize(gs::width, gs::height);
+            
+            return component;
+        }
+        template<typename T, typename ...Args> T* PrioritizeComponent(int priority, Args... args)
+        {
+            T* component = new T(args...);
+            component->priority = priority;
+            
+            bool done{ false };
+            for (list<NovelObject*>::iterator it = objects.begin(); it != objects.end() && !done; ++it)
+                if ((*it)->priority > priority)
+                {
+                    objects.insert(it, component);
+                    done = true;
+                }
+            if (!done)
+                objects.push_back(component);
+            
+            component->SetNovelSystem(this);
+            component->Init();
+            component->Resize(gs::width, gs::height);
             
             return component;
         }

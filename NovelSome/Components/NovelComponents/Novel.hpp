@@ -10,6 +10,10 @@
 #define NovelComponents_hpp
 
 #include <iostream>
+#include <list>
+using std::list;
+#include <vector>
+using std::vector;
 
 //NovelComponent
 #include <locale>
@@ -99,10 +103,9 @@ namespace ns
         class Background : public NovelObject
         {
         private:
-            sf::Texture texture;
             sf::Sprite sprite;
             Novel* novel{ nullptr };
-            List<Background>* groupPointer{ nullptr };
+            list<Background*>::iterator groupPointer;
             sf::String imagePath{ L"" };
             
             bool spriteLoaded{ false };
@@ -136,14 +139,14 @@ namespace ns
             
             bool visible{ true };
             
-            void LoadImage(sf::String path);
+            void LoadImage(const sf::String&);
             void Resize(unsigned int width, unsigned int height) override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void PollEvent(sf::Event& event) override;
             void SetNovel(Novel* novel);
-            void SetGroup(List<Background>* element);
+            void SetGroup(const list<Background*>::iterator& element);
             void CalculateScale(unsigned int width, unsigned int height);
             void CalculateParallax(int mouseX, int mouseY);
             void SetStateMode(modeEnum newMode);
@@ -175,7 +178,7 @@ namespace ns
             Skins::Dialogue* skin{ nullptr };
             CharacterData* character{ nullptr };
             Novel* novel{ nullptr };
-            List<Dialogue>* groupPointer{ nullptr };
+            list<Dialogue*>::iterator groupPointer;
             
             bool drawCharacterName{ false };
             bool fontLoaded{ false };
@@ -226,7 +229,7 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void Resize(unsigned int width, unsigned int height) override;
-            void SetGroup(List<Dialogue>* element);
+            void SetGroup(const list<Dialogue*>::iterator& element);
             void SetCharacter(CharacterData* character);
             void SetCharacterName(const sf::String& characterName);
             void SetDialogue(const sf::String& dialogue);
@@ -248,14 +251,14 @@ namespace ns
             GUISystem* guiSystem{ nullptr };
             Skins::Dialogue* skin{ nullptr };
             Novel* novel{ nullptr };
-            List<Choose>* groupPointer{ nullptr };
+            list<Choose*>::iterator groupPointer;
             
             GUI::TextButton button;
             int startingYY{ 0 };
             
-            UndirectedList<std::wstring> actions;
-            UndirectedList<std::wstring> choices;
-            UndirectedList<int> choiceStart;
+            vector<std::wstring> actions;
+            vector<std::wstring> choices;
+            vector<int> choiceStart;
             
             bool fontLoaded{ false };
             sf::Int8 alpha{ 0 };
@@ -285,7 +288,7 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void Resize(unsigned int width, unsigned int height) override;
-            void SetGroup(List<Choose>* element);
+            void SetGroup(const list<Choose*>::iterator& element);
             void SetStateMode(modeEnum newMode);
             void SetGUISystem(GUISystem* system);
             void AddChoice(const std::wstring& line);
@@ -314,12 +317,11 @@ namespace ns
         class Character : public NovelObject
         {
         private:
-            sf::Texture texture;
             sf::Sprite sprite;
             sf::String imagePath{ L"" };
             
             Novel* novel{ nullptr };
-            List<Character>* groupPointer{ nullptr };
+            list<Character*>::iterator groupPointer;
             CharacterData* characterData{ nullptr };
             sf::String state{ "" };
             
@@ -362,7 +364,7 @@ namespace ns
             void PollEvent(sf::Event& event) override;
             void CalculateParallax(int mouseX, int mouseY);
             void SetNovel(Novel* novel);
-            void SetGroup(List<Character>* element);
+            void SetGroup(const list<Character*>::iterator& element);
             void SetStateMode(modeEnum newMode);
             void SetCharacterData(CharacterData* characterData);
             CharacterData* GetCharacterData();
@@ -379,10 +381,9 @@ namespace ns
         private:
             std::unique_ptr<char[]> fileInMemory;
             
-            sf::SoundBuffer soundBuffer;
             sf::Sound sound;
             Novel* novel;
-            List<SoundPlayer>* groupPointer{ nullptr };
+            list<SoundPlayer*>::iterator groupPointer;
             
             bool audioLoaded{ false };
             bool loop{ false };
@@ -411,8 +412,8 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void Destroy() override;
             void SetNovel(Novel* novel);
-            void SetGroup(List<SoundPlayer>* element);
-            void LoadFromFile(sf::String fileName);
+            void SetGroup(const list<SoundPlayer*>::iterator& element);
+            void LoadFromFile(const sf::String& fileName);
             void SetStateMode(modeEnum newMode);
             void SetLoop(bool setLoop);
             void SetPlayingOffset(sf::Time timeOffset);
@@ -427,7 +428,7 @@ namespace ns
             
             sf::Music music;
             Novel* novel;
-            List<MusicPlayer>* groupPointer{ nullptr };
+            list<MusicPlayer*>::iterator groupPointer;
             
             bool audioLoaded{ false };
             bool loop{ true };
@@ -456,8 +457,8 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void Destroy() override;
             void SetNovel(Novel* novel);
-            void SetGroup(List<MusicPlayer>* element);
-            void LoadFromFile(sf::String fileName);
+            void SetGroup(const list<MusicPlayer*>::iterator& element);
+            void LoadFromFile(const sf::String& fileName);
             void SetStateMode(modeEnum newMode);
             void SetLoop(bool setLoop);
             void SetPlayingOffset(sf::Time timeOffset);
@@ -480,8 +481,7 @@ namespace ns
             Novel* novel{ nullptr };
             GUIObject* parent{ nullptr };
             unsigned int users{ 0 };
-            List<GUIObject>* guiObjects{ nullptr };
-            List<GUIObject>* lastGuiObjects{ nullptr };
+            list<GUIObject*> guiObjects;
             
             sf::Int8 lastAlpha{ 0 };
             
@@ -494,20 +494,11 @@ namespace ns
             template<typename T, typename ...Args> T* AddComponent(Args... args)
             {
                 T* component = new T(args...);
-                List<GUIObject>* element = (List<GUIObject>*)malloc(sizeof(List<GUIObject>));
-                element->data = component;
-                element->next = nullptr;
-                element->prev = lastGuiObjects;
-                
-                if (lastGuiObjects == nullptr)
-                    guiObjects = element;
-                else
-                    lastGuiObjects->next = element;
-                lastGuiObjects = element;
+                guiObjects.push_back(component);
                 
                 component->SetGUISystem(this);
                 component->Init();
-                component->Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                component->Resize(gs::width, gs::height);
                 
                 return component;
             }
@@ -743,6 +734,7 @@ namespace ns
             {
                 GUISystem guiChoose;
                 GUIObject* chooseRect{ nullptr };
+                GUIObject* chooseConstrains{ nullptr };
                 
                 unsigned int characterSize{ 36 };
                 int maxAlpha = 255;
@@ -816,7 +808,7 @@ namespace ns
         struct NovelLibrary
         {
             Novel* novel{ nullptr };
-            List<CharacterData>* charData{ nullptr };
+            list<CharacterData*> charData;
             std::unordered_map<std::wstring, CharacterData*> characterLibrary;
             
             NovelLibrary();
@@ -869,7 +861,7 @@ namespace ns
             bool fileOpened{ false };
             std::wstring line;
             
-            List<NovelObject>* onHold{ nullptr };
+            list<NovelObject*> onHold;
             unsigned int onHoldSize{ 0 };
             
             std::wifstream wif;
@@ -879,19 +871,21 @@ namespace ns
             NovelLibrary library;
             Skin skin;
             
-            Stack<std::wstring> lines;
+            list<std::wstring> lines;
+            int preloadLinesAmount{ 12 };
             
-            List<Background>* backgroundGroup{ nullptr };
-            List<Character>* characterGroup{ nullptr };
-            List<Dialogue>* dialogueGroup{ nullptr };
-            List<Choose>* chooseGroup{ nullptr };
-            List<SoundPlayer>* soundGroup{ nullptr };
-            List<MusicPlayer>* musicGroup{ nullptr };
-            List<GUISystem>* GUIGroup{ nullptr };
+            list<Background*> backgroundGroup;
+            list<Character*> characterGroup;
+            list<Dialogue*> dialogueGroup;
+            list<Choose*> chooseGroup;
+            list<SoundPlayer*> soundGroup;
+            list<MusicPlayer*> musicGroup;
+            list<GUISystem*> GUIGroup;
             
             Novel(sf::String path);
             ~Novel();
             void Update(const sf::Time& elapsedTime) override;
+            void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
             void Draw(sf::RenderWindow* window) override;
             void Resize(unsigned int width, unsigned int height) override;
             void PollEvent(sf::Event& event) override;
@@ -903,23 +897,14 @@ namespace ns
             void LocalVariables_Set(const std::wstring& name, std::wstring value);
             void LocalVariables_Set(const std::wstring& name, bool value);
             void LocalVariables_Set(const std::wstring& name, int value);
-            void RemoveFromGroup(List<Background>* groupPointer);
-            void RemoveFromGroup(List<Dialogue>* groupPointer);
-            void RemoveFromGroup(List<Choose>* groupPointer);
-            void RemoveFromGroup(List<Character>* groupPointer);
-            void RemoveFromGroup(List<SoundPlayer>* groupPointer);
-            void RemoveFromGroup(List<MusicPlayer>* groupPointer);
-            void RemoveFromGroup(List<GUISystem>* groupPointer);
-            template<typename T> void FreeGroup(List<T>* list)
-            {
-                ns::List<T>* next{ nullptr };
-                for (; list != nullptr; list = next)
-                {
-                    next = list->next;
-                    if (list != nullptr)
-                        delete list;
-                }
-            }
+            void RemoveFromGroup(const list<Background*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<Dialogue*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<Choose*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<Character*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<SoundPlayer*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<MusicPlayer*>::iterator& groupPointer);
+            void RemoveFromGroup(const list<GUISystem*>::iterator& groupPointer);
+            template<typename T> void FreeGroup(list<T*> elements) { elements.clear(); }
         };
         
         

@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DD02AA6921FDC51700E9E909 /* NekoNinja.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */; };
+		DD02AA6A21FDC51700E9E909 /* NekoNinja.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */; };
 		DD265515216020CB008F1545 /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */; };
 		DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDAB7496215D88450062F8B6 /* Assets.xcassets */; };
-		DD8F82A1215E59FF000CB7BB /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82A0215E59FF000CB7BB /* Data */; };
-		DD8F82A2215E59FF000CB7BB /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82A0215E59FF000CB7BB /* Data */; };
+		DD65CFDA2200CB3500CBEF72 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */; };
 		DD8F82B3215E5A9A000CB7BB /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */; };
 		DD8F82B4215E5A9A000CB7BB /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */; };
 		DD8F82B5215E5A9A000CB7BB /* Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AD215E5A9A000CB7BB /* Base.cpp */; };
@@ -19,13 +20,9 @@
 		DD8F82B9215E5A9A000CB7BB /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */; };
 		DD8F82BB215E5B7E000CB7BB /* EntitySystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F8299215E5988000CB7BB /* EntitySystem.cpp */; };
 		DD8F82BC215E5B7E000CB7BB /* NovelSomeScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829C215E5988000CB7BB /* NovelSomeScript.cpp */; };
-		DD8F82BD215E5B7E000CB7BB /* List.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829E215E5988000CB7BB /* List.cpp */; };
 		DD8F82BE215E5B7E000CB7BB /* StaticMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829F215E5988000CB7BB /* StaticMethods.cpp */; };
-		DD8F82C0215E5C2A000CB7BB /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82BF215E5C2A000CB7BB /* Novels */; };
-		DD8F82C1215E5C2A000CB7BB /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DD8F82BF215E5C2A000CB7BB /* Novels */; };
 		DD8F82C2215E5C73000CB7BB /* EntitySystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F8299215E5988000CB7BB /* EntitySystem.cpp */; };
 		DD8F82C3215E5C73000CB7BB /* StaticMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829F215E5988000CB7BB /* StaticMethods.cpp */; };
-		DD8F82C4215E5C73000CB7BB /* List.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829E215E5988000CB7BB /* List.cpp */; };
 		DD8F82C5215E5C73000CB7BB /* NovelSomeScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F829C215E5988000CB7BB /* NovelSomeScript.cpp */; };
 		DDA1A07F216D463E00A9BE38 /* NekoMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */; };
 		DDA1A080216D463E00A9BE38 /* NekoMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */; };
@@ -72,20 +69,25 @@
 		DDBB6188215E9D300062CC3D /* Misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6186215E9D300062CC3D /* Misc.cpp */; };
 		DDBB618B215E9D550062CC3D /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */; };
 		DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */; };
+		DDE66FC521FB4F490071145D /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC321FB4F490071145D /* Data */; };
+		DDE66FC621FB4F490071145D /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC321FB4F490071145D /* Data */; };
+		DDE66FC721FB4F490071145D /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC421FB4F490071145D /* Novels */; };
+		DDE66FC821FB4F490071145D /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC421FB4F490071145D /* Novels */; };
 		DDF736F8216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
 		DDF736F9216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NekoNinja.cpp; sourceTree = "<group>"; };
+		DD02AA6821FDC51700E9E909 /* NekoNinja.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NekoNinja.hpp; sourceTree = "<group>"; };
+		DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DD8F8298215E5988000CB7BB /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
 		DD8F8299215E5988000CB7BB /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DD8F829A215E5988000CB7BB /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
 		DD8F829B215E5988000CB7BB /* StaticMethods.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = StaticMethods.hpp; sourceTree = "<group>"; };
 		DD8F829C215E5988000CB7BB /* NovelSomeScript.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelSomeScript.cpp; sourceTree = "<group>"; };
 		DD8F829D215E5988000CB7BB /* EntitySystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EntitySystem.hpp; sourceTree = "<group>"; };
-		DD8F829E215E5988000CB7BB /* List.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = List.cpp; sourceTree = "<group>"; };
 		DD8F829F215E5988000CB7BB /* StaticMethods.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StaticMethods.cpp; sourceTree = "<group>"; };
-		DD8F82A0215E59FF000CB7BB /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = Assets/Data; sourceTree = SOURCE_ROOT; };
 		DD8F82A8215E5A9A000CB7BB /* TestComponents.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TestComponents.hpp; sourceTree = "<group>"; };
 		DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestComponents.cpp; sourceTree = "<group>"; };
 		DD8F82AC215E5A9A000CB7BB /* ResourcePath.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ResourcePath.hpp; sourceTree = "<group>"; };
@@ -93,7 +95,6 @@
 		DD8F82AE215E5A9A000CB7BB /* ResourcePath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResourcePath.cpp; sourceTree = "<group>"; };
 		DD8F82AF215E5A9A000CB7BB /* Base.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Base.hpp; sourceTree = "<group>"; };
 		DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ResourcePath.mm; sourceTree = "<group>"; };
-		DD8F82BF215E5C2A000CB7BB /* Novels */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Novels; path = Assets/Novels; sourceTree = SOURCE_ROOT; };
 		DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NekoMain.cpp; sourceTree = "<group>"; };
 		DDA1A07E216D463E00A9BE38 /* NekoMain.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NekoMain.hpp; sourceTree = "<group>"; };
 		DDAB7469215D88050062F8B6 /* NovelSome.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NovelSome.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -137,6 +138,8 @@
 		DDBB6186215E9D300062CC3D /* Misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Misc.cpp; sourceTree = "<group>"; };
 		DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EssentialComponents.cpp; sourceTree = "<group>"; };
 		DDBB618A215E9D550062CC3D /* EssentialComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EssentialComponents.hpp; sourceTree = "<group>"; };
+		DDE66FC321FB4F490071145D /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = NovelSome/Data; sourceTree = SOURCE_ROOT; };
+		DDE66FC421FB4F490071145D /* Novels */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Novels; path = NovelSome/Novels; sourceTree = SOURCE_ROOT; };
 		DDF736F6216B65770065845D /* GUIInterface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GUIInterface.cpp; sourceTree = "<group>"; };
 		DDF736F7216B65770065845D /* GUIInterface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GUIInterface.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -182,7 +185,6 @@
 			children = (
 				DD8F8299215E5988000CB7BB /* EntitySystem.cpp */,
 				DD8F829D215E5988000CB7BB /* EntitySystem.hpp */,
-				DD8F829E215E5988000CB7BB /* List.cpp */,
 				DD8F829A215E5988000CB7BB /* List.hpp */,
 				DD8F829F215E5988000CB7BB /* StaticMethods.cpp */,
 				DD8F829B215E5988000CB7BB /* StaticMethods.hpp */,
@@ -227,6 +229,8 @@
 			children = (
 				DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */,
 				DDA1A07E216D463E00A9BE38 /* NekoMain.hpp */,
+				DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */,
+				DD02AA6821FDC51700E9E909 /* NekoNinja.hpp */,
 			);
 			path = NekoComponents;
 			sourceTree = "<group>";
@@ -236,6 +240,7 @@
 			children = (
 				DDAB746B215D88050062F8B6 /* NovelSome */,
 				DDAB7486215D88430062F8B6 /* iOS */,
+				DDAB74C7215D8B950062F8B6 /* Resources */,
 				DDAB746A215D88050062F8B6 /* Products */,
 				DDAB74A2215D89DC0062F8B6 /* Frameworks */,
 			);
@@ -258,7 +263,6 @@
 				DD8F8297215E5988000CB7BB /* Engine */,
 				DD8F82A6215E5A9A000CB7BB /* Components */,
 				DDAB746C215D88050062F8B6 /* Supporting Files */,
-				DDAB74C7215D8B950062F8B6 /* Resources */,
 			);
 			path = NovelSome;
 			sourceTree = "<group>";
@@ -274,6 +278,7 @@
 		DDAB7486215D88430062F8B6 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */,
 				DDAB749B215D88450062F8B6 /* Info.plist */,
 			);
 			path = iOS;
@@ -309,9 +314,9 @@
 		DDAB74C7215D8B950062F8B6 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				DDE66FC321FB4F490071145D /* Data */,
+				DDE66FC421FB4F490071145D /* Novels */,
 				DDAB7496215D88450062F8B6 /* Assets.xcassets */,
-				DD8F82A0215E59FF000CB7BB /* Data */,
-				DD8F82BF215E5C2A000CB7BB /* Novels */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -412,9 +417,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DDE66FC521FB4F490071145D /* Data in Resources */,
+				DDE66FC721FB4F490071145D /* Novels in Resources */,
 				DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */,
-				DD8F82A1215E59FF000CB7BB /* Data in Resources */,
-				DD8F82C0215E5C2A000CB7BB /* Novels in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -422,8 +427,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD8F82A2215E59FF000CB7BB /* Data in Resources */,
-				DD8F82C1215E5C2A000CB7BB /* Novels in Resources */,
+				DDE66FC621FB4F490071145D /* Data in Resources */,
+				DD65CFDA2200CB3500CBEF72 /* LaunchScreen.storyboard in Resources */,
+				DDE66FC821FB4F490071145D /* Novels in Resources */,
 				DDAB7497215D88450062F8B6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -457,7 +463,6 @@
 			files = (
 				DD8F82BB215E5B7E000CB7BB /* EntitySystem.cpp in Sources */,
 				DD8F82BC215E5B7E000CB7BB /* NovelSomeScript.cpp in Sources */,
-				DD8F82BD215E5B7E000CB7BB /* List.cpp in Sources */,
 				DDBB617D215E9CFB0062CC3D /* Character.cpp in Sources */,
 				DDBB6171215E9CBE0062CC3D /* NovelUpdate.cpp in Sources */,
 				DD8F82BE215E5B7E000CB7BB /* StaticMethods.cpp in Sources */,
@@ -469,6 +474,7 @@
 				DDBB6174215E9CCE0062CC3D /* NovelLibrary.cpp in Sources */,
 				DD8F82B3215E5A9A000CB7BB /* TestComponents.cpp in Sources */,
 				DDF736F8216B65770065845D /* GUIInterface.cpp in Sources */,
+				DD02AA6921FDC51700E9E909 /* NekoNinja.cpp in Sources */,
 				DD8F82B7215E5A9A000CB7BB /* ResourcePath.cpp in Sources */,
 				DDBB6181215E9D0B0062CC3D /* Dialogue.cpp in Sources */,
 				DDBB616E215E9C1A0062CC3D /* Novel.cpp in Sources */,
@@ -486,7 +492,6 @@
 			files = (
 				DD8F82C2215E5C73000CB7BB /* EntitySystem.cpp in Sources */,
 				DD8F82C3215E5C73000CB7BB /* StaticMethods.cpp in Sources */,
-				DD8F82C4215E5C73000CB7BB /* List.cpp in Sources */,
 				DDF736F9216B65770065845D /* GUIInterface.cpp in Sources */,
 				DDBB6185215E9D200062CC3D /* GUI.cpp in Sources */,
 				DDBB617E215E9CFB0062CC3D /* Character.cpp in Sources */,
@@ -505,6 +510,7 @@
 				DDAB74A1215D89CD0062F8B6 /* main.cpp in Sources */,
 				DDBB617B215E9CEC0062CC3D /* Background.cpp in Sources */,
 				DD265515216020CB008F1545 /* ResourcePath.mm in Sources */,
+				DD02AA6A21FDC51700E9E909 /* NekoNinja.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -67,28 +67,23 @@ namespace ns
                                     
                                     if (stateReading)
                                     {
-                                        wchar_t** arguments = nss::ParseArguments(command);
-                                        if (arguments != nullptr)
+                                        vector<std::wstring> arguments;
+                                        nss::ParseArguments(command, arguments);
+                                        for (auto arg : arguments)
                                         {
-                                            for (int i = 0; arguments[i] != nullptr; i++)
-                                            {
-                                                nss::CommandSettings argument;
-                                                argument.Command(arguments[i]);
-                                                
-                                                if (nss::Command(argument, L"normal") || nss::Command(argument, L"n"))
-                                                    parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
-                                                else if (nss::Command(argument, L"close") || nss::Command(argument, L"c"))
-                                                    parallaxPower = ns::GlobalSettings::defaultParallaxClose;
-                                                else if (nss::Command(argument, L"far") || nss::Command(argument, L"f"))
-                                                    parallaxPower = ns::GlobalSettings::defaultParallaxFar;
-                                                else if (nss::Command(argument, L"background") || nss::Command(argument, L"back") || nss::Command(argument, L"b"))
-                                                    parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
-                                                else if (nss::Command(argument, L"frontground") || nss::Command(argument, L"front") || nss::Command(argument, L"f"))
-                                                    parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
-                                                
-                                                free(arguments[i]);
-                                            }
-                                            free(arguments);
+                                            nss::CommandSettings argument;
+                                            argument.Command(arg);
+                                            
+                                            if (nss::Command(argument, L"normal") || nss::Command(argument, L"n"))
+                                                parallaxPower = ns::GlobalSettings::defaultParallaxNormal;
+                                            else if (nss::Command(argument, L"close") || nss::Command(argument, L"c"))
+                                                parallaxPower = ns::GlobalSettings::defaultParallaxClose;
+                                            else if (nss::Command(argument, L"far") || nss::Command(argument, L"f"))
+                                                parallaxPower = ns::GlobalSettings::defaultParallaxFar;
+                                            else if (nss::Command(argument, L"background") || nss::Command(argument, L"back") || nss::Command(argument, L"b"))
+                                                parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
+                                            else if (nss::Command(argument, L"frontground") || nss::Command(argument, L"front") || nss::Command(argument, L"f"))
+                                                parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
                                         }
                                     }
                                 }
@@ -147,7 +142,23 @@ namespace ns
                 
                 if (spritePath.length() != 0)
                 {
-                    sf::Image* imagePtr = ic::LoadImage(lookForSpritePath + spritePath, 2);
+                    sf::Texture* texturePtr = ic::LoadTexture(lookForSpritePath + spritePath, 2);
+                    if (texturePtr != nullptr)
+                    {
+                        imagePath = lookForSpritePath + spritePath;
+                        
+                        spriteLoaded = true;
+                        sprite.setTexture(*texturePtr);
+                        
+                        //scale 1 = scale that makes image fit in height with 800 pixels
+                        float scaleFactor = (float)ns::gs::relativeHeight / texturePtr->getSize().y;
+                        scaleX *= scaleFactor;
+                        scaleY *= scaleFactor;
+                        sprite.setScale(scaleX, scaleY);
+                        
+                        Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                    }
+                    /*sf::Image* imagePtr = ic::LoadImage(lookForSpritePath + spritePath, 2);
                     if (imagePtr != nullptr)
                     {
                         imagePath = lookForSpritePath + spritePath;
@@ -171,7 +182,7 @@ namespace ns
                             
                             Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
                         }
-                    }
+                    }*/
                 }
                 
                 if (!spriteLoaded)
@@ -188,33 +199,16 @@ namespace ns
         {
             if (spriteLoaded)
             {
-                sprite.setScale(scaleX * (doParallax ? (1 + parallaxPower) : 1) * gs::scale, scaleY * (doParallax ? (1 + parallaxPower) : 1) * gs::scale);
+                sprite.setScale(scaleX * (doParallax ? (1 + parallaxPower) : 1) * gs::scScale, scaleY * (doParallax ? (1 + parallaxPower) : 1) * gs::scScale);
                 sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getLocalBounds().height > height/sprite.getScale().y ? height/sprite.getScale().y : sprite.getLocalBounds().height);
                 switch (position)
                 {
-                    case left:
-                        sprite.setPosition((float)width/6, height);
-                        break;
-                        
-                    case cleft:
-                        sprite.setPosition((float)width/3, height);
-                        break;
-                        
-                    case center:
-                        sprite.setPosition((float)width/2, height);
-                        break;
-                        
-                    case cright:
-                        sprite.setPosition((width - (float)width/3), height);
-                        break;
-                        
-                    case right:
-                        sprite.setPosition((width - (float)width/6), height);
-                        break;
-                        
-                    default:
-                        sprite.setPosition(customX, customY);
-                        break;
+                    case left: sprite.setPosition((float)width/6, height); break;
+                    case cleft: sprite.setPosition((float)width/3, height); break;
+                    case center: sprite.setPosition((float)width/2, height); break;
+                    case cright: sprite.setPosition((width - (float)width/3), height); break;
+                    case right: sprite.setPosition((width - (float)width/6), height); break;
+                    default: sprite.setPosition(customX, customY); break;
                 }
                 
                 defaultPositionX = sprite.getPosition().x;
@@ -282,8 +276,7 @@ namespace ns
         {
             if (imagePath.toWideString().length() != 0)
                 ic::DeleteImage(imagePath);
-            if (groupPointer != nullptr && novel != nullptr)
-                novel->RemoveFromGroup(groupPointer);
+            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
         }
         void Character::PollEvent(sf::Event& event)
         {
@@ -311,7 +304,7 @@ namespace ns
                 parallaxPower = novel->skin.character.parallaxNormal;
             }
         }
-        void Character::SetGroup(List<Character>* element)
+        void Character::SetGroup(const list<Character*>::iterator& element)
         {
             this->groupPointer = element;
         }

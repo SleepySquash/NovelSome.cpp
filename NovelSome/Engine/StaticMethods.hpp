@@ -12,6 +12,7 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <thread>
 #include <codecvt>
 
 #ifdef _WIN32
@@ -29,6 +30,12 @@
 #endif
 #include "../Essentials/Base.hpp"
 
+using std::pair;
+using std::make_pair;
+
+using std::cout;
+using std::endl;
+
 namespace ns
 {
     class FontCollector
@@ -44,19 +51,72 @@ namespace ns
     
     
     
+    /// Идея: иметь в карте ещё и номер треда, который загружает изображение. Если треда нет, то дефолт конструктор id().
+    ///     Или иметь отдельную мапу, в которой если присутствует имя изображения, то должно возвращаться айди треда.
+    ///     Основной тред, дойдя до ресурса, который загружается, должен вызвать .join() этого объекта. Если это невозможно, то основной тред сам загрузит этот ресурс.
+    std::wstring PathWithResolutionDetermination(const std::wstring& fileName, unsigned int mode);
+    struct icThreadsJoiner;
+    struct ImageCollectorObject
+    {
+        sf::Image* image{ nullptr };
+        sf::Texture* texture{ nullptr };
+        int usage{ 0 };
+        bool destroyable{ true };
+        
+        ImageCollectorObject(sf::Image* image = nullptr, sf::Texture* texture = nullptr, int usage = 0, bool destroyable = true) : image(image), texture(texture), usage(usage), destroyable(destroyable) { }
+    };
     class ImageCollector
     {
     private:
         ImageCollector() { }
         
     public:
-        static std::unordered_map<std::wstring, sf::Image*> images;
-        static std::unordered_map<std::wstring, int> usage;
+        static std::unordered_map<std::wstring, ImageCollectorObject> images;
+        static std::unordered_map<std::wstring, std::thread> threads;
         
-        static sf::Image* LoadImage(const std::wstring& imageName, unsigned int mode = 0);
+        static icThreadsJoiner threadsJoiner;
+        static sf::Image* LoadImage(const std::wstring& imageName, unsigned int mode = 2);
+        static void ThreadImage(std::wstring imageName, unsigned int mode, bool destroyable = true, bool loadTexture = false);
+        static void PreloadImage(const std::wstring& imageName, unsigned int mode = 2, bool destroyable = true);
+        static sf::Texture* LoadTexture(const std::wstring& imageName, unsigned int mode = 2);
+        static void PreloadTexture(const std::wstring& imageName, unsigned int mode = 2, bool destroyable = true);
+        static void SetDestroyable(std::wstring imageName, bool destroyable);
         static void DeleteImage(const std::wstring& imageName);
+        static void EraseImage(const std::wstring& imageName);
         static void FreeImages();
     };
+    struct icThreadsJoiner { ~icThreadsJoiner() { for (auto& t : ImageCollector::threads) t.second.join(); ImageCollector::threads.clear(); } };
+    
+    
+    
+    struct scThreadsJoiner;
+    struct SoundCollectorObject
+    {
+        sf::SoundBuffer* sound{ nullptr };
+        int usage{ 0 };
+        bool destroyable{ true };
+        
+        SoundCollectorObject(sf::SoundBuffer* sound = nullptr, int usage = 0, bool destroyable = true) : sound(sound), usage(usage), destroyable(destroyable) { }
+    };
+    class SoundCollector
+    {
+    private:
+        SoundCollector() { }
+        
+    public:
+        static std::unordered_map<std::wstring, SoundCollectorObject> sounds;
+        static std::unordered_map<std::wstring, std::thread> threads;
+        
+        static scThreadsJoiner threadsJoiner;
+        static sf::SoundBuffer* LoadSound(const std::wstring& soundName, unsigned int mode = 3);
+        static void ThreadSound(std::wstring soundName, unsigned int mode, bool destroyable = true);
+        static void PreloadSound(const std::wstring& soundName, unsigned int mode = 3, bool destroyable = true);
+        static void SetDestroyable(std::wstring soundName, bool destroyable);
+        static void DeleteSound(const std::wstring& soundName);
+        static void EraseSound(const std::wstring& soundName);
+        static void FreeSounds();
+    };
+    struct scThreadsJoiner { ~scThreadsJoiner() { for (auto& t : SoundCollector::threads) t.second.join(); SoundCollector::threads.clear(); } };
     
     
     
@@ -71,9 +131,10 @@ namespace ns
         static unsigned int resizeToWidth;
         static unsigned int resizeToHeight;
         
+        static float scale, scScale;
+        static float scalex, scaley;
         static unsigned int relativeWidth;
         static unsigned int relativeHeight;
-        static float scale;
         
         static int windowPositionOffset;
         
@@ -106,6 +167,7 @@ namespace ns
     typedef GlobalSettings gs;
     typedef FontCollector fc;
     typedef ImageCollector ic;
+    typedef SoundCollector sc;
 }
 
 #endif /* StaticMethods_hpp */

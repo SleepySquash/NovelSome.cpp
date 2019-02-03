@@ -42,6 +42,7 @@
 
 #ifdef SFML_SYSTEM_IOS
     std::string iOSDeviceName();
+    std::string documentsPath(void);
     inline std::string resourcePath()
     {
         return "";
@@ -52,6 +53,7 @@
     }
 #else
     std::string resourcePath(void);
+    std::string documentsPath(void);
     std::wstring executablePath(void);
 #endif
 

@@ -22,31 +22,20 @@ namespace ns
         }
         void GUISystem::Update(const sf::Time& elapsedTime)
         {
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
-                {
-                    next = list->next;
-                    list->data->Update(elapsedTime);
-                    if (list->data->regulateFadings)
-                        list->data->FadingUpdate(elapsedTime);
-                    if (list->data->child != nullptr)
-                        list->data->child->Update(elapsedTime);
-                }
+            for (auto g : guiObjects)
+            {
+                g->Update(elapsedTime);
+                if (g->regulateFadings) g->FadingUpdate(elapsedTime);
+                if (g->child != nullptr) g->child->Update(elapsedTime);
+            }
         }
         void GUISystem::Draw(sf::RenderWindow* window)
         {
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
+            for (auto g : guiObjects)
+                if (g->visible)
                 {
-                    next = list->next;
-                    if (list->data->visible)
-                    {
-                        list->data->Draw(window);
-                        if (list->data->child != nullptr)
-                            list->data->child->Draw(window);
-                    }
+                    g->Draw(window);
+                    if (g->child != nullptr) g->child->Draw(window);
                 }
         }
         void GUISystem::Resize(unsigned int width, unsigned int height)
@@ -56,43 +45,15 @@ namespace ns
                 lastWidth = width;
                 lastHeight = height;
                 
-                List<GUIObject>* next = nullptr;
-                if (guiObjects != nullptr)
-                    for (auto* list = guiObjects; list != nullptr; list = next)
+                for (auto g : guiObjects)
+                    if (g->visible)
                     {
-                        next = list->next;
+                        //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
                         
-                        if (list->data->visible)
-                        {
-                            //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
-                            /*if (list->data->constrains.displayWhenVariableIsTrue.length() != 0)
-                             {
-                             NovelVariable* nvar = novel->FindVariable(list->data->constrains.displayWhenVariableIsTrue);
-                             if (nvar != nullptr)
-                             {
-                             switch (nvar->type)
-                             {
-                             case NovelVariable::String:
-                             list->data->visible = std::wstring(nvar->value.asString).length() > 0;
-                             break;
-                             case NovelVariable::Integer:
-                             list->data->visible = nvar->value.asInt != 0;
-                             break;
-                             case NovelVariable::Boolean:
-                             list->data->visible = nvar->value.asBoolean;
-                             break;
-                             default:
-                             break;
-                             }
-                             }
-                             }*/
-                            
-                            list->data->PreCalculate(width, height);
-                            list->data->constrains.Recalculate(*list->data, width, height);
-                            list->data->Resize(width, height);
-                            if (list->data->child != nullptr)
-                                list->data->child->Resize(width, height);
-                        }
+                        g->PreCalculate(width, height);
+                        g->constrains.Recalculate(*g, width, height);
+                        g->Resize(width, height);
+                        if (g->child != nullptr) g->child->Resize(width, height);
                     }
             }
         }
@@ -101,51 +62,32 @@ namespace ns
             lastWidth = width;
             lastHeight = height;
             
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
+            for (auto g : guiObjects)
+                if (g->visible && !g->ignoreVariableChange)
                 {
-                    next = list->next;
-                    
-                    if (list->data->visible && !list->data->ignoreVariableChange)
-                    {
-                        list->data->PreCalculate(width, height);
-                        list->data->constrains.Recalculate(*list->data, width, height);
-                        list->data->Resize(width, height);
-                        if (list->data->child != nullptr)
-                            list->data->child->Resize(width, height);
-                    }
+                    g->PreCalculate(width, height);
+                    g->constrains.Recalculate(*g, width, height);
+                    g->Resize(width, height);
+                    if (g->child != nullptr) g->child->Resize(width, height);
                 }
         }
         void GUISystem::VariableChange(const std::wstring& varName)
         {
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
+            for (auto g : guiObjects)
+                if (!g->ignoreVariableChange)
                 {
-                    next = list->next;
-                    if (!list->data->ignoreVariableChange)
-                    {
-                        list->data->VariableChange(varName);
-                        if (list->data->child != nullptr)
-                            list->data->child->VariableChange(varName);
-                    }
+                    g->VariableChange(varName);
+                    if (g->child != nullptr) g->child->VariableChange(varName);
                 }
         }
         void GUISystem::SetAlpha(sf::Int8 alpha)
         {
             lastAlpha = alpha;
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
+            for (auto g : guiObjects)
+                if (!g->regulateFadings)
                 {
-                    next = list->next;
-                    if (!list->data->regulateFadings)
-                    {
-                        list->data->SetAlpha(alpha);
-                        if (list->data->child != nullptr)
-                            list->data->child->SetAlpha(alpha);
-                    }
+                    g->SetAlpha(alpha);
+                    if (g->child != nullptr) g->child->SetAlpha(alpha);
                 }
         }
         void GUISystem::SetAlphaIfBigger(sf::Int8 alpha)
@@ -153,40 +95,27 @@ namespace ns
             if ((unsigned int)lastAlpha < (unsigned int)alpha)
             {
                 lastAlpha = alpha;
-                List<GUIObject>* next = nullptr;
-                if (guiObjects != nullptr)
-                    for (auto* list = guiObjects; list != nullptr; list = next)
+                for (auto g : guiObjects)
+                    if (!g->regulateFadings)
                     {
-                        next = list->next;
-                        if (!list->data->regulateFadings)
-                        {
-                            list->data->SetAlpha(alpha);
-                            if (list->data->child != nullptr)
-                                list->data->child->SetAlphaIfBigger(alpha);
-                        }
+                        g->SetAlpha(alpha);
+                        if (g->child != nullptr) g->child->SetAlphaIfBigger(alpha);
                     }
             }
         }
         void GUISystem::Clear()
         {
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
+            for (auto g : guiObjects)
+            {
+                if (g->child != nullptr)
                 {
-                    next = list->next;
-                    
-                    if (list->data->child != nullptr)
-                    {
-                        list->data->child->Clear();
-                        delete list->data->child;
-                        list->data->child = nullptr;
-                    }
-                    list->data->Destroy();
-                    delete list->data;
-                    delete list;
+                    g->child->Clear();
+                    delete g->child;
                 }
-            guiObjects = nullptr;
-            lastGuiObjects = nullptr;
+                g->Destroy();
+                delete g;
+            }
+            guiObjects.clear();
         }
         void GUISystem::SetNovel(Novel* novel)
         {
@@ -198,17 +127,8 @@ namespace ns
         }
         void GUISystem::ResetResize()
         {
-            lastWidth = 0;
-            lastHeight = 0;
-            
-            List<GUIObject>* next = nullptr;
-            if (guiObjects != nullptr)
-                for (auto* list = guiObjects; list != nullptr; list = next)
-                {
-                    next = list->next;
-                    if (list->data->child != nullptr)
-                        list->data->child->ResetResize();
-                }
+            lastWidth = 0; lastHeight = 0;
+            for (auto g : guiObjects) if (g->child != nullptr) g->child->ResetResize();
         }
         
         
@@ -299,7 +219,7 @@ namespace ns
                                 }
                                 
                                 if (possibleVariable.length() != 0 && nvar == nullptr)
-                                    cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::ConvertToUTF8(possibleVariable) << "'." << endl;
+                                    cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::utf8(possibleVariable) << "'." << endl;
                                 else
                                 {
                                     std::wstring possibleFunction = L"";
@@ -329,17 +249,17 @@ namespace ns
                                                 
                                                 if (possibleVariable == L"@name")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
+                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
                                                     {
-                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup->data->charText;
+                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup.front()->charText;
                                                         text.setString(nvar->value.asString);
                                                         replaceBy += std::to_wstring((int)text.getLocalBounds().width);
                                                     }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->text.getLocalBounds().width);
+                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
+                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup.front()->text.getLocalBounds().width);
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
@@ -378,17 +298,17 @@ namespace ns
                                                 
                                                 if (possibleVariable == L"@name")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
+                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
                                                     {
-                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup->data->charText;
+                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup.front()->charText;
                                                         text.setString(nvar->value.asString);
                                                         replaceBy += std::to_wstring((int)text.getLocalBounds().height);
                                                     }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup != nullptr)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup->data->text.getLocalBounds().height);
+                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
+                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup.front()->text.getLocalBounds().height);
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
@@ -442,7 +362,7 @@ namespace ns
                                 nvar = guiObject.guiSystem->novel->FindVariable(word);
                             
                             if (word.length() != 0 && nvar == nullptr)
-                                cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::ConvertToUTF8(word) << "'." << endl;
+                                cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::utf8(word) << "'." << endl;
                             else if (nvar != nullptr)
                             {
                                 dependVariable = true;
@@ -1029,7 +949,7 @@ namespace ns
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
             if (!wif.is_open())
-                cout << "Error :: Skin :: File couldn't be opened, path: " << base::ConvertToUTF8(fileName) << endl;
+                cout << "Error :: Skin :: File couldn't be opened, path: " << base::utf8(fileName) << endl;
             else
             {
                 bool eof{ false };
@@ -1037,7 +957,7 @@ namespace ns
                 nss::CommandSettings command;
                 
                 bool parsingGUI{ (guiScope == L"") };
-                List<GUIObject>* scope = new List<GUIObject>();
+                list<GUIObject*> scope; scope.push_back(nullptr);
                 unsigned int knownType = 0;
                 std::wstring forArgumentsParsing{ L"" };
                 GUIObject* component{ nullptr };
@@ -1087,17 +1007,12 @@ namespace ns
                                 {
                                     if (thatsAScope)
                                         thatsAScope = false;
-                                    else if (scope != nullptr)
-                                    {
-                                        
-                                        List<GUIObject>* next = scope->next;
-                                        delete scope;
-                                        scope = next;
-                                    }
+                                    else if (scope.size() != 0)
+                                        scope.erase(scope.begin());
                                 }
                             }
                             
-                            if (scope != nullptr)
+                            if (scope.size() != 0)
                             {
                                 if (thatsAScope)
                                 {
@@ -1118,14 +1033,12 @@ namespace ns
                                             forArgumentsParsing = line;
                                     }
                                     
-                                    List<GUIObject>* list = new List<GUIObject>();
-                                    
                                     if (knownType != 0)
                                     {
                                         GUISystem* guiSystemToAddTo{ nullptr };
-                                        if (scope->data != nullptr)
-                                            guiSystemToAddTo = scope->data->GetChildSystem();
-                                        else if (scope->data == nullptr && scope->next == nullptr)
+                                        if (scope.front() != nullptr)
+                                            guiSystemToAddTo = scope.front()->GetChildSystem();
+                                        else if (scope.front() == nullptr && scope.size() == 1)
                                             guiSystemToAddTo = this;
                                         
                                         if (guiSystemToAddTo != nullptr)
@@ -1164,150 +1077,124 @@ namespace ns
                                                     component = nullptr;
                                                     break;
                                             }
-                                            list->data = component;
                                             
                                             nss::CommandSettings argumentLine;
                                             argumentLine.Command(forArgumentsParsing);
-                                            wchar_t** arguments = nss::ParseArguments(argumentLine);
-                                            if (arguments != nullptr)
-                                                for (int i = 0; arguments[i] != nullptr; i++)
+                                            
+                                            vector<std::wstring> arguments;
+                                            nss::ParseArguments(argumentLine, arguments);
+                                            for (auto arg : arguments)
+                                            {
+                                                nss::CommandSettings argument;
+                                                argument.Command(arg);
+                                                
+                                                if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"image")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"text")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"@dialogue")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"@name")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"\""))
                                                 {
-                                                    nss::CommandSettings argument;
-                                                    argument.Command(arguments[i]);
-                                                    
-                                                    if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"image")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"text")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"@dialogue")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"@name")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"\""))
+                                                    if (knownType == 3 && text != nullptr)
                                                     {
-                                                        if (knownType == 3 && text != nullptr)
-                                                        {
-                                                            argument.lastPos--;
-                                                            std::wstring str = nss::ParseAsQuoteString(argument);
-                                                            text->SetString(str);
-                                                        }
-                                                        else if (knownType == 4 && img != nullptr)
-                                                        {
-                                                            argument.lastPos--;
-                                                            std::wstring path = nss::ParseAsQuoteString(argument);
-                                                            img->LoadImage(base::GetFolderPath(fileName) + path);
-                                                        }
+                                                        argument.lastPos--;
+                                                        std::wstring str = nss::ParseAsQuoteString(argument);
+                                                        text->SetString(str);
                                                     }
-                                                    else if (nss::Command(argument, L"}")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"{")) { /* ignoring */ }
-                                                    else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
+                                                    else if (knownType == 4 && img != nullptr)
                                                     {
-                                                        skin->dialogue.nameRect = component;
-                                                        skin->dialogue.nameRect->SetFadings(GUIObject::offline);
+                                                        argument.lastPos--;
+                                                        std::wstring path = nss::ParseAsQuoteString(argument);
+                                                        img->LoadImage(base::GetFolderPath(fileName) + path);
                                                     }
-                                                    else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
-                                                        skin->dialogue.dialogueRect = component;
-                                                    else if (nss::Command(argument, L"choose") && guiScope == L"choose")
-                                                        skin->choose.chooseRect = component;
-                                                    
-                                                    delete arguments[i];
                                                 }
-                                            if (arguments != nullptr)
-                                                delete arguments;
+                                                else if (nss::Command(argument, L"}")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"{")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
+                                                {
+                                                    skin->dialogue.nameRect = component;
+                                                    skin->dialogue.nameRect->SetFadings(GUIObject::offline);
+                                                }
+                                                else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
+                                                    skin->dialogue.dialogueRect = component;
+                                                else if (nss::Command(argument, L"choose") && guiScope == L"choose")
+                                                    skin->choose.chooseRect = component;
+                                            }
                                         }
                                     }
                                     
-                                    list->next = scope;
-                                    scope->prev = list;
-                                    scope = list;
+                                    scope.insert(scope.begin(), component);
                                     knownType = 0;
                                 }
                                 else
                                 {
                                     if (nss::Command(command, L"//")) { /* that's a comment */ }
                                     else if (nss::Command(command, L"}")) { /* we've already handled this situation */ }
-                                    else if (nss::Command(command, L"rectangle"))
-                                    {
-                                        forArgumentsParsing = line;
-                                        knownType = 2;
-                                    }
-                                    else if (nss::Command(command, L"text"))
-                                    {
-                                        forArgumentsParsing = line;
-                                        knownType = 3;
-                                    }
-                                    else if (nss::Command(command, L"image"))
-                                    {
-                                        forArgumentsParsing = line;
-                                        knownType = 4;
-                                    }
-                                    else if (nss::Command(command, L"@dialogue"))
-                                    {
-                                        forArgumentsParsing = line;
-                                        knownType = 5;
-                                    }
-                                    else if (nss::Command(command, L"@name"))
-                                    {
-                                        forArgumentsParsing = line;
-                                        knownType = 6;
-                                    }
+                                    else if (nss::Command(command, L"rectangle")) { forArgumentsParsing = line; knownType = 2; }
+                                    else if (nss::Command(command, L"text")) { forArgumentsParsing = line; knownType = 3; }
+                                    else if (nss::Command(command, L"image")) { forArgumentsParsing = line; knownType = 4; }
+                                    else if (nss::Command(command, L"@dialogue")) { forArgumentsParsing = line; knownType = 5; }
+                                    else if (nss::Command(command, L"@name")) { forArgumentsParsing = line; knownType = 6; }
                                     else if (nss::ContainsUsefulInformation(command))
                                     {
                                         knownType = 0;
-                                        if (scope->data != nullptr)
+                                        if (scope.front() != nullptr)
                                         {
                                             if (nss::Command(command, L"left:") || nss::Command(command, L"left "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"right:") || nss::Command(command, L"right "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"top:") || nss::Command(command, L"top "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"bottom:") || nss::Command(command, L"bottom "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"width:") || nss::Command(command, L"width "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"height:") || nss::Command(command, L"height "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"posx:") || nss::Command(command, L"positionx:") ||
                                                      nss::Command(command, L"posx ") || nss::Command(command, L"positionx "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.posXS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.posXS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"posy:") || nss::Command(command, L"positiony:") ||
                                                      nss::Command(command, L"posy ") || nss::Command(command, L"positiony "))
                                             {
                                                 nss::SkipSpaces(command);
-                                                scope->data->constrains.posYS = nss::ParseAsMaybeQuoteStringFull(command);
+                                                scope.front()->constrains.posYS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
                                             else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:")
                                                      || nss::Command(command, L"alpha ") || nss::Command(command, L"maxalpha "))
                                             {
                                                 int possibleValue = nss::ParseAlpha(command);
                                                 if (possibleValue != -1)
-                                                    scope->data->maxAlpha = possibleValue;
+                                                    scope.front()->maxAlpha = possibleValue;
                                             }
                                             else if (nss::Command(command, L"fit:") || nss::Command(command, L"fitmode:")
                                                      || nss::Command(command, L"fit ") || nss::Command(command, L"fitmode "))
                                             {
                                                 int possibleValue = nss::ParseAlpha(command);
                                                 if (possibleValue != -1)
-                                                    scope->data->maxAlpha = possibleValue;
+                                                    scope.front()->maxAlpha = possibleValue;
                                             }
                                             else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") ||
                                                      nss::Command(command, L"color ") || nss::Command(command, L"colour ") ||
@@ -1316,14 +1203,14 @@ namespace ns
                                             {
                                                 sf::Color possibleColor = nss::ParseColor(command);
                                                 if (possibleColor.a != 255)
-                                                    scope->data->SetColor(possibleColor);
+                                                    scope.front()->SetColor(possibleColor);
                                             }
                                             else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") ||
                                                      nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour ") ||
                                                      nss::Command(command, L"outline:") || nss::Command(command, L"outlinecolor:") ||
                                                      nss::Command(command, L"ocolor:") || nss::Command(command, L"ocolour:"))
                                             {
-                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
                                                 if (textPtr != nullptr)
                                                 {
                                                     sf::Color possibleColor = nss::ParseColor(command);
@@ -1333,7 +1220,7 @@ namespace ns
                                             }
                                             else if (nss::Command(command, L"thickness ") || nss::Command(command, L"thickness:"))
                                             {
-                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
                                                 if (textPtr != nullptr)
                                                 {
                                                     float thickness = nss::ArgumentAsFloat(command);
@@ -1344,7 +1231,7 @@ namespace ns
                                             else if (nss::Command(command, L"size ") || nss::Command(command, L"size:") ||
                                                      nss::Command(command, L"charactersize ") || nss::Command(command, L"charactersize:"))
                                             {
-                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
                                                 if (textPtr != nullptr)
                                                 {
                                                     unsigned int characterSize = nss::ArgumentAsInt(command);
@@ -1355,7 +1242,7 @@ namespace ns
                                             else if (nss::Command(command, L"font ") || nss::Command(command, L"font:") ||
                                                      nss::Command(command, L"fontname ") || nss::Command(command, L"fontname:"))
                                             {
-                                                GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(scope->data);
+                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
                                                 if (textPtr != nullptr)
                                                 {
                                                     std::wstring fontName = nss::ParseAsMaybeQuoteStringFull(command);
@@ -1370,20 +1257,13 @@ namespace ns
                             else
                             {
                                 parsingGUI = false;
-                                scope = new List<GUIObject>();
+                                scope.push_back(nullptr);
                                 knownType = 0;
                             }
                         }
                     }
                     else
                         eof = true;
-                }
-                
-                while (scope != nullptr)
-                {
-                    List<GUIObject>* next = scope->next;
-                    delete scope;
-                    scope = next;
                 }
             }
             wif.close();
@@ -1392,7 +1272,7 @@ namespace ns
         }
         void GUISystem::PrintIerarchy()
         {
-            cout << "GUISystem {" << endl;
+            /*cout << "GUISystem {" << endl;
             for (List<GUIObject>* list = guiObjects; list != nullptr; list = list->next)
             {
                 cout << "---GUIObject {" << endl;
@@ -1415,7 +1295,7 @@ namespace ns
                     }
                 cout << "---}" << endl;
             }
-            cout << "}" << endl;
+            cout << "}" << endl;*/
         }
         
         

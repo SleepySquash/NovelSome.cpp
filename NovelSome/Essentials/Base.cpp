@@ -13,6 +13,34 @@ namespace ns
 {
     namespace base
     {
+        std::string utf8(const std::wstring& str)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.to_bytes(str);
+        }
+        std::wstring utf16(const std::string& str)
+        {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.from_bytes(str);
+        }
+        std::string utf8(const wchar_t& wchar)
+        {
+            std::wstring str = L"";
+            str[0] = wchar;
+            
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.to_bytes(str);
+        }
+        std::wstring utf16(const char& wchar)
+        {
+            std::string str = "";
+            str[0] = wchar;
+            
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            return converter.from_bytes(str);
+        }
+        
+        
 #ifdef _WIN32
 #include <direct.h>
         std::wstring GetCurrentWorkingDir( void )
@@ -36,6 +64,81 @@ namespace ns
             return wcurrent_working_dir+L'\\';
         }
 #endif
+        bool FileExists(std::wstring path)
+        {
+#ifdef _WIN32
+            return _waccess_s(path.c_str(), 0) == 0;
+#else
+            struct stat buffer;
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+            std::string u8str = converter.to_bytes(path);
+            return (stat (u8str.c_str(), &buffer) == 0);
+#endif
+        }
+        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath)
+        {
+            if (!FileExists(currentPath))
+            {
+                std::wstring getExtention = GetExtentionFromString(currentPath);
+                std::wstring woExtention = GetStringWithNoExtention(currentPath, getExtention);
+                
+                if (FileExists(woExtention + L"@3x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@2x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@1x" + getExtention))
+                    return true;
+                else if (FileExists(woExtention + L"@0x" + getExtention))
+                    return true;
+            }
+            else
+                return true;
+            
+            return false;
+        }
+        /// Thanks to Maxim Suslov ( https://stackoverflow.com/users/3364871/maxim-suslov ) ///
+        bool CreateDirectory(const std::wstring& path)
+        {
+#ifdef _WIN32
+            int ret = _wmkdir(path.c_str());
+#else
+            std::string upath = utf8(path);
+            mode_t mode = 0755;
+            int ret = mkdir(upath.c_str(), mode);
+#endif
+            if (ret == 0)
+                return true;
+            
+            switch (errno)
+            {
+                case ENOENT:
+                    // parent didn't exist, try to create it
+                {
+                    int pos = path.find_last_of('/');
+                    if (pos == std::string::npos)
+#ifdef _WIN32
+                        pos = path.find_last_of('\\');
+                    if (pos == std::string::npos)
+#endif
+                        return false;
+                    if (!CreateDirectory( path.substr(0, pos) ))
+                        return false;
+                }
+                    // now, try to create again
+#ifdef _WIN32
+                    return (0 == _wmkdir(path.c_str()));
+#else
+                    return (0 == mkdir(upath.c_str(), mode));
+#endif
+                    
+                case EEXIST:
+                    // done!
+                    return FileExists(path);
+                    
+                default:
+                    return false;
+            }
+        }
         
         
         
@@ -55,9 +158,6 @@ namespace ns
             
             return folder;
         }
-        
-        
-        
         std::wstring GetExtentionFromString(std::wstring filename)
         {
             for (int i = filename.size(); i >= 0; --i)
@@ -69,9 +169,6 @@ namespace ns
                 }
             return L"";
         }
-        
-        
-        
         std::wstring GetStringWithNoExtention(std::wstring filename)
         {
             std::wstring returned = L"";
@@ -108,41 +205,6 @@ namespace ns
             }
             
             return size;
-        }
-        
-        
-        
-        bool FileExists(std::wstring path)
-        {
-#ifdef _WIN32
-            return _waccess_s(path.c_str(), 0) == 0;
-#else
-            struct stat buffer;
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(path);
-            return (stat (u8str.c_str(), &buffer) == 0);
-#endif
-        }
-        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath)
-        {
-            if (!FileExists(currentPath))
-            {
-                std::wstring getExtention = GetExtentionFromString(currentPath);
-                std::wstring woExtention = GetStringWithNoExtention(currentPath, getExtention);
-                
-                if (FileExists(woExtention + L"@3x" + getExtention))
-                    return true;
-                else if (FileExists(woExtention + L"@2x" + getExtention))
-                    return true;
-                else if (FileExists(woExtention + L"@1x" + getExtention))
-                    return true;
-                else if (FileExists(woExtention + L"@0x" + getExtention))
-                    return true;
-            }
-            else
-                return true;
-            
-            return false;
         }
         
         
@@ -343,32 +405,7 @@ namespace ns
         
         
         
-        std::string ConvertToUTF8(const std::wstring& str)
-        {
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.to_bytes(str);
-        }
-        std::string ConvertToUTF8(const wchar_t& wchar)
-        {
-            std::wstring str = L"";
-            str[0] = wchar;
-            
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.to_bytes(str);
-        }
-        std::wstring ConvertFromUTF8(const std::string& str)
-        {
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.from_bytes(str);
-        }
-        std::wstring ConvertFromUTF8(const char& wchar)
-        {
-            std::string str = "";
-            str[0] = wchar;
-            
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.from_bytes(str);
-        }
+        
         int ConvertToInt(const std::wstring& stringValue)
         {
             std::string parsingString = "";
