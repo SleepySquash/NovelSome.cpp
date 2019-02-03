@@ -1,0 +1,29 @@
+name Юи
+display "Юи"
+
+color 255 192 203
+outline 255 255 255
+thickness 1
+
+
+state normal_c as close
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 1.73
+
+state normal_n as normal
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 1.25
+
+state normal_f as far
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 1
+
+state normal
+    "d266890959ebbd6b808b7f3f00716edd.png"
+    scale 1
+    parallax far
+
+state "nopantyhose"
+    sprite "d266890959ebbd6b808b7f3f00716ede.png"
+    scale 1
+    parallax far

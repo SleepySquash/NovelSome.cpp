@@ -1,0 +1,221 @@
+name "Default"
+
+font: "Pacifica.ttf"
+
+dialogue
+{
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
+    insecond: 0.03
+    mode: insecond
+
+    ladd: "
+    radd: "
+    shift: 15
+
+    fill: white
+    outline: black
+    thickness: 1
+
+    font: "NotoSansCJK-Regular.ttc"
+    size: 30
+}
+
+choose
+{
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+}
+
+background
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+character
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+music
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+ambient
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+sound
+{
+    appearTime: 0
+    disappearTime: 0
+    volume 100
+}
+
+
+
+
+//или просто menu {
+gui menu
+{
+    //...
+}
+
+gui choose
+{
+    rectangle as Choose
+    {
+        alpha: .8
+
+        posx: .width/2 - 280
+        posy: .height/2 - 160
+        width: 560
+        height: 320
+    }
+
+    text "СУДЬБОНОСНОЕ РЕШЕНИЕ"
+    {
+        posx: .width/2 - @text.width/2
+        posy: .height/4
+
+        fill: white
+        outline: magenta
+        thickness: 1
+        size: 48
+    }
+}
+
+
+gui gamepause
+{
+    rectangle
+    {
+        alpha: .8
+    }
+
+    text "Game pause"
+    {
+        posx: .width/2 - @text.width/2
+        posy: .height/4.5
+
+        fill: white
+        outline: red
+        thickness: 2
+        size: 96
+    }
+}
+
+
+
+gui dialogue
+{
+    rectangle as Dialogue
+    {
+        alpha: .66
+
+        left: 30
+        right: 30
+        bottom: 10
+        //height: .height/2
+        //posy: .height/4
+        height: .height/4.6
+
+        @dialogue
+        {
+            left: 10
+            right: 10
+            top: 10
+            //width: ".width - 20"
+
+            alpha: .9
+            color: magenta
+        }
+
+        rectangle as Name
+        {
+            maxAlpha: .66
+
+            left: 10
+            //top: -15 - @name.height
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
+
+            @name
+            {
+                left: 7
+                bottom: 5
+            }
+        }
+    }
+}
+
+
+//bottom: - это отступ от нижнего края вышестоящего объекта
+//top: - это отступ от верхнего края вышестоящего объекта
+//чтобы объект был за пределами вышестоящего, нужно:
+// 1) работать с posy
+// 2) или сделать отступ от верхнего края (top:) просто-напросто отрицательным
+// 3) или сделать отступ от нижнего края (bottom:) равным высоте вышестоящего объекта плюс какие-то значения
+
+
+//или просто dialogue {
+gui sdialogue
+{
+    //глобальные задания переменных на данный скоп
+    font: "NotoSansCJK-Regular.ttc"
+    characterSize: 30
+
+    rectangle {
+        color black
+        alpha: 170
+
+        left: 30
+        right: 30
+        bottom: 10
+        height: ".height/5 - 10"
+
+        text @dialogue {
+            left: 10
+            top: 10
+            width: .width - 20
+
+            font: "NotoSansCJK-Regular.ttc"
+            size: 30
+        }
+
+        rectangle as Name {
+            color: black
+            maxAlpha: 170
+
+            left: 10
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
+
+            fadings as nameRect
+
+            text @name {
+                left: 5
+                top: 5
+                width: .width - 20
+
+                font: "NotoSansCJK-Regular.ttc"
+                size: 30
+            }
+        }
+    }
+}
