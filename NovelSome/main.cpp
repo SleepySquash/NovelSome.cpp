@@ -343,6 +343,7 @@ int main()
 #endif
     }
     
+    bool displayWindow{ true };
     sf::Clock clock;
     window.setActive();
     while (window.isOpen())
@@ -353,8 +354,8 @@ int main()
             switch (event.type)
             {
                 case sf::Event::Closed: window.close(); break;
-                case sf::Event::GainedFocus: window.setFramerateLimit(gs::framerateLimit); break;
-                case sf::Event::LostFocus: window.setFramerateLimit(gs::framerateNoFocus); break;
+                case sf::Event::GainedFocus: displayWindow = true; window.setFramerateLimit(gs::framerateLimit); break;
+                case sf::Event::LostFocus: displayWindow = false; window.setFramerateLimit(gs::framerateNoFocus); break;
                     
                 case sf::Event::MouseMoved:
                 case sf::Event::MouseButtonPressed:
@@ -388,7 +389,7 @@ int main()
                             }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 16");
+                                Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 17");
 #ifdef SFML_SYSTEM_IOS
                                 Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
@@ -416,11 +417,22 @@ int main()
             }
         }
         
+#ifdef SFML_SYSTEM_IOS
+        if (displayWindow)
+        {
+            system.Update(clock.restart());
+            
+            window.clear();
+            system.Draw(&window);
+            window.display(); //TODO: Might crash there if app is not running
+        }
+#else
         system.Update(clock.restart());
         
         window.clear();
         system.Draw(&window);
         window.display();
+#endif
     }
     
     system.clear();

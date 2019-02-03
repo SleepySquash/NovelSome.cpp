@@ -300,7 +300,7 @@ namespace ns
 #ifdef _WIN32
                 std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
                 if (!ifStream.is_open())
-                    std::cerr << "Unable to open file: " << base::ConvertToUTF8(fullPath) << std::endl;
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
                 else
                 {
                     auto filesize = ifStream.tellg();

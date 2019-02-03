@@ -1,17 +1,8 @@
 "..."
-
-//sound "no.ogg"
-//"..."
-//sound "no.ogg"
-
 var backgroundNeko = "Неко.jpg"
 var infoInteger = 123
 var booleanyeah = true
 
-//debug::outputVariables
-//"."
-//background "ItJyTkXF_n4.jpg"
-//"..."
 Background "Неко.jpg"
 
 Юи "Nya :3"
@@ -66,9 +57,6 @@ choice "Рей лучше Аски."
 "Привет, я очень длинный текст. Такой длинный, что до невозможности длинный. ДжоДжо хочу смотреть, а ещё хочу шаверму очень сильно хочу есть шаверму ууу вкусная шаверма аааа вообще я хавать хочу сильно, так что пойду лучше есть, а не программировать этот ваш НовелСам."
 
 юи = "Йей :3"
-
-//debug::outputVariables
-
 юи = 0
 infoInteger = -23
 booleanyeah = false

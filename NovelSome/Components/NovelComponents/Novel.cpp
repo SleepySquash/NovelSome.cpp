@@ -68,7 +68,7 @@ namespace ns
         {
             while (lines.size() <= preloadLinesAmount && !wif.eof())
             {
-                std::getline(wif, line); //cout << "ANALYZING " << base::utf8(line);
+                std::getline(wif, line);
                 nss::CommandSettings settings;
                 settings.Command(line);
                 
@@ -82,11 +82,9 @@ namespace ns
                 {
                     std::wstring filePath = nss::ParseAsQuoteString(settings);
                     ic::PreloadTexture(folderPath + filePath, 1);
-                    //cout << ">>>>> background preload" << endl;
                 }
                 else if (nss::Command(settings, L"show "))
                 {
-                    //cout << ">>>>> character preload" << endl;
                     std::wstring possibleName = nss::ParseUntil(settings, ' ');
                     if (possibleName.length() != 0)
                     {
@@ -180,14 +178,9 @@ namespace ns
                 {
                     std::wstring filePath = nss::ParseAsQuoteString(settings);
                     sc::PreloadSound(folderPath + filePath);
-                    //cout << ">>>>> sound preload" << endl;
                 }
                 
-                if (shouldPush)
-                {
-                    lines.push_front(line);
-                    //cout << "ADDING " << base::utf8(line);
-                }
+                if (shouldPush) lines.push_front(line);
             }
         }
         void Novel::Draw(sf::RenderWindow* window)

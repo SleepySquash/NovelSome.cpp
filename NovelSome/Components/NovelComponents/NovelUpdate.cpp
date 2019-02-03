@@ -957,11 +957,6 @@ namespace ns
                     ///----------------------------------------DEBUG----------------------------------------
                     else if (nss::Command(command, L"debug::outputvariables"))
                     {
-                        ic::PreloadImage(GetFolderPath() + L"ItJyTkXF_n4.jpg", 1);
-                        ic::PreloadImage(GetFolderPath() + L"Неко.jpg", 1);
-                        ic::PreloadImage(GetFolderPath() + L"Characters/d266890959ebbd6b808b7f3f00716edd.png", 2);
-                        ic::PreloadImage(GetFolderPath() + L"Characters/d266890959ebbd6b808b7f3f00716ede.png", 2);
-                        
                         cout << endl;
                         for (const auto& key : localVariables)
                             if (key.second != nullptr)
