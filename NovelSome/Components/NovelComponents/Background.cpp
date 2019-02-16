@@ -27,25 +27,6 @@ namespace ns
                     
                     Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
                 }
-                /*sf::Image* imagePtr = ic::LoadImage(novel->GetFolderPath() + path, 1);
-                if (imagePtr != nullptr)
-                {
-                    imagePath = novel->GetFolderPath() + sf::String(path);
-                    bool textureLoaded{ false };
-                    if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
-                        textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
-                    else
-                        textureLoaded = texture.loadFromImage(*imagePtr);
-                    
-                    if (textureLoaded)
-                    {
-                        spriteLoaded = true;
-                        texture.setSmooth(true);
-                        sprite.setTexture(texture);
-                        
-                        Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
-                    }
-                }*/
                 
                 if (!spriteLoaded)
                 {
@@ -67,7 +48,7 @@ namespace ns
         {
             switch (mode)
             {
-                case appearing:
+                case appearing: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -86,7 +67,7 @@ namespace ns
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case disappearing:
+                case disappearing: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -105,7 +86,7 @@ namespace ns
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case deprecated: this->GetNovelSystem()->PopComponent(this); break;
+                case deprecated: gs::requestWindowRefresh = true; this->GetNovelSystem()->PopComponent(this); break;
                 default: break;
             }
         }

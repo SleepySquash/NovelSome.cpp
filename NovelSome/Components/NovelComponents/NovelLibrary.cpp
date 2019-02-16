@@ -56,7 +56,8 @@ namespace ns
         }
         void Skin::LoadFromFile(const std::wstring& fileName)
         {
-            std::wstring fullPath = sf::String(resourcePath()) + fileName;
+            std::wstring fullPath = fileName;
+            if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
             
             std::wifstream wif;
 #ifdef _WIN32
@@ -250,6 +251,8 @@ namespace ns
                             {
                                 if (settingScope == L"dialogue")
                                     dialogue.fontName = possibleValue;
+                                else if (settingScope == L"choose")
+                                    choose.fontName = possibleValue;
                                 else
                                     defaultFontName = possibleValue, dialogue.fontName = possibleValue;
                             }
@@ -454,23 +457,24 @@ namespace ns
 #define _closedir closedir
 #endif
                 
-                sf::String novelPath{ executablePath() + novel->GetFolderPath() };
+                std::wstring novelPath{ novel->GetFolderPath() };
+                if (!base::FileExists(novelPath)) novelPath = base::utf16(resourcePath()) + novelPath;
                 
-                list<sf::String> folders;
-                folders.push_back("");
+                list<std::wstring> folders;
+                folders.push_back(L"");
                 
-                for (list<sf::String>::iterator currentFolder = folders.begin(); currentFolder != folders.end(); ++currentFolder)
+                for (list<std::wstring>::iterator currentFolder = folders.begin(); currentFolder != folders.end(); ++currentFolder)
                 {
-                    sf::String fullpath{ novelPath + *currentFolder };
+                    std::wstring fullpath{ novelPath + *currentFolder };
 #ifdef _WIN32
-                    if ((dir = _opendir(fullpath.toWideString().c_str())) != NULL)
+                    if ((dir = _opendir(fullpath.c_str())) != NULL)
 #else
-                        if ((dir = _opendir(fullpath.toAnsiString().c_str())) != NULL)
+                        if ((dir = _opendir(base::utf8(fullpath).c_str())) != NULL)
 #endif
                         {
                             while ((ent = _readdir(dir)) != NULL)
                             {
-                                std::wstring entryName{ sf::String(ent->d_name) };
+                                std::wstring entryName{ base::utf16(ent->d_name) };
                                 if (entryName != L"." && entryName != L"..")
                                 {
                                     std::wstring extention = ns::base::GetExtentionFromString(entryName);
@@ -478,18 +482,16 @@ namespace ns
                                     else if (extention == L".nschar")
                                     {
                                         std::wifstream wif;
-                                        sf::String filePath = (fullpath + entryName);
+                                        std::wstring filePath = (fullpath + entryName);
 #ifdef _WIN32
                                         wif.open(filePath.toWideString());
 #else
-                                        std::wstring _wpath = filePath;
-                                        std::string _path(_wpath.begin(), _wpath.end());
-                                        wif.open(_path);
+                                        wif.open(base::utf8(filePath));
 #endif
                                         wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
                                         
                                         if (!wif.is_open())
-                                            cout << "Warning :: NovelComponent :: File couldn't be opened, path: " << filePath.toAnsiString() << endl;
+                                            cout << "Warning :: NovelComponent :: File couldn't be opened, path: " << base::utf8(filePath) << endl;
                                         else
                                         {
                                             bool eof{ false };
@@ -545,7 +547,7 @@ namespace ns
                                                     {
                                                         std::wstring possibleThickness = nss::ParseUntil(command, '\0');
                                                         if (possibleThickness.length() != 0)
-                                                            charData->outlineThickness = ns::base::ConvertToFloat(possibleThickness);
+                                                            charData->outlineThickness = ns::base::atof(possibleThickness);
                                                     }
                                                 }
                                                 else
@@ -560,14 +562,13 @@ namespace ns
 #else
                                                 std::string entDNameString(ent->d_name);
                                                 std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-                                                charData->name = ns::base::GetStringWithNoExtention(converter.from_bytes(entDNameString));
+                                                charData->name = base::GetStringWithNoExtention(converter.from_bytes(entDNameString));
 #endif
                                             }
                                             if (charData->displayName == L"")
                                                 charData->displayName = charData->name;
                                             
-                                            charData->filePath = *currentFolder + entryName;
-                                            
+                                            charData->filePath = std::wstring(*currentFolder) + entryName;
                                             if (novel->library.characterLibrary.find(charData->name) != novel->library.characterLibrary.end())
                                             {
                                                 std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Character with following name is already placed: '" << charData->name.toAnsiString() << '\'' << std::endl;
@@ -587,13 +588,11 @@ namespace ns
                                     }
                                 }
                             }
-                            if (ent != NULL)
-                                free(ent);
+                            if (ent != NULL) free(ent);
                             ent = NULL;
                             _closedir(dir);
                         }
-                        else
-                            std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Could not open directory: '" << fullpath.toAnsiString() << '\'' << std::endl;
+                        else std::cout << "Warning :: NovelLibrary :: ScanForCharacters :: Could not open directory: '" << base::utf8(fullpath) << '\'' << std::endl;
                 }
             }
             else

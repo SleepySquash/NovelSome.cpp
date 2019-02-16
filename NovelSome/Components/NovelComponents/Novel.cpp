@@ -12,15 +12,13 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Novel::Novel(sf::String path) : nsdataPath(path)
+        Novel::Novel(const std::wstring& path) : nsdataPath(path)
         {
-            //ns::ic::FreeImages();
-            
             folderPath = ns::base::GetFolderPath(path);
             
             localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
             localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 16"))});
+            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
             
             library.SetNovel(this);
             library.ScanForCharacters();
@@ -29,26 +27,27 @@ namespace ns
             skin.dialogue.gui.SetNovel(this);
             skin.LoadFromFile(folderPath + L"skin.nskin");
             
-            sf::String filePath = (resourcePath() + path);
+            std::wstring filePath = path;
+            if (!base::FileExists(path)) filePath = base::utf16(resourcePath()) + filePath;
 #ifdef _WIN32
-            wif.open(filePath.toWideString());
+            wif.open(filePath);
 #else
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(filePath.toWideString());
-            wif.open(u8str);
+            wif.open(base::utf8(filePath));
 #endif
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
             if (!(fileOpened = wif.is_open()))
-                cout << "Error :: NovelComponent :: File couldn't be opened, path: " << path.toAnsiString() << endl;
+                cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(path) << endl;
         }
         Novel::~Novel()
         {
+            entity->SendMessage(MessageHolder("NovelComponents :: Novel :: Returning to the menu"));
+            
             wif.close();
             layers.clear();
             skin.dialogue.gui.Clear();
             skin.gamePauseGUI.Clear();
-            ns::ic::FreeImages();
+            //ns::ic::FreeImages();
             
             for (auto& key : localVariables)
                 if (key.second != nullptr)
@@ -78,6 +77,7 @@ namespace ns
                 else if (!nss::ContainsUsefulInformation(line)) shouldPush = false;
                 else if (nss::Command(settings, L"background hide")) { }
                 else if (nss::Command(settings, L"hide ")) { }
+                else if (nss::Command(settings, L"sound stop ")) { }
                 else if (nss::Command(settings, L"background add ") || nss::Command(settings, L"background "))
                 {
                     std::wstring filePath = nss::ParseAsQuoteString(settings);
@@ -210,7 +210,7 @@ namespace ns
                 onHold.erase(it);
             }
         }
-        sf::String Novel::GetFolderPath() { return folderPath; }
+        std::wstring Novel::GetFolderPath() { return folderPath; }
         
         
         

@@ -65,6 +65,7 @@ namespace ns
         while (it != objects.end()) { (*it)->Destroy(); delete (*it); objects.erase(it++); }
         objects.clear();
     }
+    bool NovelSystem::empty() { return objects.empty(); }
     void NovelSystem::ChangePriorityOf(NovelObject* component, int priority)
     {
         std::list<NovelObject*>::iterator it = std::find(objects.begin(), objects.end(), component);

@@ -1,0 +1,157 @@
+font: "Pacifica.ttf"
+
+dialogue
+{
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
+    insecond: 0.03
+    mode: insecond
+
+    ladd: "
+    radd: "
+    shift: 15
+
+    fill: white
+    outline: black
+    thickness: 1
+
+    font: "NotoSansCJK-Regular.ttc"
+    size: 30
+}
+
+choose
+{
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
+    font: "NotoSansCJK-Regular.ttc"
+}
+
+background
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+character
+{
+    appearTime: 0.6
+    disappearTime: 0.6
+    alpha: 1.
+}
+
+music
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+ambient
+{
+    appearTime: 1
+    disappearTime: 1
+    volume 100
+}
+
+sound
+{
+    appearTime: 0
+    disappearTime: 0
+    volume 100
+}
+
+
+
+
+
+gui choose
+{
+    rectangle as Choose
+    {
+        alpha: .8
+
+        posx: .width/2 - 280
+        posy: .height/2 - 160
+        width: 560
+        height: 320
+    }
+
+    text "Что лучше: попки или сиськи?"
+    {
+        posx: .width/2 - @text.width/2
+        posy: .height/4
+
+        fill: white
+        thickness: 1
+        size: 46
+    }
+}
+
+
+gui gamepause
+{
+    rectangle
+    {
+        alpha: .8
+    }
+
+    text "Game pause"
+    {
+        posx: .width/2 - @text.width/2
+        posy: .height/4.5
+
+        fill: white
+        outline: red
+        thickness: 2
+        size: 96
+    }
+}
+
+
+
+gui dialogue
+{
+    rectangle as Dialogue
+    {
+        alpha: .66
+
+        left: 30
+        right: 30
+        bottom: 10
+        height: .height/2
+        posy: .height/4
+
+        @dialogue
+        {
+            left: 10
+            right: 10
+            top: 10
+            //width: ".width - 20"
+
+            alpha: .9
+            color: magenta
+        }
+
+        rectangle as Name
+        {
+            maxAlpha: .66
+
+            left: 10
+            //top: -15 - @name.height
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
+
+            @name
+            {
+                left: 7
+                bottom: 5
+            }
+        }
+    }
+}

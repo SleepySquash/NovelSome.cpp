@@ -12,43 +12,45 @@ namespace ns
 {
     sf::Font* FontCollector::GetFont(const std::wstring& fontName)
     {
-        if (fonts.find(fontName) != fonts.end())
-            return fonts.at(fontName);
+        if (fonts.find(fontName) != fonts.end()) return fonts.at(fontName);
+        else if (fonts.find(L"Data/Fonts/" + fontName) != fonts.end()) return fonts.at(L"Data/Fonts/" + fontName);
         else
         {
-            sf::Font* font = new sf::Font();
-            
-            sf::String fullPath = sf::String(resourcePath()) + L"Data/Fonts/" + fontName;
-            bool fontLoaded{ false };
-#ifdef _WIN32
-            //TODO: Fix memory leak
-            std::ifstream ifStream(fullPath.toWideString(), std::ios::binary | std::ios::ate);
-            if (!ifStream.is_open())
-                std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
-            else
+            std::wstring fullPath = fontName;
+            if (!base::FileExists(fontName)) fullPath = base::utf16(resourcePath()) + L"Data/Fonts/" + fontName;
+            if (base::FileExists(fullPath))
             {
-                auto filesize = ifStream.tellg();
-                char* fileInMemory = new char[static_cast<unsigned int>(filesize)];
-                ifStream.seekg(0, std::ios::beg);
-                ifStream.read(fileInMemory, filesize);
-                ifStream.close();
+                sf::Font* font = new sf::Font();
+                bool fontLoaded{ false };
+    #ifdef _WIN32
+                //TODO: Fix memory leak
+                std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
+                if (!ifStream.is_open())
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+                else
+                {
+                    auto filesize = ifStream.tellg();
+                    char* fileInMemory = new char[static_cast<unsigned int>(filesize)];
+                    ifStream.seekg(0, std::ios::beg);
+                    ifStream.read(fileInMemory, filesize);
+                    ifStream.close();
+                    
+                    fontLoaded = font->loadFromMemory(fileInMemory, filesize);
+                }
+    #else
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                std::string u8str = converter.to_bytes(fullPath);
+                if (!(fontLoaded = font->loadFromFile(u8str)))
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+    #endif
                 
-                fontLoaded = font->loadFromMemory(fileInMemory, filesize);
+                if (fontLoaded)
+                {
+                    fonts.emplace(L"Data/Fonts/" + fontName, font);
+                    return font;
+                }
             }
-#else
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(fullPath.toWideString());
-            if (!(fontLoaded = font->loadFromFile(u8str)))
-                std::cerr << "Unable to open file: " << fullPath.toAnsiString() << std::endl;
-#endif
-            
-            if (fontLoaded)
-            {
-                fonts.emplace(fontName, font);
-                return font;
-            }
-            else
-                return nullptr;
+            return nullptr;
         }
     }
     void FontCollector::FreeFonts()
@@ -66,6 +68,7 @@ namespace ns
     
     
     
+    bool Collector_UseFullPath = false;
     //////////////////////////////////////////
     ///
     /// Modes:
@@ -75,102 +78,105 @@ namespace ns
     ///     4 - music/ambient
     ///
     //////////////////////////////////////////
-    std::wstring PathWithResolutionDetermination(const std::wstring& imageName, unsigned int mode)
+    std::wstring PathWithFolderDetermination(const std::wstring& imageName, unsigned int mode)
     {
-        std::wstring fullPath = sf::String(resourcePath()) + imageName;
-        if (mode != 0 && !base::FileExists(fullPath))
+        std::wstring fullPath = imageName;
+        if (mode != 0 && !base::DoesFileExistWithResolutionClass(fullPath))
         {
-            std::wstring getExtention = base::GetExtentionFromString(fullPath);
-            std::wstring woExtention = base::GetStringWithNoExtention(fullPath, getExtention);
-            if (!base::FileExists(sf::String(woExtention + L"@0x" + getExtention)) &&
-                !base::FileExists(sf::String(woExtention + L"@1x" + getExtention)) &&
-                !base::FileExists(sf::String(woExtention + L"@2x" + getExtention)) &&
-                !base::FileExists(sf::String(woExtention + L"@3x" + getExtention)))
+            if (!base::DoesFileExistWithResolutionClass(base::utf16(resourcePath()) + fullPath))
             {
                 bool found{ false };
                 std::wstring onlyFolder = base::GetFolderPath(fullPath);
-                
                 std::wstring onlyFileName = L"";
-                for (unsigned long i = onlyFolder.length(); i < fullPath.length(); i++)
-                    onlyFileName += fullPath[i];
+                for (unsigned long i = onlyFolder.length(); i < fullPath.length(); i++) onlyFileName += fullPath[i];
                 
-                switch (mode)
+                for (int j = 0; j <= 1 && !found; ++j)
                 {
-                    case 1:
-                        for (int i = 0; i <= 1 && !found; i++)
-                        {
-                            std::wstring currentPath;
-                            switch (i)
+                    if (j == 1) {onlyFolder = base::utf16(resourcePath()) + onlyFolder; fullPath = base::utf16(resourcePath()) + fullPath;}
+                    switch (mode)
+                    {
+                        case 1:
+                            for (int i = 0; i <= 1 && !found; i++)
                             {
-                                case 0: currentPath = onlyFolder + L"backgrounds/" + onlyFileName; break;
-                                case 1: currentPath = onlyFolder + L"Backgrounds/" + onlyFileName; break;
-                                default: break;
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0: currentPath = onlyFolder + L"backgrounds/" + onlyFileName; break;
+                                    case 1: currentPath = onlyFolder + L"Backgrounds/" + onlyFileName; break;
+                                    default: break;
+                                }
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
                             }
-                            if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
-                        }
-                        break;
-                        
-                    case 2:
-                        for (int i = 0; i <= 3 && !found; i++)
-                        {
-                            std::wstring currentPath;
-                            switch (i)
+                            break;
+                            
+                        case 2:
+                            for (int i = 0; i <= 3 && !found; i++)
                             {
-                                case 0: currentPath = onlyFolder + L"images/" + onlyFileName; break;
-                                case 1: currentPath = onlyFolder + L"sprites/" + onlyFileName; break;
-                                case 2: currentPath = onlyFolder + L"Images/" + onlyFileName; break;
-                                case 3: currentPath = onlyFolder + L"Sprites/" + onlyFileName; break;
-                                default: break;
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0: currentPath = onlyFolder + L"images/" + onlyFileName; break;
+                                    case 1: currentPath = onlyFolder + L"sprites/" + onlyFileName; break;
+                                    case 2: currentPath = onlyFolder + L"Images/" + onlyFileName; break;
+                                    case 3: currentPath = onlyFolder + L"Sprites/" + onlyFileName; break;
+                                    default: break;
+                                }
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
                             }
-                            if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
-                        }
-                        break;
-                    case 3:
-                        for (int i = 0; i <= 5 && !found; i++)
-                        {
-                            std::wstring currentPath;
-                            switch (i)
+                            break;
+                        case 3:
+                            for (int i = 0; i <= 5 && !found; i++)
                             {
-                                case 0: currentPath = onlyFolder + L"sounds/" + onlyFileName; break;
-                                case 1: currentPath = onlyFolder + L"sound/" + onlyFileName; break;
-                                case 2: currentPath = onlyFolder + L"audio/" + onlyFileName; break;
-                                case 3: currentPath = onlyFolder + L"Sounds/" + onlyFileName; break;
-                                case 4: currentPath = onlyFolder + L"Sound/" + onlyFileName; break;
-                                case 5: currentPath = onlyFolder + L"Audio/" + onlyFileName; break;
-                                default: break;
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0: currentPath = onlyFolder + L"sounds/" + onlyFileName; break;
+                                    case 1: currentPath = onlyFolder + L"sound/" + onlyFileName; break;
+                                    case 2: currentPath = onlyFolder + L"audio/" + onlyFileName; break;
+                                    case 3: currentPath = onlyFolder + L"Sounds/" + onlyFileName; break;
+                                    case 4: currentPath = onlyFolder + L"Sound/" + onlyFileName; break;
+                                    case 5: currentPath = onlyFolder + L"Audio/" + onlyFileName; break;
+                                    default: break;
+                                }
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
                             }
-                            if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
-                        }
-                        break;
-                    case 4:
-                        for (int i = 0; i <= 5 && !found; i++)
-                        {
-                            std::wstring currentPath;
-                            switch (i)
+                            break;
+                        case 4:
+                            for (int i = 0; i <= 5 && !found; i++)
                             {
-                                case 0: currentPath = onlyFolder + L"music/" + onlyFileName; break;
-                                case 1: currentPath = onlyFolder + L"ambient/" + onlyFileName; break;
-                                case 2: currentPath = onlyFolder + L"audio/" + onlyFileName; break;
-                                case 3: currentPath = onlyFolder + L"Music/" + onlyFileName; break;
-                                case 4: currentPath = onlyFolder + L"Ambient/" + onlyFileName; break;
-                                case 5: currentPath = onlyFolder + L"Audio/" + onlyFileName; break;
-                                default: break;
+                                std::wstring currentPath;
+                                switch (i)
+                                {
+                                    case 0: currentPath = onlyFolder + L"music/" + onlyFileName; break;
+                                    case 1: currentPath = onlyFolder + L"ambient/" + onlyFileName; break;
+                                    case 2: currentPath = onlyFolder + L"audio/" + onlyFileName; break;
+                                    case 3: currentPath = onlyFolder + L"Music/" + onlyFileName; break;
+                                    case 4: currentPath = onlyFolder + L"Ambient/" + onlyFileName; break;
+                                    case 5: currentPath = onlyFolder + L"Audio/" + onlyFileName; break;
+                                    default: break;
+                                }
+                                if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
                             }
-                            if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
-                        }
-                        break;
-                    default: break;
+                            break;
+                        default: break;
+                    }
                 }
-            }
+            } else fullPath = base::utf16(resourcePath()) + fullPath;
         }
         
+        return fullPath;
+    }
+    std::wstring PathWithResolutionDetermination(const std::wstring& imageName, unsigned int mode)
+    {
+        std::wstring fullPath = PathWithFolderDetermination(imageName, mode);
         if (gs::isResolutionClassEnabled)
         {
             std::wstring getExtention = base::GetExtentionFromString(fullPath);
-            std::wstring woExtention = base::GetStringWithNoExtention(fullPath, getExtention);
+            std::wstring woExtention = base::GetStringWithNoExtention(fullPath);
             
             switch (ns::gs::resolutionClass)
             {
+                case -1: break;
                 case 0:
                     if (base::FileExists(woExtention + L"@0x" + getExtention)) fullPath = woExtention + L"@0x" + getExtention;
                     else if (base::FileExists(woExtention + L"@1x" + getExtention)) fullPath = woExtention + L"@1x" + getExtention;
@@ -199,7 +205,13 @@ namespace ns
                     else if (base::FileExists(woExtention + L"@0x" + getExtention)) fullPath = woExtention + L"@0x" + getExtention;
                     break;
                     
-                default: break;
+                default:
+                    if (base::FileExists(woExtention + L"@" + std::to_wstring(ns::gs::resolutionClass) + L"x" + getExtention)) fullPath = woExtention + L"@" + std::to_wstring(ns::gs::resolutionClass) + L"x" + getExtention;
+                    else if (base::FileExists(woExtention + L"@3x" + getExtention)) fullPath = woExtention + L"@3x" + getExtention;
+                    else if (base::FileExists(woExtention + L"@2x" + getExtention)) fullPath = woExtention + L"@2x" + getExtention;
+                    else if (base::FileExists(woExtention + L"@1x" + getExtention)) fullPath = woExtention + L"@1x" + getExtention;
+                    else if (base::FileExists(woExtention + L"@0x" + getExtention)) fullPath = woExtention + L"@0x" + getExtention;
+                    break;
             }
         }
         else
@@ -207,7 +219,7 @@ namespace ns
             if (!base::FileExists(fullPath))
             {
                 std::wstring getExtention = base::GetExtentionFromString(fullPath);
-                std::wstring woExtention = base::GetStringWithNoExtention(fullPath, getExtention);
+                std::wstring woExtention = base::GetStringWithNoExtention(fullPath);
                 
                 if (base::FileExists(sf::String(woExtention + L"@3x" + getExtention))) fullPath = woExtention + L"@3x" + getExtention;
                 else if (base::FileExists(sf::String(woExtention + L"@2x" + getExtention))) fullPath = woExtention + L"@2x" + getExtention;
@@ -267,8 +279,32 @@ namespace ns
                     delete[] fileInMemory;
                 }
 #else
-                if (!(imageLoaded = image->loadFromFile(base::utf8(fullPath))))
-                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+#ifdef SFML_SYSTEM_ANDROID
+                if (fullPath[0] == L'/')
+                {
+                    std::ifstream ifStream(base::utf8(fullPath), std::ios::binary | std::ios::ate);
+                    if (!ifStream.is_open())
+                        std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+                    else
+                    {
+                        auto filesize = ifStream.tellg();
+                        char* fileInMemory = new char[static_cast<unsigned int>(filesize)];
+                        ifStream.seekg(0, std::ios::beg);
+                        ifStream.read(fileInMemory, filesize);
+                        ifStream.close();
+                        
+                        imageLoaded = image->loadFromMemory(fileInMemory, filesize);
+                        delete[] fileInMemory;
+                    }
+                }
+                else
+                {
+#endif
+                    if (!(imageLoaded = image->loadFromFile(base::utf8(fullPath))))
+                        std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+#ifdef SFML_SYSTEM_ANDROID
+                }
+#endif
 #endif
                 
                 if (imageLoaded)
@@ -304,8 +340,32 @@ namespace ns
                 delete[] fileInMemory;
             }
 #else
-            if (!(imageLoaded = image->loadFromFile(base::utf8(fullPath))))
-                std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+#ifdef SFML_SYSTEM_ANDROID
+            if (fullPath[0] == L'/')
+            {
+                std::ifstream ifStream(base::utf8(fullPath), std::ios::binary | std::ios::ate);
+                if (!ifStream.is_open())
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+                else
+                {
+                    auto filesize = ifStream.tellg();
+                    char* fileInMemory = new char[static_cast<unsigned int>(filesize)];
+                    ifStream.seekg(0, std::ios::beg);
+                    ifStream.read(fileInMemory, filesize);
+                    ifStream.close();
+                    
+                    imageLoaded = image->loadFromMemory(fileInMemory, filesize);
+                    delete[] fileInMemory;
+                }
+            }
+            else
+            {
+#endif
+                if (!(imageLoaded = image->loadFromFile(base::utf8(fullPath))))
+                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
+#ifdef SFML_SYSTEM_ANDROID
+            }
+#endif
 #endif
             
             if (imageLoaded)
@@ -351,6 +411,51 @@ namespace ns
         if (images.find(imageName) == images.end())
             if (threads.find(imageName) == threads.end())
                 threads.emplace(imageName, std::thread(&ThreadImage, imageName, mode, destroyable, true));
+    }
+    sf::Texture* ImageCollector::RequestHigherTexture(const std::wstring& imageName, unsigned int mode)
+    {
+        if (images.find(imageName) == images.end())
+        {
+            if (threads.find(imageName) == threads.end())
+            {
+                if (gs::isResolutionClassEnabled && gs::resolutionClass == 0) return LoadTexture(imageName, mode);
+                
+                std::wstring fullPath = PathWithFolderDetermination(imageName, mode);
+                std::wstring getExtention = base::GetExtentionFromString(fullPath);
+                std::wstring woExtention = base::GetStringWithNoExtention(fullPath);
+                if (base::FileExists(woExtention + L"@0x" + getExtention))
+                {
+                    std::wstring imageExtention = base::GetExtentionFromString(imageName);
+                    std::wstring imageWoExtention = base::GetStringWithNoExtention(imageName);
+                    sf::Texture* texture = LoadTexture(imageWoExtention + L"@0x" + imageExtention, mode);
+                    if (texture)
+                    {
+                        // Start loading with the help of thread
+                        
+                        return texture;
+                    }
+                    else return LoadTexture(imageName, mode);
+                }
+                else return LoadTexture(imageName, mode);
+            }
+            else
+            {
+                threads[imageName].join();
+                threads.erase(imageName);
+                return LoadTexture(imageName, mode);
+            }
+        }
+        return LoadTexture(imageName, mode);
+    }
+    sf::Image* ImageCollector::FindImage(const std::wstring& imageName)
+    {
+        if (images.find(imageName) != images.end()) return images[imageName].image;
+        return nullptr;
+    }
+    sf::Texture* ImageCollector::FindTexture(const std::wstring& imageName)
+    {
+        if (images.find(imageName) != images.end()) return images[imageName].texture;
+        return nullptr;
     }
     void ImageCollector::SetDestroyable(std::wstring imageName, bool destroyable)
     {
@@ -555,6 +660,93 @@ namespace ns
     
     
     
+    void GlobalSettings::Load(const std::wstring& path)
+    {
+        std::wifstream wif;
+#ifdef _WIN32
+        wif.open(base::utf16(documentsPath()) + path);
+#else
+        wif.open(documentsPath() + base::utf8(path));
+#endif
+        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+        
+        if (wif.is_open())
+        {
+            std::wstring line;
+            nss::CommandSettings command;
+            command.lowercaseCommand = false;
+            
+            while (!wif.eof())
+            {
+                std::getline(wif, line);
+                command.Command(line);
+                
+                if (nss::Command(command, L"framerateLimit:"))
+                {
+                    int integer = nss::ParseAsInt(command);
+                    if (integer >= 0) gs::framerateLimit = integer;
+                }
+                else if (nss::Command(command, L"framerateNoFocus:"))
+                {
+                    int integer = nss::ParseAsInt(command);
+                    if (integer >= 0) gs::framerateNoFocus = integer;
+                }
+                else if (nss::Command(command, L"resolutionClassSetting:") || nss::Command(command, L"resolutionClass:"))
+                {
+                    int integer = nss::ParseAsInt(command);
+                    if (integer >= -1) gs::resolutionClass = gs::resolutionClassSetting = integer;
+                }
+                else if (nss::Command(command, L"isParallaxEnabled:"))
+                    gs::isParallaxEnabled = nss::ParseAsBool(command);
+                else if (nss::Command(command, L"isVerticalSyncEnabled:"))
+                    gs::isVerticalSyncEnabled = nss::ParseAsBool(command);
+                else if (nss::Command(command, L"maxVolumeGlobal:"))
+                {
+                    float integer = nss::ParseAsFloat(command);
+                    if (integer >= 0) gs::maxVolumeGlobal = integer;
+                }
+                else if (nss::Command(command, L"maxVolumeMusic:"))
+                {
+                    float integer = nss::ParseAsFloat(command);
+                    if (integer >= 0) gs::maxVolumeMusic = integer;
+                }
+                else if (nss::Command(command, L"maxVolumeAmbeint:"))
+                {
+                    float integer = nss::ParseAsFloat(command);
+                    if (integer >= 0) gs::maxVolumeAmbeint = integer;
+                }
+                else if (nss::Command(command, L"maxVolumeSound:"))
+                {
+                    float integer = nss::ParseAsFloat(command);
+                    if (integer >= 0) gs::maxVolumeSound = integer;
+                }
+            }
+            
+            wif.close();
+        }
+    }
+    void GlobalSettings::Save(const std::wstring& path)
+    {
+        if (!base::FileExists(path)) base::CreateDirectory(base::utf16(documentsPath()));
+        
+        std::wofstream wof;
+#ifdef _WIN32
+        wof.open(base::utf16(documentsPath()) + path);
+#else
+        wof.open(documentsPath() + base::utf8(path));
+#endif
+        wof.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+        if (wof.is_open())
+        {
+            wof << " " << endl;
+        }
+    }
+    
+    
+    
+    
+    
+    
     sf::RenderWindow* gs::window = nullptr;
     
     unsigned int gs::width = 0;
@@ -584,6 +776,7 @@ namespace ns
     
     bool gs::isPauseEnabled = true;
     bool gs::isPause = false;
+    bool gs::requestWindowRefresh = true;
     
     bool gs::isParallaxEnabled = true;
     float gs::defaultParallaxBackground = 0.018;

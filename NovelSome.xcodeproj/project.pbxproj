@@ -11,6 +11,8 @@
 		DD02AA6A21FDC51700E9E909 /* NekoNinja.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */; };
 		DD265515216020CB008F1545 /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */; };
 		DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDAB7496215D88450062F8B6 /* Assets.xcassets */; };
+		DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
+		DD3FBA212212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
 		DD65CFDA2200CB3500CBEF72 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */; };
 		DD8F82B3215E5A9A000CB7BB /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */; };
 		DD8F82B4215E5A9A000CB7BB /* TestComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */; };
@@ -69,6 +71,8 @@
 		DDBB6188215E9D300062CC3D /* Misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6186215E9D300062CC3D /* Misc.cpp */; };
 		DDBB618B215E9D550062CC3D /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */; };
 		DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */; };
+		DDBD1F7F221341B400CFF750 /* NovelsLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */; };
+		DDBD1F80221341B400CFF750 /* NovelsLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */; };
 		DDE66FC521FB4F490071145D /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC321FB4F490071145D /* Data */; };
 		DDE66FC621FB4F490071145D /* Data in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC321FB4F490071145D /* Data */; };
 		DDE66FC721FB4F490071145D /* Novels in Resources */ = {isa = PBXBuildFile; fileRef = DDE66FC421FB4F490071145D /* Novels */; };
@@ -80,6 +84,8 @@
 /* Begin PBXFileReference section */
 		DD02AA6721FDC51700E9E909 /* NekoNinja.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NekoNinja.cpp; sourceTree = "<group>"; };
 		DD02AA6821FDC51700E9E909 /* NekoNinja.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NekoNinja.hpp; sourceTree = "<group>"; };
+		DD3FBA1E2212111400E66342 /* MainMenu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MainMenu.cpp; sourceTree = "<group>"; };
+		DD3FBA1F2212111400E66342 /* MainMenu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MainMenu.hpp; sourceTree = "<group>"; };
 		DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DD8F8298215E5988000CB7BB /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
 		DD8F8299215E5988000CB7BB /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
@@ -138,6 +144,8 @@
 		DDBB6186215E9D300062CC3D /* Misc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Misc.cpp; sourceTree = "<group>"; };
 		DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EssentialComponents.cpp; sourceTree = "<group>"; };
 		DDBB618A215E9D550062CC3D /* EssentialComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EssentialComponents.hpp; sourceTree = "<group>"; };
+		DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelsLibrary.cpp; sourceTree = "<group>"; };
+		DDBD1F7E221341B400CFF750 /* NovelsLibrary.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelsLibrary.hpp; sourceTree = "<group>"; };
 		DDE66FC321FB4F490071145D /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = NovelSome/Data; sourceTree = SOURCE_ROOT; };
 		DDE66FC421FB4F490071145D /* Novels */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Novels; path = NovelSome/Novels; sourceTree = SOURCE_ROOT; };
 		DDF736F6216B65770065845D /* GUIInterface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GUIInterface.cpp; sourceTree = "<group>"; };
@@ -180,6 +188,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD3FBA1D221210EB00E66342 /* NSMenuComponents */ = {
+			isa = PBXGroup;
+			children = (
+				DD3FBA1E2212111400E66342 /* MainMenu.cpp */,
+				DD3FBA1F2212111400E66342 /* MainMenu.hpp */,
+				DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */,
+				DDBD1F7E221341B400CFF750 /* NovelsLibrary.hpp */,
+			);
+			path = NSMenuComponents;
+			sourceTree = "<group>";
+		};
 		DD8F8297215E5988000CB7BB /* Engine */ = {
 			isa = PBXGroup;
 			children = (
@@ -203,6 +222,7 @@
 			children = (
 				DDA1A07C216D45C200A9BE38 /* NekoComponents */,
 				DDBB616B215E9C0A0062CC3D /* NovelComponents */,
+				DD3FBA1D221210EB00E66342 /* NSMenuComponents */,
 				DD8F82AA215E5A9A000CB7BB /* TestComponents.cpp */,
 				DD8F82A8215E5A9A000CB7BB /* TestComponents.hpp */,
 				DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */,
@@ -464,6 +484,7 @@
 				DD8F82BB215E5B7E000CB7BB /* EntitySystem.cpp in Sources */,
 				DD8F82BC215E5B7E000CB7BB /* NovelSomeScript.cpp in Sources */,
 				DDBB617D215E9CFB0062CC3D /* Character.cpp in Sources */,
+				DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */,
 				DDBB6171215E9CBE0062CC3D /* NovelUpdate.cpp in Sources */,
 				DD8F82BE215E5B7E000CB7BB /* StaticMethods.cpp in Sources */,
 				DDBB6169215E9BE10062CC3D /* NovelSystem.cpp in Sources */,
@@ -482,6 +503,7 @@
 				DDBB6177215E9CDD0062CC3D /* Audio.cpp in Sources */,
 				DDBB6184215E9D200062CC3D /* GUI.cpp in Sources */,
 				DDBB617A215E9CEC0062CC3D /* Background.cpp in Sources */,
+				DDBD1F7F221341B400CFF750 /* NovelsLibrary.cpp in Sources */,
 				DDA1A07F216D463E00A9BE38 /* NekoMain.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -497,10 +519,12 @@
 				DDBB617E215E9CFB0062CC3D /* Character.cpp in Sources */,
 				DD8F82C5215E5C73000CB7BB /* NovelSomeScript.cpp in Sources */,
 				DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */,
+				DD3FBA212212111400E66342 /* MainMenu.cpp in Sources */,
 				DDBB616F215E9C1A0062CC3D /* Novel.cpp in Sources */,
 				DDBB6178215E9CDD0062CC3D /* Audio.cpp in Sources */,
 				DDA1A080216D463E00A9BE38 /* NekoMain.cpp in Sources */,
 				DDBB6182215E9D0B0062CC3D /* Dialogue.cpp in Sources */,
+				DDBD1F80221341B400CFF750 /* NovelsLibrary.cpp in Sources */,
 				DDBB6188215E9D300062CC3D /* Misc.cpp in Sources */,
 				DDBB6172215E9CBE0062CC3D /* NovelUpdate.cpp in Sources */,
 				DDBB6175215E9CCE0062CC3D /* NovelLibrary.cpp in Sources */,
@@ -527,12 +551,12 @@
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include/,
 					"$(inherited)",
-					/Users/mayday/Documents/Libraries/SFML/include/,
+					/Users/mayday/Developer/Libraries/SFML/include/,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/mayday/Documents/Libraries/SFML/extlibs/libs-ios/",
-					/Users/mayday/Documents/Libraries/SFML/build/ios/lib/Debug/,
+					"/Users/mayday/Developer/Libraries/SFML/extlibs/libs-ios/",
+					/Users/mayday/Developer/Libraries/SFML/build/ios/lib/Debug/,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;
@@ -569,12 +593,12 @@
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include/,
 					"$(inherited)",
-					/Users/mayday/Documents/Libraries/SFML/include/,
+					/Users/mayday/Developer/Libraries/SFML/include/,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/Users/mayday/Documents/Libraries/SFML/extlibs/libs-ios/",
-					/Users/mayday/Documents/Libraries/SFML/build/ios/lib/Debug/,
+					"/Users/mayday/Developer/Libraries/SFML/extlibs/libs-ios/",
+					/Users/mayday/Developer/Libraries/SFML/build/ios/lib/Debug/,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;

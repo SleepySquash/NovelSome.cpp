@@ -65,6 +65,9 @@
 //TODO: Settings in the GamePause (and in the menu for future): changing the ResolutionClass.
 
 
+//TODO: Make minEH be able to "send messages" to other components. Like, for example, message to the MainMenu from Novel about its ending and exiting, so the MainMenu starts to draw itself again. Or if there's no MainMenu, then the message is destroyed.
+
+
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
 //DONE: Text's new line when exceed the screen's width
@@ -100,6 +103,13 @@
         #include <SFML/Main.hpp>
     #endif
 #endif
+#ifdef SFML_SYSTEM_ANDROID
+    #include <jni.h>
+    #include <android/native_activity.h>
+    #include <android/log.h>
+    #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_INFO, "sfml-activity", __VA_ARGS__))
+    #include <SFML/System/NativeActivity.hpp>
+#endif
 
 #include <iostream>
 #include <unordered_map>
@@ -113,6 +123,7 @@
 #include "Engine/StaticMethods.hpp"
 
 #include "Components/EssentialComponents.hpp"
+#include "Components/NSMenuComponents/MainMenu.hpp"
 #include "Components/NovelComponents/Novel.hpp"
 //#include "Components/NekoComponents/NekoNinja.hpp"
 
@@ -263,6 +274,12 @@ void SetResolutionClass()
 }
 
 
+#if defined(SFML_SYSTEM_ANDROID)
+    char* androidFilesPath = new char[255];
+    std::string documentsPath() { return std::string(androidFilesPath); }
+    char* androidDataPath = new char[255];
+    std::string externalDataPath() { return std::string(androidDataPath); }
+#endif
 
 #ifdef _MSC_VER
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
@@ -270,16 +287,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 int main()
 #endif
 {
-#ifdef SFML_SYSTEM_IOS
+#if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
     sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
     gs::isParallaxEnabled = false;
 #else
-    #ifdef SFML_SYSTEM_ANDROID
-        sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-        gs::isParallaxEnabled = false;
-    #else
     sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
-    #endif
 #endif
     gs::window = &window;
     gs::width = window.getSize().x;
@@ -293,10 +305,103 @@ int main()
     if (sf::VideoMode::getDesktopMode().width == window.getSize().x)
         window.setPosition({- GlobalSettings::windowPositionOffset, window.getPosition().y});
 #endif
-    SetResolutionClass();
     
     window.setFramerateLimit(gs::framerateLimit);
     window.setVerticalSyncEnabled(gs::isVerticalSyncEnabled);
+    
+#if defined(SFML_SYSTEM_ANDROID)
+    const char* androidFilesPath1 = sf::getNativeActivity()->internalDataPath;
+    int i; for (i = 0; androidFilesPath1[i] != '\0'; ++i) androidFilesPath[i] = androidFilesPath1[i];
+    androidFilesPath[i++] = '/'; androidFilesPath[i] = '\0';
+    LOGE("InternalDataPath: %s", androidFilesPath);
+    
+    const char* androidDataPath1 = sf::getNativeActivity()->externalDataPath;
+    for (i = 0; androidDataPath1[i] != '\0'; ++i) androidDataPath[i] = androidDataPath1[i];
+    androidDataPath[i++] = '/'; androidDataPath[i] = '\0';
+    LOGE("ExternalDataPath: %s", androidDataPath);
+    
+    
+    if (!base::FileExists(base::utf16(std::string(androidDataPath) + "Built-in Novels/")))
+        base::CreateDirectory(base::utf16(std::string(androidDataPath) + "Built-in Novels/"));
+    
+    ANativeActivity* activity = sf::getNativeActivity();
+    JNIEnv* lJNIEnv = activity->env;
+    (activity->vm)->AttachCurrentThread(&lJNIEnv, NULL);
+    
+    // Retrieve the NativeActivity
+    jobject ObjectNativeActivity = activity->clazz;
+    jclass ClassNativeActivity = lJNIEnv->GetObjectClass(ObjectNativeActivity);
+    
+    // Retrieve the ActivityInfo
+    jmethodID MethodGetAssetManager = lJNIEnv->GetMethodID(ClassNativeActivity, "getAssets", "()Landroid/content/res/AssetManager;");
+    jobject ObjectAssetManager = lJNIEnv->CallObjectMethod(ObjectNativeActivity, MethodGetAssetManager);
+    
+    AAssetManager* mgr = AAssetManager_fromJava(lJNIEnv, ObjectAssetManager);
+    
+    bool updateTheNovel{ true };
+    std::ifstream fileVersion;
+    fileVersion.open(std::string(androidDataPath) + "Built-in Novels/Bundle/version.novelversion");
+    if (fileVersion.is_open())
+    {
+        std::string line; std::getline(fileVersion, line);
+        int versionOld = std::atoi(line.c_str()); LOGE("Version OLD: %i", versionOld);
+        AAsset* assetVersion = AAssetManager_open(mgr, "Novels/Bundle/version.novelversion", AASSET_MODE_BUFFER);
+        if (assetVersion != NULL)
+        {
+            size_t fileLength = AAsset_getLength(assetVersion);
+            char* fileContent = new char[fileLength+1];
+            AAsset_read(assetVersion, fileContent, fileLength);
+            fileContent[fileLength] = '\0';
+            
+            int versionNew = std::atoi(fileContent); LOGE("Version NEW: %i", versionNew);
+            updateTheNovel = (versionOld != versionNew);
+            
+            AAsset_close(assetVersion);
+        }
+    }
+    
+    if (updateTheNovel)
+    {
+        std::vector<std::string> directories = { "/Bundle", "/Bundle/Backgrounds", "/Bundle/Characters", "/Bundle/Music", "/Bundle/Sounds", "/Example", base::utf8(L"/Чувственное познание") };
+        for (auto& dir : directories)
+        {
+            if (!base::FileExists(base::utf16(std::string(androidDataPath) + "Built-in Novels" + dir)))
+                base::CreateDirectory(base::utf16(std::string(androidDataPath) + "Built-in Novels" + dir));
+            
+            AAssetDir* assetDir = AAssetManager_openDir(mgr, ("Novels" + dir).c_str());
+            const char* filename = (const char*)NULL;
+            std::string fileto = std::string(std::string(androidDataPath) + "Built-in Novels" + dir + "/");
+            
+            while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL)
+            {
+                AAsset* asset = AAssetManager_open(mgr, ("Novels" + dir + "/" + std::string(filename)).c_str(), AASSET_MODE_BUFFER);
+                if (asset != NULL)
+                {
+                    const char* filenameto = (fileto + std::string(filename)).c_str();
+                    LOGE("filenameto: %s", filenameto);
+                    
+                    size_t fileLength = AAsset_getLength(asset);
+                    char* fileContent = new char[fileLength+1];
+                    AAsset_read(asset, fileContent, fileLength);
+                    fileContent[fileLength] = '\0';
+                    
+                    FILE* out = fopen(filenameto, "w");
+                    fwrite(fileContent, sizeof(char), fileLength+1, out);
+                    fclose(out);
+                    
+                    delete [] fileContent;
+                    AAsset_close(asset);
+                }
+            }
+            AAssetDir_close(assetDir);
+        }
+    }
+    
+    (activity->vm)->DetachCurrentThread();
+#endif
+    
+    gs::Load(L"UserDefined.nsoptions");
+    SetResolutionClass();
     
     EntitySystem system;
     
@@ -322,7 +427,13 @@ int main()
     ///----------------------------------------------------------
     Entity* Elizabeth = system.AddEntity();
     {
-        Elizabeth->AddComponent<NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+/*#ifdef SFML_SYSTEM_ANDROID
+        LOGE("Novel loading path: %s", (externalDataPath() + "Built-in Novels/Bundle/scen.nsdat").c_str());
+        entity->AddComponent<NovelComponents::Novel>(externalDataPath() + "Built-in Novels/Bundle/scen.nsdat");
+#else
+        entity->AddComponent<NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+#endif*/
+        Elizabeth->AddComponent<NSMenuComponents::MainMenu>();
     }
     
     ///----------------------------------------------------------
@@ -334,34 +445,54 @@ int main()
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 17");
-#ifdef SFML_SYSTEM_IOS
-        Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
-#endif
-#ifdef SFML_SYSTEM_ANDROID
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 18");
+#if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
         Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
     }
     
-    bool displayWindow{ true };
+    bool active{ true };
     sf::Clock clock;
+#if defined(SFML_SYSTEM_IOS)
     window.setActive();
+#endif
     while (window.isOpen())
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        sf::Event event; gs::requestWindowRefresh = false;
+        while (active ? window.pollEvent(event) : window.waitEvent(event))
         {
             switch (event.type)
             {
                 case sf::Event::Closed: window.close(); break;
-                case sf::Event::GainedFocus: displayWindow = true; window.setFramerateLimit(gs::framerateLimit); break;
-                case sf::Event::LostFocus: displayWindow = false; window.setFramerateLimit(gs::framerateNoFocus); break;
+                case sf::Event::GainedFocus: active = true; clock.restart(); window.setFramerateLimit(gs::framerateLimit);
+#ifdef SFML_SYSTEM_ANDROID
+                    window.setActive();
+#endif
+                    break;
+                case sf::Event::LostFocus: active = false; system.PollEvent(event); window.setFramerateLimit(gs::framerateNoFocus);
+#ifdef SFML_SYSTEM_ANDROID
+                    window.setActive(false);
+#endif
+                    break;
+#if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
+                case sf::Event::MouseEntered: active = true; clock.restart(); window.setFramerateLimit(gs::framerateLimit);
+#ifdef SFML_SYSTEM_ANDROID
+                    window.setActive();
+#endif
+                    break;
+                case sf::Event::MouseLeft: active = false; system.PollEvent(event); window.setFramerateLimit(gs::framerateNoFocus);
+#ifdef SFML_SYSTEM_ANDROID
+                    window.setActive(false);
+#endif
+                    break;
+#endif
                     
+                case sf::Event::TouchEnded:
+                case sf::Event::TouchMoved:
+                case sf::Event::TouchBegan:
+                case sf::Event::MouseButtonReleased:
                 case sf::Event::MouseMoved:
                 case sf::Event::MouseButtonPressed:
-                case sf::Event::MouseButtonReleased:
-                case sf::Event::TouchBegan:
-                case sf::Event::TouchEnded:
                     system.PollEvent(event);
                     break;
                     
@@ -369,9 +500,6 @@ int main()
                     system.PollEvent(event);
                     switch (event.key.code)
                     {
-                        case sf::Keyboard::Space:
-                            system.AddEntity();
-                            break;
                         case sf::Keyboard::E:
                             system.PopEntity(Shimakaze);
                             Shimakaze = nullptr;
@@ -385,11 +513,11 @@ int main()
                                 system.PopEntity(Elizabeth);
                             Elizabeth = system.AddEntity();
                             {
-                                Elizabeth->AddComponent<NovelComponents::Novel>("Novels/Bundle/scen.nsdat");
+                                Elizabeth->AddComponent<NovelComponents::Novel>(L"Novels/Bundle/scen.nsdat");
                             }
                             Shimakaze = system.AddEntity();
                             {
-                                Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 17");
+                                Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 18");
 #ifdef SFML_SYSTEM_IOS
                                 Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
@@ -412,26 +540,32 @@ int main()
                     window.setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
                     break;
                     
-                default:
-                    break;
+                default: break;
             }
+            gs::requestWindowRefresh = true;
         }
         
-#ifdef SFML_SYSTEM_IOS
-        if (displayWindow)
+#if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
+        if (active)
         {
             system.Update(clock.restart());
             
-            window.clear();
-            system.Draw(&window);
-            window.display(); //TODO: Might crash there if app is not running
-        }
+            if (gs::requestWindowRefresh)
+            {
+                window.clear();
+                system.Draw(&window);
+                window.display(); //TODO: Might crash here if app is not running
+            }
+        } else sf::sleep(sf::milliseconds(100));
 #else
         system.Update(clock.restart());
         
-        window.clear();
-        system.Draw(&window);
-        window.display();
+        if (gs::requestWindowRefresh)
+        {
+            window.clear();
+            system.Draw(&window);
+            window.display();
+        }
 #endif
     }
     

@@ -26,6 +26,7 @@
 using std::cout;
 using std::cin;
 using std::endl;
+using namespace ns;
 
 namespace nss
 {

@@ -18,7 +18,7 @@ namespace ns
                    !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
             {
                 if ((wif.fail() || wif.bad()) && lines.empty())
-                    cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << nsdataPath.toAnsiString() << endl;
+                    cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << base::utf8(nsdataPath) << endl;
                 
                 if (!wif.eof() || !lines.empty())
                 {
@@ -126,10 +126,8 @@ namespace ns
                                 if (openedWithBracket > 0)
                                     --openedWithBracket;
                         }
-                        if (openedWithBracket == 0)
-                            spacesCount = command.lastPos - 6;
-                        else
-                            spacesCount = -1;
+                        if (openedWithBracket == 0) spacesCount = command.lastPos - 6;
+                        else spacesCount = -1;
                         
                         bool mightBeOnNextLine{ (openedWithBracket == 0) };
                         int lastChooseSpaces = -1;
@@ -241,8 +239,7 @@ namespace ns
                                     {
                                         int currentSpaces = -1;
                                         for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
-                                            if (parsed[i] != L' ')
-                                                currentSpaces = i;
+                                            if (parsed[i] != L' ' && parsed[i] != L'\t') currentSpaces = i;
                                         
                                         if (currentSpaces != -1 && currentSpaces <= spacesCount)
                                             chooseEnded = true;
@@ -263,8 +260,7 @@ namespace ns
                                             {
                                                 int currentSpaces = -1;
                                                 for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
-                                                    if (parsed[i] != L' ')
-                                                        currentSpaces = i;
+                                                    if (parsed[i] != L' ' && parsed[i] != L'\t') currentSpaces = i;
                                                 lastChooseSpaces = currentSpaces;
                                                 
                                                 explicitChoose = true;
@@ -276,8 +272,7 @@ namespace ns
                                                 {
                                                     int currentSpaces = -1;
                                                     for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
-                                                        if (parsed[i] != L' ')
-                                                            currentSpaces = i;
+                                                        if (parsed[i] != L' ' && parsed[i] != L'\t') currentSpaces = i;
                                                     
                                                     if (currentSpaces != -1 && currentSpaces > spacesCount)
                                                     {
@@ -291,8 +286,7 @@ namespace ns
                                                 {
                                                     int currentSpaces = -1;
                                                     for (int i = 0; i < parsed.length() && currentSpaces == -1; ++i)
-                                                        if (parsed[i] != L' ')
-                                                            currentSpaces = i;
+                                                        if (parsed[i] != L' ' && parsed[i] != L'\t') currentSpaces = i;
                                                     
                                                     if (currentSpaces != -1 && currentSpaces > lastChooseSpaces)
                                                         { component->AddAction(parsed); explicitChoose = false; }
@@ -502,7 +496,7 @@ namespace ns
                                 else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
                                     component->parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
                                 else
-                                    component->parallaxPower = base::ConvertToFloat(possibleParallax);
+                                    component->parallaxPower = base::atof(possibleParallax);
                             }
                         }
                         
@@ -919,9 +913,9 @@ namespace ns
                                     else
                                     {
                                         if (valueString == L"true" || valueString == L"false")
-                                            LocalVariables_Set(varName, ns::base::ConvertToBool(valueString));
+                                            LocalVariables_Set(varName, base::atob(valueString));
                                         else
-                                            LocalVariables_Set(varName, ns::base::ConvertToInt(valueString));
+                                            LocalVariables_Set(varName, base::atoi(valueString));
                                     }
                                 }
                             }
@@ -992,9 +986,9 @@ namespace ns
                                         else
                                         {
                                             if (valueString == L"true" || valueString == L"false")
-                                                LocalVariables_Set(possibleName, ns::base::ConvertToBool(valueString));
+                                                LocalVariables_Set(possibleName, base::atob(valueString));
                                             else
-                                                LocalVariables_Set(possibleName, ns::base::ConvertToInt(valueString));
+                                                LocalVariables_Set(possibleName, base::atoi(valueString));
                                         }
                                     }
                                 }
@@ -1121,6 +1115,8 @@ namespace ns
             if (fileOpened && !(ns::GlobalSettings::isPause && ns::GlobalSettings::isPauseEnabled))
                 layers.Update(elapsedTime);
             gamePause.Update(elapsedTime);
+            
+            if (eof && onHold.empty()) entity->PopComponent(this);
         }
     }
 }

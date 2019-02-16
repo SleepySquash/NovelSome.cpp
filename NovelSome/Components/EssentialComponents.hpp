@@ -36,6 +36,7 @@ namespace ns
             
             sf::Time deltaTime{ sf::Time::Zero };
             int frames{ 0 };
+            bool firstCalculate{ true };
             
         public:
             DebugComponent(sf::String build);

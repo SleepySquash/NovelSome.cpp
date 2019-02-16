@@ -85,7 +85,7 @@
             @autoreleasepool {
                 NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
                 NSString *documentsDirectory = [paths firstObject];
-                return [documentsDirectory UTF8String] + std::string("/Melancholy Hill/NekoPlace/");
+                return [documentsDirectory UTF8String] + std::string("/Melancholy Hill/NovelSome/");
             }
             return "";
         }

@@ -48,8 +48,7 @@ namespace ns
         }
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
-            if (guiSystem != nullptr)
-                guiSystem->Update(elapsedTime);
+            if (guiSystem != nullptr) guiSystem->Update(elapsedTime);
             
             if (mode != deprecated && textAppearMode == textAppearModeEnum::printing)
                 if (textAppearPos < textAppearMax)
@@ -57,6 +56,7 @@ namespace ns
                     elapsedCharacterSum += elapsedTime.asSeconds();
                     while (elapsedCharacterSum > characterInSecond && textAppearPos < textAppearMax)
                     {
+                        gs::requestWindowRefresh = true;
                         ++textAppearPos;
                         elapsedCharacterSum -= characterInSecond;
                         
@@ -70,7 +70,7 @@ namespace ns
             
             switch (mode)
             {
-                case appearing:
+                case appearing: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -84,8 +84,7 @@ namespace ns
                             if (sendMessageBack == atAppearance)
                                 novel->UnHold(this);
                     }
-                    else
-                        alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
                     
                     if (guiSystem != nullptr)
                         guiSystem->SetAlphaIfBigger(alpha);
@@ -100,7 +99,7 @@ namespace ns
                     }
                     break;
                     
-                case disappearing:
+                case disappearing: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -130,9 +129,7 @@ namespace ns
                     }
                     break;
                     
-                case deprecated:
-                    this->GetNovelSystem()->PopComponent(this);
-                    break;
+                case deprecated: gs::requestWindowRefresh = true; this->GetNovelSystem()->PopComponent(this); break;
                     
                 case waitingForTime:
                     if (currentTime < waitingTime)
@@ -226,10 +223,7 @@ namespace ns
                 }
             }
         }
-        void Dialogue::Destroy()
-        {
-            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
-        }
+        void Dialogue::Destroy() { if (novel != nullptr) novel->RemoveFromGroup(groupPointer); }
         void Dialogue::Resize(unsigned int width, unsigned int height)
         {
             charText.setCharacterSize((unsigned int)(characterSize * gs::scale));
@@ -354,10 +348,7 @@ namespace ns
             if (charText.getOutlineThickness() != 0)
                 charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
         }
-        void Dialogue::SetGroup(const list<Dialogue*>::iterator& element)
-        {
-            this->groupPointer = element;
-        }
+        void Dialogue::SetGroup(const list<Dialogue*>::iterator& element) { this->groupPointer = element; }
         void Dialogue::SetDialogue(const sf::String& dialogue)
         {
             textString = dialogue;
@@ -394,16 +385,14 @@ namespace ns
         }
         void Dialogue::SetStateMode(modeEnum newMode)
         {
+            gs::requestWindowRefresh = true;
             if (mode != newMode)
             {
                 currentTime = 0.f;
                 mode = newMode;
             }
         }
-        void Dialogue::SetGUISystem(GUISystem* system)
-        {
-            this->guiSystem = system;
-        }
+        void Dialogue::SetGUISystem(GUISystem* system) { this->guiSystem = system; }
         
         
         
@@ -430,12 +419,10 @@ namespace ns
         }
         void Choose::Update(const sf::Time& elapsedTime)
         {
-            if (guiSystem != nullptr)
-                guiSystem->Update(elapsedTime);
-            
+            if (guiSystem != nullptr) guiSystem->Update(elapsedTime);
             switch (mode)
             {
-                case appearing:
+                case appearing: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -455,7 +442,7 @@ namespace ns
                     button.setAlpha(alpha);
                     break;
                     
-                case disappearing:
+                case disappearing: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -475,12 +462,8 @@ namespace ns
                     button.setAlpha(alpha);
                     break;
                     
-                case deprecated:
-                    this->GetNovelSystem()->PopComponent(this);
-                    break;
-                    
-                default:
-                    break;
+                case deprecated: gs::requestWindowRefresh = true; this->GetNovelSystem()->PopComponent(this); break;
+                default: break;
             }
         }
         void Choose::PollEvent(sf::Event& event)
@@ -497,7 +480,7 @@ namespace ns
                         for (int i = 0; i < choices.size() && !found; ++i)
                         {
                             button.setString(choices[i]);
-                            button.setPosition(640*gs::scalex, yy*gs::scaley);
+                            button.setPosition(gs::width/2, yy);
                             
                             if ((found = button.PollEvent(event)))
                             {
@@ -520,7 +503,7 @@ namespace ns
                                     }
                             }
                             
-                            yy += button.text.getGlobalBounds().height/gs::scale + 10;
+                            yy += button.text.getGlobalBounds().height + 10*gs::scaley;
                         }
                     }
                 }
@@ -543,10 +526,10 @@ namespace ns
                 for (int i = 0; i < choices.size(); ++i)
                 {
                     button.setString(choices[i]);
-                    button.setPosition(640*gs::scalex, yy*gs::scaley);
+                    button.setPosition(gs::width/2, yy);
                     button.Draw(window);
                     
-                    yy += button.text.getGlobalBounds().height/gs::scale + 10;
+                    yy += button.text.getGlobalBounds().height + 10*gs::scaley;
                 }
             }
         }
@@ -560,11 +543,10 @@ namespace ns
                 guiSystem->Resize(width, height);
             
             button.Resize(width, height);
+            if (choices.size()) button.setString(choices[0]);
+            startingYY = (gs::height/2 - (float)((button.text.getGlobalBounds().height + 10) * choices.size())/2) + button.text.getGlobalBounds().height/2;
         }
-        void Choose::SetGroup(const list<Choose*>::iterator& element)
-        {
-            this->groupPointer = element;
-        }
+        void Choose::SetGroup(const list<Choose*>::iterator& element) { this->groupPointer = element; }
         void Choose::SetStateMode(modeEnum newMode)
         {
             if (mode != newMode)
@@ -573,19 +555,13 @@ namespace ns
                 mode = newMode;
             }
         }
-        void Choose::SetGUISystem(GUISystem* system)
-        {
-            this->guiSystem = system;
-        }
+        void Choose::SetGUISystem(GUISystem* system) { this->guiSystem = system; }
         void Choose::AddChoice(const std::wstring& line)
         {
             choices.push_back(line);
             choiceStart.push_back(actions.size());
         }
-        void Choose::AddAction(const std::wstring& line)
-        {
-            actions.push_back(line);
-        }
+        void Choose::AddAction(const std::wstring& line) { actions.push_back(line); }
         void Choose::InitChoose()
         {
             /*cout << "   choices: " << endl;
@@ -612,16 +588,8 @@ namespace ns
                 button.setFont(fontName);
                 button.characterSize = characterSize;
                 button.ignoreWasPressed = true;
-                button.halign = GUI::TextButton::halignEnum::center;
-                button.valign = GUI::TextButton::valignEnum::top;
-                
-                int yy = 0;
-                for (int i = 0; i < choices.size(); ++i)
-                {
-                    button.setString(choices[i]);
-                    yy += button.text.getGlobalBounds().height + 10;
-                }
-                startingYY = 400 - yy/2;
+                button.halign = Halign::Center;
+                button.valign = Valign::Center;
                 
                 Resize(gs::width, gs::height);
             }

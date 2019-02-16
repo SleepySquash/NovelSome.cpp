@@ -41,20 +41,22 @@ namespace ns
         }
         void DebugComponent::Update(const sf::Time& elapsedTime)
         {
-            deltaTime += elapsedTime;
-            frames++;
-            
-            if (deltaTime.asSeconds() > 0.3 && frames > 0)
+            if (firstCalculate) gs::requestWindowRefresh = true;
+            if (gs::requestWindowRefresh)
             {
-                frames = (float)frames/deltaTime.asSeconds();
-                std::wstring perfString = L"FPS is ";
-                perfString += std::to_wstring(frames);
-                
-                performanceText.setString(perfString);
-                performanceText.setPosition(gs::width - performanceText.getLocalBounds().width - 10*gs::scale, performanceText.getPosition().y);
-                
-                deltaTime = sf::Time::Zero;
-                frames = 0;
+                if (deltaTime.asSeconds() > 0.3 && frames > 0)
+                {
+                    frames = (float)frames/deltaTime.asSeconds();
+                    std::wstring perfString = L"FPS is ";
+                    perfString += std::to_wstring(frames);
+                    
+                    performanceText.setString(perfString);
+                    performanceText.setPosition(gs::width - performanceText.getLocalBounds().width - 10*gs::scale, performanceText.getPosition().y);
+                    
+                    deltaTime = sf::Time::Zero;
+                    frames = 0; firstCalculate = false;
+                }
+                else { deltaTime += elapsedTime; frames++; }
             }
         }
         void DebugComponent::Draw(sf::RenderWindow* window)

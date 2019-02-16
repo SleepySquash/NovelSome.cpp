@@ -60,6 +60,7 @@ namespace ns
         void PollEvent(sf::Event& event);
         void PopComponent(NovelObject* component);
         void clear();
+        bool empty();
         void ChangePriorityOf(NovelObject* component, int priority);
         
         template<typename T, typename ...Args> T* AddComponent(Args... args)

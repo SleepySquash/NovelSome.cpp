@@ -15,11 +15,11 @@ namespace ns
         GamePause::GamePause()
         {
             shape.setFillColor(sf::Color(0,0,0,0));
+            menuBackButton.setCharacterSize(60);
+            menuBackButton.setFont(L"Pacifica.ttf");
+            menuBackButton.setString(L"Back to menu");
         }
-        GamePause::~GamePause()
-        {
-            gs::isPause = false;
-        }
+        GamePause::~GamePause() { gs::isPause = false; }
         void GamePause::Update(const sf::Time& elapsedTime)
         {
             if (alpha != 0 && novel != nullptr)
@@ -37,54 +37,46 @@ namespace ns
             }
             switch (mode)
             {
-                case appearing:
-                    if (alpha == 0 && novel != nullptr)
-                        novel->skin.gamePauseGUI.Resize(gs::width, gs::height);
+                case appearing: gs::requestWindowRefresh = true;
+                    if (alpha == 0 && novel) Resize(gs::width, gs::height);
                     
-                    if (currentTime < appearTime)
-                        currentTime += elapsedTime.asSeconds();
-                    
+                    if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
                     {
                         alpha = maxAlpha;
                         currentTime = 0.f;
-                        mode = waiting;
+                        mode = appeared;
                     }
-                    else
-                        alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-                    if (novel != nullptr)
-                        novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    if (novel) novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    menuBackButton.setAlpha(alpha);
                     break;
                     
-                case disappearing:
-                    if (currentTime < disappearTime)
-                        currentTime += elapsedTime.asSeconds();
-                    
+                case disappearing: gs::requestWindowRefresh = true;
+                    if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= disappearTime)
                     {
                         alpha = 0;
                         currentTime = 0.f;
                         mode = waiting;
                     }
-                    else
-                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
-                    if (novel != nullptr)
-                        novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    if (novel) novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    menuBackButton.setAlpha(alpha);
                     break;
                     
-                default:
-                    break;
+                default: break;
             }
         }
         void GamePause::PollEvent(sf::Event& event)
         {
-            if (novel != nullptr)
-                novel->skin.gamePauseGUI.PollEvent(event);
+            if (gs::isPause && menuBackButton.PollEvent(event)) { gs::isPause = false; if (novel) entity->PopComponent(novel); }
+            if (novel) novel->skin.gamePauseGUI.PollEvent(event);
             if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
                 || (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Right))
             {
-                ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
-                mode = ns::GlobalSettings::isPause? appearing : disappearing;
+                gs::isPause = !gs::isPause;
+                mode = gs::isPause? appearing : disappearing;
                 currentTime = 0.f;
             }
             else if (event.type == sf::Event::TouchBegan)
@@ -107,16 +99,25 @@ namespace ns
                     }
                 }
             }
+            else if (event.type == sf::Event::LostFocus) { if (!gs::isPause) {gs::isPause = true; mode = appearing; currentTime = 0.f; }}
         }
         void GamePause::Draw(sf::RenderWindow *window)
         {
-            if (alpha != 0 && novel != nullptr)
+            if (mode != waiting && novel)
+            {
                 novel->skin.gamePauseGUI.Draw(window);
+                menuBackButton.Draw(window);
+            }
         }
         void GamePause::Resize(unsigned int width, unsigned int height)
         {
-            if (alpha != 0 && novel != nullptr)
+            if (mode != waiting && novel)
+            {
                 novel->skin.gamePauseGUI.Resize(width, height);
+                
+                menuBackButton.Resize(width, height);
+                menuBackButton.setPosition(width/2, height - height/5);
+            }
         }
         
         

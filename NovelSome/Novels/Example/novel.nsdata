@@ -1,0 +1,4 @@
+name "Пример"
+name:ru "Бандл"
+
+scenario "scenario.nscen"

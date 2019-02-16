@@ -14,11 +14,7 @@
 
 #include <thread>
 #include <codecvt>
-
-#ifdef _WIN32
-    //std::ifstream in GetFont
-    #include <fstream>
-#endif
+#include <fstream>
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
@@ -26,13 +22,15 @@
 
 #include "../Essentials/ResourcePath.hpp"
 #ifdef _WIN32
-#include "../Essentials/versionhelpers.h"
+    #include "../Essentials/versionhelpers.h"
 #endif
 #include "../Essentials/Base.hpp"
+#include "NovelSomeScript.hpp"
 
+using base::utf8;
+using base::utf16;
 using std::pair;
 using std::make_pair;
-
 using std::cout;
 using std::endl;
 
@@ -51,9 +49,8 @@ namespace ns
     
     
     
-    /// Идея: иметь в карте ещё и номер треда, который загружает изображение. Если треда нет, то дефолт конструктор id().
-    ///     Или иметь отдельную мапу, в которой если присутствует имя изображения, то должно возвращаться айди треда.
-    ///     Основной тред, дойдя до ресурса, который загружается, должен вызвать .join() этого объекта. Если это невозможно, то основной тред сам загрузит этот ресурс.
+    extern bool Collector_UseFullPath;
+    std::wstring PathWithFolderDetermination(const std::wstring& fileName, unsigned int mode);
     std::wstring PathWithResolutionDetermination(const std::wstring& fileName, unsigned int mode);
     struct icThreadsJoiner;
     struct ImageCollectorObject
@@ -80,6 +77,9 @@ namespace ns
         static void PreloadImage(const std::wstring& imageName, unsigned int mode = 2, bool destroyable = true);
         static sf::Texture* LoadTexture(const std::wstring& imageName, unsigned int mode = 2);
         static void PreloadTexture(const std::wstring& imageName, unsigned int mode = 2, bool destroyable = true);
+        static sf::Texture* RequestHigherTexture(const std::wstring& imageName, unsigned int mode = 2);
+        static sf::Image* FindImage(const std::wstring& imageName);
+        static sf::Texture* FindTexture(const std::wstring& imageName);
         static void SetDestroyable(std::wstring imageName, bool destroyable);
         static void DeleteImage(const std::wstring& imageName);
         static void EraseImage(const std::wstring& imageName);
@@ -120,9 +120,11 @@ namespace ns
     
     
     
-    class GlobalSettings
+    struct GlobalSettings
     {
-    public:
+        static void Load(const std::wstring& path);
+        static void Save(const std::wstring& path);
+        
         static sf::RenderWindow* window;
         
         static unsigned int width;
@@ -148,6 +150,8 @@ namespace ns
         
         static bool isPauseEnabled;
         static bool isPause;
+        static bool inGame;
+        static bool requestWindowRefresh;
         
         static bool isParallaxEnabled;
         static float defaultParallaxBackground;

@@ -17,8 +17,9 @@ namespace ns
             spriteLoaded = false;
             if (novel != nullptr && characterData != nullptr)
             {
-                sf::String fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + characterData->filePath;
-                std::wstring lookForSpritePath = ns::base::GetFolderPath(novel->GetFolderPath() + characterData->filePath);
+                std::wstring fullPath = novel->GetFolderPath() + characterData->filePath;
+                if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
+                std::wstring lookForSpritePath = base::GetFolderPath(novel->GetFolderPath() + characterData->filePath);
                 std::wstring spritePath{ L"" };
                 
                 scaleX = 1.f;
@@ -26,16 +27,14 @@ namespace ns
                 
                 std::wifstream wif;
 #ifdef _WIN32
-                wif.open(fullPath.toWideString());
+                wif.open(fullPath);
 #else
-                std::wstring _wpath = fullPath;
-                std::string _path(_wpath.begin(), _wpath.end());
-                wif.open(_path);
+                wif.open(base::utf8(fullPath));
 #endif
                 wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
                 
                 if (!wif.is_open())
-                    cout << "Warning :: Character :: File couldn't be opened, path: " << fullPath.toAnsiString() << endl;
+                    cout << "Warning :: Character :: File couldn't be opened, path: " << base::utf8(fullPath) << endl;
                 else
                 {
                     bool eof{ false };
@@ -128,7 +127,7 @@ namespace ns
                                     else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
                                         parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
                                     else
-                                        parallaxPower = base::ConvertToFloat(possibleParallax);
+                                        parallaxPower = base::atof(possibleParallax);
                                 }
                                 
                                 eof = stateReading ? false : true;
@@ -158,31 +157,6 @@ namespace ns
                         
                         Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
                     }
-                    /*sf::Image* imagePtr = ic::LoadImage(lookForSpritePath + spritePath, 2);
-                    if (imagePtr != nullptr)
-                    {
-                        imagePath = lookForSpritePath + spritePath;
-                        bool textureLoaded{ false };
-                        if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
-                            textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
-                        else
-                            textureLoaded = texture.loadFromImage(*imagePtr);
-                        
-                        if (textureLoaded)
-                        {
-                            spriteLoaded = true;
-                            texture.setSmooth(true);
-                            sprite.setTexture(texture);
-                            
-                            //scale 1 = scale that makes image fit in height with 800 pixels
-                            float scaleFactor = (float)ns::gs::relativeHeight / imagePtr->getSize().y;
-                            scaleX *= scaleFactor;
-                            scaleY *= scaleFactor;
-                            sprite.setScale(scaleX, scaleY);
-                            
-                            Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
-                        }
-                    }*/
                 }
                 
                 if (!spriteLoaded)
@@ -221,7 +195,7 @@ namespace ns
         {
             switch (mode)
             {
-                case appearing:
+                case appearing: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -240,7 +214,7 @@ namespace ns
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case disappearing:
+                case disappearing: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime)
                         currentTime += elapsedTime.asSeconds();
                     
@@ -259,9 +233,7 @@ namespace ns
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case deprecated:
-                    this->GetNovelSystem()->PopComponent(this);
-                    break;
+                case deprecated: gs::requestWindowRefresh = true; this->GetNovelSystem()->PopComponent(this); break;
                     
                 default:
                     break;

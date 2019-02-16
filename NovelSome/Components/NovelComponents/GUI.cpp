@@ -12,14 +12,8 @@ namespace ns
 {
     namespace NovelComponents
     {
-        GUISystem::~GUISystem()
-        {
-            Clear();
-        }
-        GUISystem::GUISystem(Novel* novel)
-        {
-            this->novel = novel;
-        }
+        GUISystem::~GUISystem() { Clear(); }
+        GUISystem::GUISystem(Novel* novel) { this->novel = novel; }
         void GUISystem::Update(const sf::Time& elapsedTime)
         {
             for (auto g : guiObjects)
@@ -117,14 +111,8 @@ namespace ns
             }
             guiObjects.clear();
         }
-        void GUISystem::SetNovel(Novel* novel)
-        {
-            this->novel = novel;
-        }
-        void GUISystem::SetParent(GUIObject* parent)
-        {
-            this->parent = parent;
-        }
+        void GUISystem::SetNovel(Novel* novel) { this->novel = novel; }
+        void GUISystem::SetParent(GUIObject* parent) { this->parent = parent; }
         void GUISystem::ResetResize()
         {
             lastWidth = 0; lastHeight = 0;
@@ -213,7 +201,7 @@ namespace ns
                                 bool availableToSelf{ false };
                                 if (possibleVariable == L"@text")
                                 {
-                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                    GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
                                     if (textPtr != nullptr)
                                         availableToSelf = true, nvar = new NovelVariable(textPtr->textString);
                                 }
@@ -263,7 +251,7 @@ namespace ns
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
-                                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                                    GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
                                                     if (textPtr != nullptr)
                                                         replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().width);
                                                     else
@@ -312,7 +300,7 @@ namespace ns
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
-                                                    GUIObjects::Text* textPtr = dynamic_cast<GUIObjects::Text*>(&guiObject);
+                                                    GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
                                                     if (textPtr != nullptr)
                                                         replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().height);
                                                     else
@@ -403,7 +391,7 @@ namespace ns
                             if (onlyNeedsScaling)
                                 reallyOnlyScaled = true;
                             
-                            float left = base::ConvertToFloat(word);
+                            float left = base::atof(word);
                             left = left * ns::gs::scale;
                             finalLine += std::to_wstring(left);
                             
@@ -917,10 +905,7 @@ namespace ns
                 }*/
             }
         }
-        void GUIObject::SetGUISystem(GUISystem *system)
-        {
-            this->guiSystem = system;
-        }
+        void GUIObject::SetGUISystem(GUISystem *system) { this->guiSystem = system; }
         GUISystem* GUIObject::GetChildSystem()
         {
             if (child == nullptr)
@@ -936,7 +921,8 @@ namespace ns
         bool GUISystem::LoadFromFile(const std::wstring& fileName, Skin* skin, std::wstring guiScope)
         {
             bool skinLoaded{ false };
-            std::wstring fullPath = sf::String(resourcePath()) + fileName;
+            std::wstring fullPath = fileName;
+            if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
             
             std::wifstream wif;
 #ifdef _WIN32
@@ -1398,10 +1384,7 @@ namespace ns
             {
                 
             }
-            void Image::Draw(sf::RenderWindow* window)
-            {
-                window->draw(sprite);
-            }
+            void Image::Draw(sf::RenderWindow* window) { window->draw(sprite); }
             void Image::Resize(unsigned int width, unsigned int height)
             {
                 sprite.setScale({static_cast<float>(constrains.width) / texture.getSize().x, static_cast<float>(constrains.height)  / texture.getSize().y});

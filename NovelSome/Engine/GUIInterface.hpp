@@ -1,57 +1,144 @@
 //
 //  GUIInterface.hpp
-//  NovelSome
+//  AlternativeTransport-MLaToA2018
 //
-//  Created by Никита Исаенко on 08/10/2018.
+//  Created by Никита Исаенко on 22/11/2018.
 //  Copyright © 2018 Melancholy Hill. All rights reserved.
 //
 
 #ifndef GUIInterface_hpp
 #define GUIInterface_hpp
 
-#include <iostream>
-
 #include <SFML/Graphics.hpp>
 
 #include "../Essentials/Base.hpp"
 #include "StaticMethods.hpp"
 
-using std::cin;
-using std::cout;
-using std::endl;
-
 namespace ns
 {
+    enum class Halign { Left, Center, Right };
+    enum class Valign { Top, Center, Bottom };
     namespace GUI
     {
-        struct TextButton
+        struct Button
         {
-        public:
+            sf::Vector2i dot;
+            int maxAlpha{ 255 };
+            bool visible{ true }, active{ true };
+            
+            Halign halign{ Halign::Center };
+            Valign valign{ Valign::Center };
+            
+            virtual void Draw(sf::RenderTarget* window);
+            virtual void Resize(unsigned int width, unsigned int height);
+            virtual bool PollEvent(sf::Event& event);
+            virtual void setAlpha(const sf::Int8& alpha);
+            virtual void setPosition(float x, float y);
+            virtual void setVisible(bool vis);
+        };
+        
+        struct TextButton : Button
+        {
             bool fontLoaded{ false };
             
             bool onPress{ false };
             bool wasPressed{ false };
             bool ignoreWasPressed{ false };
-            sf::Vector2i dot;
+            bool characterScale{ false };
             
             sf::Text text;
             sf::String string;
-            unsigned int characterSize{ 30 };
+            unsigned int characterSize{ 20 };
             float thickness{ 1.f };
-            int maxAlpha = 255;
-            
-            enum class halignEnum { left, center, right };
-            enum class valignEnum { top, center, bottom };
-            halignEnum halign{ halignEnum::center };
-            valignEnum valign{ valignEnum::top };
             
             TextButton();
-            void Update(const sf::Time& elapsedTime);
-            void Draw(sf::RenderTarget* window);
-            void Resize(unsigned int width, unsigned int height);
-            bool PollEvent(sf::Event& event);
-            void setAlpha(const sf::Int8& alpha);
-            void setPosition(float x, float y);
+            void Draw(sf::RenderTarget* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            bool PollEvent(sf::Event& event) override;
+            void setAlpha(const sf::Int8& alpha) override;
+            void setPosition(float x, float y) override;
+            void setFont(const std::wstring& fontname);
+            void setString(const std::wstring& string);
+            void setCharacterSize(const unsigned int size);
+        };
+        
+        struct SpriteButton : Button
+        {
+            bool spriteLoaded{ false };
+            
+            bool onPress{ false };
+            bool wasPressed{ false };
+            bool ignoreWasPressed{ false };
+            bool characterScale{ false };
+            
+            sf::Sprite sprite;
+            std::wstring textureName{ L"" };
+            float scale{ 1.f };
+            
+            ~SpriteButton();
+            void Draw(sf::RenderTarget* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            bool PollEvent(sf::Event& event) override;
+            void setAlpha(const sf::Int8& alpha) override;
+            void setPosition(float x, float y) override;
+            void setTexture(const std::wstring& texture);
+            void setTexture(sf::Texture* texture);
+            void setScale(const float& scl);
+        };
+        
+        struct RectangleButton : Button
+        {
+            bool fontLoaded{ false };
+            
+            bool onPress{ false };
+            bool wasPressed{ false };
+            bool ignoreWasPressed{ false };
+            bool characterScale{ false };
+            
+            sf::RectangleShape shape;
+            sf::Text text;
+            sf::String string;
+            unsigned int characterSize{ 20 };
+            float thickness{ 1.f };
+            
+            RectangleButton();
+            void Draw(sf::RenderTarget* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            bool PollEvent(sf::Event& event) override;
+            void setAlpha(const sf::Int8& alpha) override;
+            void setPosition(float x, float y) override;
+            void setSize(const sf::Vector2f& vec);
+            void setFont(const std::wstring& fontname);
+            void setString(const std::wstring& string);
+            void setCharacterSize(const unsigned int size);
+        };
+        
+        struct RectangleButtons : Button
+        {
+            bool fontLoaded{ false };
+            
+            bool anyButtonPressed{ false };
+            unsigned long index{ 0 }, pressedIndex{ 0 };
+            bool onPress{ false };
+            bool ignoreWasPressed{ false };
+            bool characterScale{ false };
+            
+            sf::RectangleShape shape;
+            sf::Color shapeFillColor{ sf::Color(0,0,0, 170) };
+            
+            sf::Text text;
+            sf::String string;
+            unsigned int characterSize{ 20 };
+            float thickness{ 1.f };
+            
+            RectangleButtons();
+            void Draw(sf::RenderTarget* window) override;
+            void Resize(unsigned int width, unsigned int height) override;
+            bool PollEvent(sf::Event& event) override;
+            void eventPolled(sf::Event& event);
+            void setAlpha(const sf::Int8& alpha) override;
+            void setPosition(float x, float y) override;
+            void setSize(const sf::Vector2f& vec);
             void setFont(const std::wstring& fontname);
             void setString(const std::wstring& string);
             void setCharacterSize(const unsigned int size);

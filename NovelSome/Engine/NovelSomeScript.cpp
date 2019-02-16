@@ -219,12 +219,12 @@ namespace nss
     int ParseAsInt(CommandSettings& results)
     {
         //std::wstring stringValue = nss::ParseUntil(results, ' ');
-        return ns::base::ConvertToInt(nss::ParseUntil(results, ' '));
+        return ns::base::atoi(nss::ParseUntil(results, ' '));
     }
     float ParseAsFloat(CommandSettings& results)
     {
         //std::wstring stringValue = nss::ParseUntil(results, ' ');
-        return ns::base::ConvertToFloat(nss::ParseUntil(results, ' '));
+        return ns::base::atof(nss::ParseUntil(results, ' '));
     }
     std::wstring ParseAsString(CommandSettings& results)
     {
@@ -261,9 +261,9 @@ namespace nss
                 std::wstring color3 = nss::ParseUntil(results, ' ');
                 if (color3.length() != 0)
                 {
-                    int rColor = ns::base::ConvertToInt(color1);
-                    int gColor = ns::base::ConvertToInt(color2);
-                    int bColor = ns::base::ConvertToInt(color3);
+                    int rColor = ns::base::atoi(color1);
+                    int gColor = ns::base::atoi(color2);
+                    int bColor = ns::base::atoi(color3);
                     return sf::Color(rColor, gColor, bColor, 0);
                 }
             }
@@ -608,8 +608,8 @@ namespace nss
     float MathParser(const std::wstring& line)
     {
         bool operatorWasFound{ false };
-        ns::Stack<std::wstring> output;
-        ns::Stack<std::wstring> operators;
+        Stack<std::wstring> output;
+        Stack<std::wstring> operators;
         
         size_t wordLength = 0;
         size_t wordBeg = 0;
@@ -705,7 +705,7 @@ namespace nss
             if (output.IsEmpty())
                 return 0;
             else
-                return ns::base::ConvertToFloat(output[0]);
+                return base::atof(output[0]);
         }
         
         while (!operators.IsEmpty())
@@ -713,10 +713,10 @@ namespace nss
         
         /*cout << "Shunting-yard Algorithm's output: ";
         for (int j = output.size - 1; j >= 0; --j)
-            cout << ns::base::ConvertToUTF8(output[j]) << " ";
+            cout << base::ConvertToUTF8(output[j]) << " ";
         cout << endl;*/
         
-        ns::Stack<std::wstring> values;
+        Stack<std::wstring> values;
         int pos = output.size;
         while (pos >= 0)
         {
@@ -748,8 +748,8 @@ namespace nss
                         if (!values.IsEmpty())
                         {
                             std::wstring loperand = values.Pop();
-                            float rop = ns::base::ConvertToFloat(roperand);
-                            float lop = ns::base::ConvertToFloat(loperand);
+                            float rop = base::atof(roperand);
+                            float lop = base::atof(loperand);
                             
                             float result{ 0 };
                             if (token == L"+")
@@ -765,15 +765,15 @@ namespace nss
                         }
                         else
                         {
-                            cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::utf8(token) << "'." << endl;
+                            cout << "Error :: MathParser :: Operation can't be done: '" << base::utf8(token) << "'." << endl;
                             values.Push(roperand);
                         }
                     }
                     else
-                        cout << "Error :: MathParser :: Operation can't be done: '" << ns::base::utf8(token) << "'." << endl;
+                        cout << "Error :: MathParser :: Operation can't be done: '" << base::utf8(token) << "'." << endl;
                 }
                 else
-                    cout << "Error :: MathParser :: Operation is not supported: '" << ns::base::utf8(token) << "'." << endl;
+                    cout << "Error :: MathParser :: Operation is not supported: '" << base::utf8(token) << "'." << endl;
             }
             else
                 values.Push(token);
@@ -782,7 +782,7 @@ namespace nss
         }
         
         if (!values.IsEmpty())
-            return ns::base::ConvertToFloat(values.Pop());
+            return base::atof(values.Pop());
         
         return 0;
     }

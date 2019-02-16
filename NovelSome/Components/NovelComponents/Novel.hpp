@@ -20,9 +20,6 @@ using std::vector;
 #include <fstream>
 #include <codecvt>
 
-//std::unique_ptr<> in Music and Background
-#include <memory>
-
 //CharacterData in NovelLibrary
 #include <unordered_map>
 
@@ -54,13 +51,14 @@ namespace ns
         {
         private:
             sf::RectangleShape shape;
+            GUI::TextButton menuBackButton;
             
             sf::Int8 alpha{ 0 };
             float currentTime{ 0.f };
             
         public:
             Novel* novel{ nullptr };
-            enum modeEnum{ appearing, waiting, disappearing };
+            enum modeEnum{ appearing, waiting, appeared, disappearing };
             modeEnum mode{ waiting };
             
             int maxAlpha{ 255 };
@@ -716,7 +714,7 @@ namespace ns
                 int maxAlpha = 255;
                 bool forcePressInsideDialogue{ true };
                 float characterInSecond{ 0.04f };
-                unsigned int textAppearMode{ 0 };
+                unsigned int textAppearMode{ 1 };
                 std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
                 
                 wchar_t leftSpeechAddition{ 0 };
@@ -852,8 +850,8 @@ namespace ns
         private:
             NovelSystem layers;
             
-            sf::String nsdataPath{ "" };
-            sf::String folderPath{ "" };
+            std::wstring nsdataPath{ L"" };
+            std::wstring folderPath{ L"" };
             nss::CommandSettings command;
             std::unordered_map<std::wstring, NovelVariable*> localVariables;
             
@@ -880,7 +878,7 @@ namespace ns
             list<MusicPlayer*> musicGroup;
             list<GUISystem*> GUIGroup;
             
-            Novel(sf::String path);
+            Novel(const std::wstring& path);
             ~Novel();
             void Update(const sf::Time& elapsedTime) override;
             void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
@@ -889,7 +887,7 @@ namespace ns
             void PollEvent(sf::Event& event) override;
             void OnHold(NovelObject* component);
             void UnHold(NovelObject* component);
-            sf::String GetFolderPath();
+            std::wstring GetFolderPath();
             NovelVariable* FindVariable(const std::wstring& variableName);
             void VariableChange(const std::wstring& name);
             void LocalVariables_Set(const std::wstring& name, std::wstring value);
