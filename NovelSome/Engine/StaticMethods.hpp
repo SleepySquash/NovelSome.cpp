@@ -109,6 +109,7 @@ namespace ns
         
         static scThreadsJoiner threadsJoiner;
         static sf::SoundBuffer* LoadSound(const std::wstring& soundName, unsigned int mode = 3);
+        static bool LoadMusic(sf::Music& music, std::wstring fullPath);
         static void ThreadSound(std::wstring soundName, unsigned int mode, bool destroyable = true);
         static void PreloadSound(const std::wstring& soundName, unsigned int mode = 3, bool destroyable = true);
         static void SetDestroyable(std::wstring soundName, bool destroyable);

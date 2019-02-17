@@ -8,6 +8,7 @@ description "Привет, я очень длинное описание. Так
 
 event Scan {
     background "Неко@0x.jpg"
+    music "Pixie Paris - Es rappelt im Karton (Картон).ogg" from 39.8
 }
 
 event NovelStart {

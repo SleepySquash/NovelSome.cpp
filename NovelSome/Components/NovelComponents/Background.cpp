@@ -90,11 +90,7 @@ namespace ns
                 default: break;
             }
         }
-        void Background::Draw(sf::RenderWindow* window)
-        {
-            if (spriteLoaded && visible)
-                window->draw(sprite);
-        }
+        void Background::Draw(sf::RenderWindow* window) { if (spriteLoaded && visible) window->draw(sprite); }
         void Background::Destroy()
         {
             if (imagePath.toWideString().length() != 0)
@@ -108,10 +104,10 @@ namespace ns
         }
         void Background::CalculateParallax(int mouseX, int mouseY)
         {
-            if (mouseX >= 0 && mouseY >= 0 && mouseX <= ns::gs::width && mouseY <= ns::gs::height)
+            if (mouseX >= 0 && mouseY >= 0 && mouseX <= gs::width && mouseY <= gs::height)
             {
-                float posX = defaultPositionX + (int)(mouseX - ns::gs::width/2) * parallaxPower;
-                float posY = defaultPositionY + (int)(mouseY - ns::gs::height/2) * parallaxPower;
+                float posX = defaultPositionX + (int)(mouseX - gs::width/2) * parallaxPower;
+                float posY = defaultPositionY + (int)(mouseY - gs::height/2) * parallaxPower;
                 sprite.setPosition(posX, posY);
             }
         }

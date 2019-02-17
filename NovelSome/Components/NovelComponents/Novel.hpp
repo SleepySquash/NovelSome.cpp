@@ -37,6 +37,7 @@ using std::vector;
 #include "../../Engine/StaticMethods.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+#include "../NSMenuComponents/NovelsLibrary.hpp"
 
 using std::cin;
 using std::cout;
@@ -863,6 +864,7 @@ namespace ns
             std::wifstream wif;
             
         public:
+            NovelInfo* nvl{ nullptr };
             GamePause gamePause;
             NovelLibrary library;
             Skin skin;
@@ -878,7 +880,8 @@ namespace ns
             list<MusicPlayer*> musicGroup;
             list<GUISystem*> GUIGroup;
             
-            Novel(const std::wstring& path);
+            Novel(const std::wstring& path, NovelInfo* nvl = nullptr);
+            Novel(NovelInfo* nvl);
             ~Novel();
             void Update(const sf::Time& elapsedTime) override;
             void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);

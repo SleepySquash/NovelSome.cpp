@@ -12,9 +12,9 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Novel::Novel(const std::wstring& path) : nsdataPath(path)
+        Novel::Novel(const std::wstring& path, NovelInfo* nvl) : nsdataPath(path), nvl(nvl)
         {
-            folderPath = ns::base::GetFolderPath(path);
+            folderPath = base::GetFolderPath(path);
             
             localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
             localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
@@ -25,7 +25,30 @@ namespace ns
             
             gamePause.novel = this;
             skin.dialogue.gui.SetNovel(this);
-            skin.LoadFromFile(folderPath + L"skin.nskin");
+            std::wstring skinPath = L"skin.nskin";
+            if (nvl != nullptr)
+            {
+                std::wifstream wifn; bool done{ false };
+#ifdef _WIN32
+                wifn.open(nvl->path);
+#else
+                wifn.open(base::utf8(nvl->path));
+#endif
+                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                
+                if (wifn.is_open())
+                {
+                    std::wstring line; nss::CommandSettings command;
+                    while (!wifn.eof() && !done)
+                    {
+                        std::getline(wifn, line); command.Command(line);
+                        if (nss::Command(command, L"skin ")) { skinPath = nss::ParseAsMaybeQuoteString(command); done = true; }
+                    }
+                    wifn.close();
+                }
+            }
+            skin.LoadFromFile(folderPath + skinPath);
+            
             
             std::wstring filePath = path;
             if (!base::FileExists(path)) filePath = base::utf16(resourcePath()) + filePath;
@@ -38,6 +61,61 @@ namespace ns
             
             if (!(fileOpened = wif.is_open()))
                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(path) << endl;
+        }
+        Novel::Novel(NovelInfo* nvl) : nvl(nvl)
+        {
+            if (nvl != nullptr)
+            {
+                std::wstring scenario = L"";
+                std::wifstream wifn; bool done{ false };
+    #ifdef _WIN32
+                wifn.open(nvl->path);
+    #else
+                wifn.open(base::utf8(nvl->path));
+    #endif
+                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                
+                if (wifn.is_open())
+                {
+                    std::wstring line; nss::CommandSettings command;
+                    while (!wifn.eof() && !done)
+                    {
+                        std::getline(wifn, line); command.Command(line);
+                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                    }
+                    wifn.close();
+                }
+                
+                if (scenario != L"")
+                {
+                    std::wstring path = nvl->path + scenario;
+                    nsdataPath = path;
+                    folderPath = base::GetFolderPath(path);
+                    
+                    localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
+                    localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
+                    localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
+                    
+                    library.SetNovel(this);
+                    library.ScanForCharacters();
+                    
+                    gamePause.novel = this;
+                    skin.dialogue.gui.SetNovel(this);
+                    skin.LoadFromFile(folderPath + L"skin.nskin");
+                    
+                    std::wstring filePath = path;
+                    if (!base::FileExists(path)) filePath = base::utf16(resourcePath()) + filePath;
+        #ifdef _WIN32
+                    wif.open(filePath);
+        #else
+                    wif.open(base::utf8(filePath));
+        #endif
+                    wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                    
+                    if (!(fileOpened = wif.is_open()))
+                        cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(path) << endl;
+                } else cout << "Error :: NovelComponent :: File couldn't be opened, scenario: " << base::utf8(scenario) << endl;
+            }
         }
         Novel::~Novel()
         {

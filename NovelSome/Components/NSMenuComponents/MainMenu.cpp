@@ -82,14 +82,34 @@ namespace ns
         {
             if (!active) return;
             
+            if (doParallax && event.type == sf::Event::MouseMoved)
+            {
+                if (novelShowBackground) CalculateParallax(novelBackground, event.mouseMove.x, event.mouseMove.y);
+                else CalculateParallax(background, event.mouseMove.x, event.mouseMove.y);
+            }
+            
             float yy;
             switch (page)
             {
                 case Page::Main:
                     if (novelsButton.PollEvent(event))
                     {
-                        page = Page::Novels;
-                        if (!novelsLoaded) novelsLoaded = Novels::LoadNovels();
+                        page = Page::Novels; if (novelMusic.getStatus() == sf::Music::Status::Paused) novelMusic.play();
+                        if (!novelsLoaded) {
+                            novelsLoaded = Novels::LoadNovels();
+                            if (Novels::info.size())
+                            {
+                                long yyNovelsHeight = (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10) * Novels::info.size();
+                                if (yyNovelsHeight < gs::relativeHeight - gs::relativeHeight/4) {
+                                    yyNovels_from = gs::relativeHeight/2 - yyNovelsHeight/2;
+                                    yyNovels_to = yyNovels_from;
+                                } else {
+                                    yyNovels_from = gs::relativeHeight/15 - (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
+                                    yyNovels_to = yyNovels_from + (yyNovelsHeight - gs::relativeHeight + gs::relativeHeight/4) + (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
+                                }
+                                yyNovels = yyNovels_to;
+                            }
+                        }
                     }
                     else if (editorButton.PollEvent(event)) page = Page::Editor;
                     else if (settingsButton.PollEvent(event)) page = Page::Settings;
@@ -103,135 +123,174 @@ namespace ns
                         if (isNovelSelected && verticalOrientation)
                         {
                             if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
-                            isNovelSelected = false;
-                        } else page = Page::Main; }
+                            isNovelSelected = false; novelMusic.stop();
+                        } else { page = Page::Main; novelMusic.pause(); } }
                     else
                     {
-                        bool unselectNovelSelected{ true };
-                        if (event.type != sf::Event::MouseButtonReleased && event.type != sf::Event::TouchEnded)
-                            unselectNovelSelected = false;
-                        
-                        if (!verticalOrientation || !isNovelSelected)
+                        if (event.type == sf::Event::MouseWheelScrolled)
                         {
-                            yy = gs::height/3; long i = 0;
-                            for (auto it = Novels::info.begin(); it != Novels::info.end() && active; ++it)
+                            if (event.mouseWheelScroll.delta != 0 && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
                             {
-                                novelButtons.index = i;
-                                
-                                novelButtons.setString((*it).name);
-                                novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
-                                if (novelButtons.PollEvent(event))
-                                {
-                                    unselectNovelSelected = false;
-                                    if (!isNovelSelected || novelSelected != it)
-                                    {
-                                        if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
-                                        isNovelSelected = true; novelSelected = it;
-                                        novelRawDescription = L""; novelAuthor = L"";
-                                        std::wstring back = L"";
-                                        std::wifstream wif; bool done{ false };
-        #ifdef _WIN32
-                                        wif.open((*it).path);
-        #else
-                                        wif.open(base::utf8((*novelSelected).path));
-        #endif
-                                        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                                        
-                                        int infoRead{ 0 };
-                                        if (wif.is_open())
-                                        {
-                                            std::wstring line;
-                                            nss::CommandSettings command;
-                                            while (!wif.eof() && !done)
-                                            {
-                                                std::getline(wif, line);
-                                                command.Command(line);
-                                                
-                                                if (nss::Command(command, L"background ")) {
-                                                    back = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                else if (nss::Command(command, L"description ")) {
-                                                    novelRawDescription = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                else if (nss::Command(command, L"author ")) {
-                                                    novelAuthor = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                
-                                                if (infoRead >= 3) done = true;
-                                            }
-                                            
-                                            wif.close();
-                                        }
-                                        if (back != L"" && back.length())
-                                        {
-                                            std::wstring path = base::GetFolderPath((*it).path) + back;
-                                            sf::Texture* texture = ic::LoadTexture(path, 1);
-                                            if (texture)
-                                            {
-                                                novelBackTexture = path;
-                                                novelBackground.setTexture(*texture, true);
-                                                novelBackground.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
-                                                float factorX = (float)gs::width / texture->getSize().x;
-                                                float factorY = (float)gs::height / texture->getSize().y;
-                                                float scaleFactor = factorX > factorY ? factorX : factorY;
-                                                novelBackground.setScale(scaleFactor, scaleFactor);
-                                                novelBackground.setPosition(gs::width/2, gs::height/2);
-                                                novelShowBackground = true;
-                                            }
-                                        }
-                                        if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = L"Описание: ..."; }
-                                        else
-                                        {
-                                            novelRawDescription = L"Описание: " + novelRawDescription;
-                                            novelText.setCharacterSize(35 * gs::scScale);
-                                            novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
-                                            novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
-                                        }
-                                        if (novelAuthor == L"") novelAuthor = L"???";
-                                    }
-                                }
-                                yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
+                                yyNovels += 14 * event.mouseWheelScroll.delta;
+                                if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
+                                if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
                             }
-                            novelButtons.eventPolled(event);
                         }
-                        
-                        if (isNovelSelected && novelStartButton.PollEvent(event))
+                        else
                         {
-                            unselectNovelSelected = false;
-                            std::wstring scenario = L"";
-                            std::wifstream wif; bool done{ false };
-#ifdef _WIN32
-                            wif.open((*it).path);
-#else
-                            wif.open(base::utf8((*novelSelected).path));
-#endif
-                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                            bool unselectNovelSelected{ true };
+                            if (event.type != sf::Event::MouseButtonReleased && event.type != sf::Event::TouchEnded)
+                                unselectNovelSelected = false;
                             
-                            if (wif.is_open())
+                            if (!verticalOrientation || !isNovelSelected)
                             {
-                                std::wstring line;
-                                nss::CommandSettings command;
-                                while (!wif.eof() && !done)
+                                yy = yyNovels*gs::scaley; long i = 0;
+                                for (auto it = Novels::info.begin(); it != Novels::info.end() && active; ++it)
                                 {
-                                    std::getline(wif, line);
-                                    command.Command(line);
+                                    novelButtons.index = i;
                                     
-                                    if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                                    novelButtons.setString((*it).name);
+                                    novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
+                                    if (novelButtons.PollEvent(event))
+                                    {
+                                        unselectNovelSelected = false;
+                                        if (!isNovelSelected || novelSelected != it)
+                                        {
+                                            novelMusic.stop();
+                                            if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
+                                            isNovelSelected = true; novelSelected = it;
+                                            novelRawDescription = L""; novelAuthor = L"";
+                                            std::wstring back{ L"" }, music{ L"" };
+                                            float musicFrom{ 0 };
+                                            std::wifstream wif; bool done{ false };
+            #ifdef _WIN32
+                                            wif.open((*it).path);
+            #else
+                                            wif.open(base::utf8((*novelSelected).path));
+            #endif
+                                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                                            
+                                            int infoRead{ 0 };
+                                            if (wif.is_open())
+                                            {
+                                                std::wstring line;
+                                                nss::CommandSettings command;
+                                                while (!wif.eof() && !done)
+                                                {
+                                                    std::getline(wif, line);
+                                                    command.Command(line);
+                                                    
+                                                    if (nss::Command(command, L"background ")) {
+                                                        back = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                                                    else if (nss::Command(command, L"description ")) {
+                                                        novelRawDescription = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                                                    else if (nss::Command(command, L"author ")) {
+                                                        novelAuthor = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                                                    else if (nss::Command(command, L"music "))
+                                                    {
+                                                        music = nss::ParseAsMaybeQuoteString(command); ++infoRead;
+                                                        while (command.lastPos < line.length())
+                                                        {
+                                                            nss::SkipSpaces(command);
+                                                            std::wstring fromstr = nss::ParseUntil(command, L' ');
+                                                            if (fromstr != L"from") musicFrom = base::atof(fromstr);
+                                                        }
+                                                    }
+                                                    
+                                                    if (infoRead >= 4) done = true;
+                                                }
+                                                
+                                                wif.close();
+                                            }
+                                            if (back != L"" && back.length())
+                                            {
+                                                std::wstring path = base::GetFolderPath((*it).path) + back;
+                                                sf::Texture* texture = ic::LoadTexture(path, 1);
+                                                if (texture)
+                                                {
+                                                    novelBackTexture = path;
+                                                    novelBackground.setTexture(*texture, true);
+                                                    novelBackground.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                                                    float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                                                    float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                                                    float scaleFactor = factorX > factorY ? factorX : factorY;
+                                                    novelBackground.setScale(scaleFactor, scaleFactor);
+                                                    novelBackground.setPosition(gs::width/2, gs::height/2);
+                                                    if (doParallax) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                                                    novelShowBackground = true;
+                                                }
+                                            }
+                                            if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = L"Описание: ..."; }
+                                            else
+                                            {
+                                                novelRawDescription = L"Описание: " + novelRawDescription;
+                                                novelText.setCharacterSize(35 * gs::scScale);
+                                                novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
+                                                novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
+                                            }
+                                            if (novelAuthor == L"") novelAuthor = L"???";
+                                            if (music != L"")
+                                            {
+                                                if (sc::LoadMusic(novelMusic, base::GetFolderPath((*it).path) + music))
+                                                {
+                                                    novelMusic.setLoop(true);
+                                                    novelMusic.setVolume(100 * gs::maxVolumeMusic * gs::maxVolumeGlobal);
+                                                    if (musicFrom >= 0) {novelMusic.setPlayingOffset(sf::seconds(musicFrom)); novelMusic_from = musicFrom; } else novelMusic_from = 0;
+                                                    novelMusic.play();
+                                                }
+                                            }
+                                        }
+                                    }
+                                    yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
                                 }
-                                
-                                wif.close();
+                                novelButtons.eventPolled(event);
                             }
                             
-                            active = !(scenario != L"");
-                            if (!active) entity->AddComponent<NovelComponents::Novel>(base::GetFolderPath((*novelSelected).path) + scenario);
-                            else cout << "MainMenu :: PollEvent :: Novel start failed with no scenario found." << endl;
-                        }
-                        
-                        if (unselectNovelSelected)
-                        {
-                            sf::Vector2i dot; if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y }; else dot = { event.touch.x, event.touch.y };
-                            unselectNovelSelected = !novelBackShape.getGlobalBounds().contains(dot.x, dot.y);
+                            if (isNovelSelected && novelStartButton.PollEvent(event))
+                            {
+                                unselectNovelSelected = false;
+                                std::wstring scenario = L"";
+                                std::wifstream wif; bool done{ false };
+    #ifdef _WIN32
+                                wif.open((*novelSelected).path);
+    #else
+                                wif.open(base::utf8((*novelSelected).path));
+    #endif
+                                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                                
+                                if (wif.is_open())
+                                {
+                                    std::wstring line;
+                                    nss::CommandSettings command;
+                                    while (!wif.eof() && !done)
+                                    {
+                                        std::getline(wif, line);
+                                        command.Command(line);
+                                        
+                                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                                    }
+                                    
+                                    wif.close();
+                                }
+                                
+                                active = !(scenario != L"");
+                                if (!active) {
+                                    novelMusic.pause();
+                                    entity->AddComponent<NovelComponents::Novel>(base::GetFolderPath((*novelSelected).path) + scenario, &(*novelSelected)); }
+                                else cout << "MainMenu :: PollEvent :: Novel start failed with no scenario found." << endl;
+                            }
+                            
                             if (unselectNovelSelected)
                             {
-                                if (isNovelSelected && novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
-                                isNovelSelected = false;
+                                if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                                sf::Vector2i dot; if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y }; else dot = { event.touch.x, event.touch.y };
+                                unselectNovelSelected = !novelBackShape.getGlobalBounds().contains(dot.x, dot.y);
+                                if (unselectNovelSelected)
+                                {
+                                    if (isNovelSelected && novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
+                                    isNovelSelected = false;
+                                    novelMusic.stop();
+                                }
                             }
                         }
                     }
@@ -246,8 +305,8 @@ namespace ns
             if (!active) return;
             if (spriteLoaded)
             {
-                float factorX = (float)width / background.getTexture()->getSize().x;
-                float factorY = (float)height / background.getTexture()->getSize().y;
+                float factorX = (float)width / background.getTexture()->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                float factorY = (float)height / background.getTexture()->getSize().y * (doParallax? 1 + parallaxPower : 1);
                 float scaleFactor = factorX > factorY ? factorX : factorY;
                 background.setScale(scaleFactor, scaleFactor);
                 background.setPosition(width/2, height/2);
@@ -306,10 +365,24 @@ namespace ns
             novelText.setOutlineThickness(2 * gs::scale);
             yyNovelText = novelBackShape.getPosition().y;
             
+            if (Novels::info.size())
+            {
+                long yyNovelsHeight = (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10) * Novels::info.size();
+                if (yyNovelsHeight < gs::relativeHeight - gs::relativeHeight/4) {
+                    yyNovels_from = gs::relativeHeight/2 - yyNovelsHeight/2;
+                    yyNovels_to = yyNovels_from;
+                } else {
+                    yyNovels_from = gs::relativeHeight/15 - (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
+                    yyNovels_to = yyNovels_from + (yyNovelsHeight - gs::relativeHeight + gs::relativeHeight/4) + (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
+                }
+                if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
+                if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
+            }
+            
             if (novelShowBackground)
             {
-                float factorX = (float)width / novelBackground.getTexture()->getSize().x;
-                float factorY = (float)height / novelBackground.getTexture()->getSize().y;
+                float factorX = (float)width / novelBackground.getTexture()->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                float factorY = (float)height / novelBackground.getTexture()->getSize().y * (doParallax? 1 + parallaxPower : 1);
                 float scaleFactor = factorX > factorY ? factorX : factorY;
                 novelBackground.setScale(scaleFactor, scaleFactor);
                 novelBackground.setPosition(width/2, height/2);
@@ -319,6 +392,12 @@ namespace ns
                 novelText.setCharacterSize(35 * gs::scScale);
                 novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
                 novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
+            }
+            
+            if (doParallax)
+            {
+                if (novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                else CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
             }
         }
         void MainMenu::Draw(sf::RenderWindow* window)
@@ -366,7 +445,7 @@ namespace ns
                     }
                     if (!isNovelSelected || !verticalOrientation)
                     {
-                        yy = gs::height/3;
+                        yy = yyNovels*gs::scaley;
                         for (auto it = Novels::info.begin(); it != Novels::info.end(); ++it)
                         {
                             novelButtons.index = i;
@@ -383,14 +462,25 @@ namespace ns
                 default: break;
             }
         }
-        void MainMenu::RecieveMessage(MessageHolder& message)
+        void MainMenu::ReceiveMessage(MessageHolder& message)
         {
             if (message.info == "NovelComponents :: Novel :: Returning to the menu")
             {
                 active = true;
+                if (novelMusic.getStatus() == sf::Music::Status::Paused) {
+                    novelMusic.play(); novelMusic.setPlayingOffset(sf::seconds(novelMusic_from)); }
                 gs::requestWindowRefresh = true;
                 Resize(gs::width, gs::height);
                 message = MessageHolder();
+            }
+        }
+        void MainMenu::CalculateParallax(sf::Sprite& sprite, int dotX, int dotY)
+        {
+            if (dotX >= 0 && dotY >= 0 && dotX <= gs::width && dotY <= gs::height)
+            {
+                float posX = gs::width/2 + (int)(dotX - gs::width/2) * parallaxPower;
+                float posY = gs::height/2 + (int)(dotY - gs::height/2) * parallaxPower;
+                sprite.setPosition(posX, posY);
             }
         }
     }

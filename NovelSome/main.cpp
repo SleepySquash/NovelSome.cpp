@@ -458,7 +458,7 @@ int main()
 #endif
     while (window.isOpen())
     {
-        sf::Event event; gs::requestWindowRefresh = false;
+        sf::Event event;
         while (active ? window.pollEvent(event) : window.waitEvent(event))
         {
             switch (event.type)
@@ -487,6 +487,7 @@ int main()
                     break;
 #endif
                     
+                case sf::Event::MouseWheelScrolled:
                 case sf::Event::TouchEnded:
                 case sf::Event::TouchMoved:
                 case sf::Event::TouchBegan:
@@ -538,6 +539,14 @@ int main()
                     CalculateScaleRatios(event.size.width, event.size.height);
                     system.Resize(event.size.width, event.size.height);
                     window.setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+#ifdef SFML_SYSTEM_ANDROID
+                    if (active)
+                    {
+                        window.clear();
+                        system.Draw(&window);
+                        window.display(); //TODO: Might crash here if app is not running
+                    }
+#endif
                     break;
                     
                 default: break;
@@ -555,6 +564,8 @@ int main()
                 window.clear();
                 system.Draw(&window);
                 window.display(); //TODO: Might crash here if app is not running
+                
+                gs::requestWindowRefresh = false;
             }
         } else sf::sleep(sf::milliseconds(100));
 #else
@@ -565,6 +576,8 @@ int main()
             window.clear();
             system.Draw(&window);
             window.display();
+            
+            gs::requestWindowRefresh = false;
         }
 #endif
     }

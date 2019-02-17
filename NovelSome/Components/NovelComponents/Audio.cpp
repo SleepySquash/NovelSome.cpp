@@ -275,50 +275,7 @@ namespace ns
             audioLoaded = false;
             if (novel != nullptr)
             {
-                std::wstring fullPath = sf::String(resourcePath()) + novel->GetFolderPath() + fileName;
-                if (!base::FileExists(fullPath))
-                {
-                    std::wstring onlyFolder = base::GetFolderPath(fullPath);
-                    std::wstring onlyFileName = L"";
-                    for (int i = onlyFolder.length(); i < fullPath.length(); i++)
-                        onlyFileName += fullPath[i];
-                    
-                    if (base::FileExists(onlyFolder + L"music/" + onlyFileName))
-                        fullPath = onlyFolder + L"music/" + onlyFileName;
-                    else if (base::FileExists(onlyFolder + L"ambient/" + onlyFileName))
-                        fullPath = onlyFolder + L"ambient/" + onlyFileName;
-                    else if (base::FileExists(onlyFolder + L"audio/" + onlyFileName))
-                        fullPath = onlyFolder + L"audio/" + onlyFileName;
-                    else if (base::FileExists(onlyFolder + L"Music/" + onlyFileName))
-                        fullPath = onlyFolder + L"Music/" + onlyFileName;
-                    else if (base::FileExists(onlyFolder + L"Ambient/" + onlyFileName))
-                        fullPath = onlyFolder + L"Ambient/" + onlyFileName;
-                    else if (base::FileExists(onlyFolder + L"Audio/" + onlyFileName))
-                        fullPath = onlyFolder + L"Audio/" + onlyFileName;
-                }
-                
-#ifdef _WIN32
-                std::ifstream ifStream(fullPath, std::ios::binary | std::ios::ate);
-                if (!ifStream.is_open())
-                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
-                else
-                {
-                    auto filesize = ifStream.tellg();
-                    fileInMemory.reset(new char[static_cast<unsigned int>(filesize)]);
-                    ifStream.seekg(0, std::ios::beg);
-                    ifStream.read(fileInMemory.get(), filesize);
-                    ifStream.close();
-                    
-                    audioLoaded = music.openFromMemory(fileInMemory.get(), filesize);
-                }
-#else
-                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                std::string u8str = converter.to_bytes(fullPath);
-                if (!(audioLoaded = music.openFromFile(u8str)))
-                    std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
-#endif
-                
-                if (audioLoaded)
+                if ((audioLoaded = sc::LoadMusic(music, novel->GetFolderPath() + fileName)))
                 {
                     audioPath = fileName;
                     music.setLoop(loop);
@@ -332,13 +289,10 @@ namespace ns
                 }
                 else
                 {
-                    if (sendMessageBack != noMessage)
-                        novel->UnHold(this);
+                    if (sendMessageBack != noMessage) novel->UnHold(this);
                     this->GetNovelSystem()->PopComponent(this);
                 }
-            }
-            else
-                cout << "Error :: MusicPlayer :: LoadFromFile :: No novel was loaded, pointer is NULL" << endl;
+            } else cout << "Error :: MusicPlayer :: LoadFromFile :: No novel was loaded, pointer is NULL" << endl;
         }
         void MusicPlayer::SetStateMode(modeEnum newMode)
         {

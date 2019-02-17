@@ -51,6 +51,9 @@ namespace ns
             enum class Page { Main, Novels, Editor, Settings };
             Page page{ Page::Main };
             
+            bool doParallax{ gs::isParallaxEnabled };
+            float parallaxPower{ gs::defaultParallaxBackground };
+            
             sf::Text welcomeToNovelSome;
             bool fontLoaded{ false };
             GUI::TextButton novelsButton;
@@ -60,6 +63,7 @@ namespace ns
             GUI::TextButton accountButton;
             GUI::TextButton backButton;
             
+            long yyNovels{ 0 }, yyNovels_from{ 0 }, yyNovels_to{ 0 };
             bool verticalOrientation{ false };
             bool isNovelSelected{ false };
             list<NovelInfo>::iterator novelSelected;
@@ -70,6 +74,7 @@ namespace ns
             sf::Text novelText; float yyNovelText{ 0 };
             std::wstring novelTextDescription{ L"" }, novelRawDescription{ L"" }, novelAuthor{ L"" };
             bool novelShowBackground{ false }; sf::Sprite novelBackground; std::wstring novelBackTexture{ L"" };
+            sf::Music novelMusic; float novelMusic_from{ 0 };
             
             MainMenu();
             ~MainMenu();
@@ -77,7 +82,8 @@ namespace ns
             void PollEvent(sf::Event& event) override;
             void Resize(unsigned int width, unsigned int height) override;
             void Draw(sf::RenderWindow* window) override;
-            void RecieveMessage(MessageHolder& message) override;
+            void ReceiveMessage(MessageHolder& message) override;
+            void CalculateParallax(sf::Sprite& sprite, int dotX, int dotY);
         };
     }
 }

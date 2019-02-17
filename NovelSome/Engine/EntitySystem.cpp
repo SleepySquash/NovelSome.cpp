@@ -17,7 +17,7 @@ namespace ns
     void Component::Draw(sf::RenderWindow*) { }
     void Component::Resize(unsigned int, unsigned int) { }
     void Component::PollEvent(sf::Event&) { }
-    void Component::RecieveMessage(MessageHolder&) { }
+    void Component::ReceiveMessage(MessageHolder&) { }
     void Component::Destroy() { }
     void Component::SetEntity(Entity* entity) { this->entity = entity; }
     Entity* Component::GetEntity() { return entity; }
@@ -63,12 +63,12 @@ namespace ns
         list<Component*>::iterator it = components.begin();
         while (it != components.end()) { (*it)->Destroy(); delete (*it); components.erase(it++); }
     }
-    void Entity::SendMessage(MessageHolder message) { Entity::RecieveMessage(message); }
-    void Entity::RecieveMessage(MessageHolder& message)
+    void Entity::SendMessage(MessageHolder message) { Entity::ReceiveMessage(message); }
+    void Entity::ReceiveMessage(MessageHolder& message)
     {
         if (components.size())
             for (auto e : components)
-                if (!e->offline) e->RecieveMessage(message);
+                if (!e->offline) e->ReceiveMessage(message);
     }
     void Entity::SetEntitySystem(EntitySystem* system) { this->system = system; }
     
@@ -124,7 +124,7 @@ namespace ns
     {
         if (entities.size())
             for (auto e : entities)
-                if (!e->offline) e->RecieveMessage(message);
+                if (!e->offline) e->ReceiveMessage(message);
     }
     void EntitySystem::clear()
     {
