@@ -17,6 +17,7 @@
 #include <locale>
 #include <fstream>
 #include <codecvt>
+#include <memory>
 #include <dirent.h>
 
 #include <dirent.h>
@@ -74,6 +75,7 @@ namespace ns
             sf::Text novelText; float yyNovelText{ 0 };
             std::wstring novelTextDescription{ L"" }, novelRawDescription{ L"" }, novelAuthor{ L"" };
             bool novelShowBackground{ false }; sf::Sprite novelBackground; std::wstring novelBackTexture{ L"" };
+            std::unique_ptr<char[]> fileInMemory;
             sf::Music novelMusic; float novelMusic_from{ 0 };
             
             MainMenu();

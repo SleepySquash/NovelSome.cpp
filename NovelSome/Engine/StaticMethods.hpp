@@ -15,6 +15,7 @@
 #include <thread>
 #include <codecvt>
 #include <fstream>
+#include <memory>
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
@@ -109,7 +110,7 @@ namespace ns
         
         static scThreadsJoiner threadsJoiner;
         static sf::SoundBuffer* LoadSound(const std::wstring& soundName, unsigned int mode = 3);
-        static bool LoadMusic(sf::Music& music, std::wstring fullPath);
+        static bool LoadMusic(sf::Music& music, std::wstring fullPath, std::unique_ptr<char[]>& fileInMemory);
         static void ThreadSound(std::wstring soundName, unsigned int mode, bool destroyable = true);
         static void PreloadSound(const std::wstring& soundName, unsigned int mode = 3, bool destroyable = true);
         static void SetDestroyable(std::wstring soundName, bool destroyable);

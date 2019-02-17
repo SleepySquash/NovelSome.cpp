@@ -231,7 +231,8 @@ namespace ns
                                             if (novelAuthor == L"") novelAuthor = L"???";
                                             if (music != L"")
                                             {
-                                                if (sc::LoadMusic(novelMusic, base::GetFolderPath((*it).path) + music))
+                                                fileInMemory.release();
+                                                if (sc::LoadMusic(novelMusic, base::GetFolderPath((*it).path) + music, fileInMemory))
                                                 {
                                                     novelMusic.setLoop(true);
                                                     novelMusic.setVolume(100 * gs::maxVolumeMusic * gs::maxVolumeGlobal);

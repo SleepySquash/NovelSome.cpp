@@ -568,7 +568,7 @@ namespace ns
             return nullptr;
         }
     }
-    bool SoundCollector::LoadMusic(sf::Music &music, std::wstring fullPath)
+    bool SoundCollector::LoadMusic(sf::Music &music, std::wstring fullPath, std::unique_ptr<char[]>& fileInMemory)
     {
         bool found{ false };
         if (!base::FileExists(fullPath))

@@ -275,7 +275,7 @@ namespace ns
             audioLoaded = false;
             if (novel != nullptr)
             {
-                if ((audioLoaded = sc::LoadMusic(music, novel->GetFolderPath() + fileName)))
+                if ((audioLoaded = sc::LoadMusic(music, novel->GetFolderPath() + fileName, fileInMemory)))
                 {
                     audioPath = fileName;
                     music.setLoop(loop);

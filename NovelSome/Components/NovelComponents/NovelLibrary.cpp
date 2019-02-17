@@ -469,12 +469,16 @@ namespace ns
 #ifdef _WIN32
                     if ((dir = _opendir(fullpath.c_str())) != NULL)
 #else
-                        if ((dir = _opendir(base::utf8(fullpath).c_str())) != NULL)
+                    if ((dir = _opendir(base::utf8(fullpath).c_str())) != NULL)
 #endif
                         {
                             while ((ent = _readdir(dir)) != NULL)
                             {
+#ifdef _WIN32
+                                std::wstring entryName{ (ent->d_name) };
+#else
                                 std::wstring entryName{ base::utf16(ent->d_name) };
+#endif
                                 if (entryName != L"." && entryName != L"..")
                                 {
                                     std::wstring extention = ns::base::GetExtentionFromString(entryName);
@@ -484,7 +488,7 @@ namespace ns
                                         std::wifstream wif;
                                         std::wstring filePath = (fullpath + entryName);
 #ifdef _WIN32
-                                        wif.open(filePath.toWideString());
+                                        wif.open(filePath);
 #else
                                         wif.open(base::utf8(filePath));
 #endif
