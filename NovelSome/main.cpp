@@ -30,22 +30,17 @@
 //TODO: .nschar having their own dialogue line's colors, so dialogues look better
 
 //TODO: Logic's "if" and "else"
-//TODO: .nsdata files and NovelInfo structure
-//TODO: Main menu
 //TODO: Parallax should have some default animation (like moving cursor) so the image is not static
 //      (maybe only when cursor is not being moved??) and this might be an option in preferences and in novel's settings
 
 //TODO: Colors in GUI system
 //TODO: Minimum width and height. After that no scaling can be made.
-//TODO: If the device NovelSome is running on is slow on loading images and stuff, then there should be an option to preload it.
-//TODO: Threading in loading images?
 
 //TODO: Choice menu and novel's ability to read commands from line[] array.
 //TODO: HUD as GUISystem parsed from skin file with command.
 //TODO: .mp3 working.
 //TODO: Game Pause having some buttons.
 //TODO: Make game pause's fingers be blocked from touching something on the screen.
-//TODO: There is should be Text's scaling factor, which will be diffrent from the usual gs::scale to make text more readble on the big devices and screens.
 
 //TODO: Double clicking also calls Game Pause (only with touch).
 //TODO: Individual scaling factor in Settings or stuff.
@@ -60,13 +55,13 @@
 
 //TODO: Make choices be dependent on the "as choose" GUIObject.
 //TODO: Properly make GUISystem's images adding, showing etc.
-//TODO: Adding the main menu and the novel select screen.
 //TODO: If one wants to make their own choices, them should use GUISystem => adding HUDs. NovelSome's "choose" command only supports list-like choosing (for now) and skin marked as "as choose" is only for limiting the space list will take.
 //TODO: Settings in the GamePause (and in the menu for future): changing the ResolutionClass.
 
 
 
 //TODO: Change the way negative offset is being made.
+//TODO: Make main menu draw only novel buttons that are in the scope.
 
 
 
@@ -93,6 +88,12 @@
 //DONE: Correct scaling speed when ratio is big.
 //DONE: Make minEH be able to "send messages" to other components. Like, for example, message to the MainMenu from Novel about its ending and exiting, so the MainMenu starts to draw itself again. Or if there's no MainMenu, then the message is destroyed.
 //DONE: "music" and "ambient" commands should stop currently playing music.
+//DONE: Adding the main menu and the novel select screen.
+//DONE: There is should be Text's scaling factor, which will be diffrent from the usual gs::scale to make text more readble on the big devices and screens.
+//DONE: If the device NovelSome is running on is slow on loading images and stuff, then there should be an option to preload it.
+//DONE: Threading in loading images?
+//DONE: .nsdata files and NovelInfo structure
+//DONE: Main menu
 
 // PARSINGS:
 //          NovelUpdate

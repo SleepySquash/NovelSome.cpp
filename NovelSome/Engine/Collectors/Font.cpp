@@ -3,7 +3,7 @@
 //  NovelSome
 //
 //  Created by Никита Исаенко on 17/03/2019.
-//  Copyright © 2019 Melanholy Hill. All rights reserved.
+//  Copyright © 2019 Melancholy Hill. All rights reserved.
 //
 
 #include "Font.hpp"

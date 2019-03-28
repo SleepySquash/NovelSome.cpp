@@ -3,7 +3,7 @@
 //  NovelSome
 //
 //  Created by Никита Исаенко on 11/02/2019.
-//  Copyright © 2019 Melanholy Hill. All rights reserved.
+//  Copyright © 2019 Melancholy Hill. All rights reserved.
 //
 
 #include "MainMenu.hpp"
@@ -114,6 +114,7 @@ namespace ns
                     break;
                 case Page::Novels:
                     if (backButton.PollEvent(event)) {
+                        novelButtons.anyButtonPressed = false;
                         if (isNovelSelected && gs::verticalOrientation)
                         {
                             if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
@@ -131,6 +132,12 @@ namespace ns
                             }
                         }
                         else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                        else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Down && isNovelSelected) {
+                            ++novelSelected; if (novelSelected == Novels::info.end()) novelSelected = Novels::info.begin();
+                            SelectNovel(novelSelected, true, true); }
+                        else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Up && isNovelSelected) {
+                            if (novelSelected == Novels::info.begin()) novelSelected = Novels::info.end(); --novelSelected;
+                            SelectNovel(novelSelected, true, true); }
                         else
                         {
                             if ((event.type == sf::Event::MouseMoved && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) || event.type == sf::Event::TouchMoved)
@@ -157,93 +164,7 @@ namespace ns
                                     if (novelButtons.PollEvent(event))
                                     {
                                         unselectNovelSelected = false;
-                                        if (!isNovelSelected || novelSelected != it)
-                                        {
-                                            novelMusic.stop();
-                                            if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
-                                            isNovelSelected = true; novelSelected = it;
-                                            novelRawDescription = L""; novelAuthor = L"";
-                                            std::wstring back{ L"" }, music{ L"" };
-                                            float musicFrom{ 0 };
-                                            std::wifstream wif; bool done{ false };
-            #ifdef _WIN32
-                                            wif.open((*it).path);
-            #else
-                                            wif.open(base::utf8((*novelSelected).path));
-            #endif
-                                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                                            
-                                            int infoRead{ 0 };
-                                            if (wif.is_open())
-                                            {
-                                                std::wstring line;
-                                                nss::CommandSettings command;
-                                                while (!wif.eof() && !done)
-                                                {
-                                                    std::getline(wif, line);
-                                                    command.Command(line);
-                                                    
-                                                    if (nss::Command(command, L"background ")) {
-                                                        back = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                    else if (nss::Command(command, L"description ")) {
-                                                        novelRawDescription = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                    else if (nss::Command(command, L"author ")) {
-                                                        novelAuthor = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
-                                                    else if (nss::Command(command, L"music "))
-                                                    {
-                                                        music = nss::ParseAsMaybeQuoteString(command); ++infoRead;
-                                                        while (command.lastPos < line.length())
-                                                        {
-                                                            nss::SkipSpaces(command);
-                                                            std::wstring fromstr = nss::ParseUntil(command, L' ');
-                                                            if (fromstr != L"from") musicFrom = base::atof(fromstr);
-                                                        }
-                                                    }
-                                                    
-                                                    if (infoRead >= 4) done = true;
-                                                }
-                                                
-                                                wif.close();
-                                            }
-                                            if (back != L"" && back.length())
-                                            {
-                                                std::wstring path = base::GetFolderPath((*it).path) + back;
-                                                sf::Texture* texture = ic::RequestHigherTexture(path, entity, 1);//ic::LoadTexture(path, 1);
-                                                if (texture)
-                                                {
-                                                    novelBackTexture = path;
-                                                    novelBackground.setTexture(*texture, true);
-                                                    novelBackground.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
-                                                    float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
-                                                    float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
-                                                    float scaleFactor = factorX > factorY ? factorX : factorY;
-                                                    novelBackground.setScale(scaleFactor, scaleFactor);
-                                                    novelBackground.setPosition(gs::width/2, gs::height/2);
-                                                    if (doParallax) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
-                                                    novelShowBackground = true;
-                                                }
-                                            }
-                                            if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = L"Описание: ..."; }
-                                            else
-                                            {
-                                                novelRawDescription = L"Описание: " + novelRawDescription;
-                                                novelText.setCharacterSize(35 * gs::scScale);
-                                                novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
-                                                novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
-                                            }
-                                            if (novelAuthor == L"") novelAuthor = L"???";
-                                            if (music != L"")
-                                            {
-                                                fileInMemory.release();
-                                                if (sc::LoadMusic(novelMusic, base::GetFolderPath((*it).path) + music, fileInMemory))
-                                                {
-                                                    novelMusic.setLoop(true);
-                                                    novelMusic.setVolume(100 * gs::maxVolumeMusic * gs::maxVolumeGlobal);
-                                                    if (musicFrom >= 0) {novelMusic.setPlayingOffset(sf::seconds(musicFrom)); novelMusic_from = musicFrom; } else novelMusic_from = 0;
-                                                    novelMusic.play();
-                                                }
-                                            }
-                                        }
+                                        SelectNovel(it);
                                     }
                                     yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
                                 }
@@ -460,7 +381,7 @@ namespace ns
                     {
                         yy = yyNovels*gs::scaley;
                         for (auto it = Novels::info.begin(); it != Novels::info.end(); ++it)
-                        {
+                        {   //TODO: Make this draw only the ones in the scope.
                             novelButtons.index = i;
                             novelButtons.setString((*it).name);
                             novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
@@ -532,6 +453,101 @@ namespace ns
                 float posX = gs::width/2 + (int)(dotX - gs::width/2) * parallaxPower;
                 float posY = gs::height/2 + (int)(dotY - gs::height/2) * parallaxPower;
                 sprite.setPosition(posX, posY);
+            }
+        }
+        void MainMenu::SelectNovel(list<NovelInfo>::iterator& it, bool focus, bool force)
+        {
+            if (!isNovelSelected || novelSelected != it || force)
+            {
+                novelMusic.stop();
+                if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
+                isNovelSelected = true; novelSelected = it;
+                novelRawDescription = L""; novelAuthor = L"";
+                std::wstring back{ L"" }, music{ L"" };
+                float musicFrom{ 0 }; bool done{ false };
+                
+                std::wifstream wif;
+#ifdef _WIN32
+                wif.open((*it).path);
+#else
+                wif.open(base::utf8((*novelSelected).path));
+#endif
+                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                
+                int infoRead{ 0 };
+                if (wif.is_open())
+                {
+                    std::wstring line;
+                    nss::CommandSettings command;
+                    while (!wif.eof() && !done)
+                    {
+                        std::getline(wif, line);
+                        command.Command(line);
+                        
+                        if (nss::Command(command, L"background ")) {
+                            back = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                        else if (nss::Command(command, L"description ")) {
+                            novelRawDescription = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                        else if (nss::Command(command, L"author ")) {
+                            novelAuthor = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                        else if (nss::Command(command, L"music "))
+                        {
+                            music = nss::ParseAsMaybeQuoteString(command); ++infoRead;
+                            while (command.lastPos < line.length())
+                            {
+                                nss::SkipSpaces(command);
+                                std::wstring fromstr = nss::ParseUntil(command, L' ');
+                                if (fromstr != L"from") musicFrom = base::atof(fromstr);
+                            }
+                        }
+                        
+                        if (infoRead >= 4) done = true;
+                    }
+                    
+                    wif.close();
+                }
+                if (back != L"" && back.length())
+                {
+                    std::wstring path = base::GetFolderPath((*it).path) + back;
+                    sf::Texture* texture = ic::RequestHigherTexture(path, entity, 1);//ic::LoadTexture(path, 1);
+                    if (texture)
+                    {
+                        novelBackTexture = path;
+                        novelBackground.setTexture(*texture, true);
+                        novelBackground.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                        float scaleFactor = factorX > factorY ? factorX : factorY;
+                        novelBackground.setScale(scaleFactor, scaleFactor);
+                        novelBackground.setPosition(gs::width/2, gs::height/2);
+                        if (doParallax) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                        novelShowBackground = true;
+                    }
+                }
+                if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = L"Описание: ..."; }
+                else
+                {
+                    novelRawDescription = L"Описание: " + novelRawDescription;
+                    novelText.setCharacterSize(35 * gs::scScale);
+                    novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
+                    novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
+                }
+                if (novelAuthor == L"") novelAuthor = L"???";
+                if (music != L"")
+                {
+                    fileInMemory.release();
+                    if (sc::LoadMusic(novelMusic, base::GetFolderPath((*it).path) + music, fileInMemory))
+                    {
+                        novelMusic.setLoop(true);
+                        novelMusic.setVolume(100 * gs::maxVolumeMusic * gs::maxVolumeGlobal);
+                        if (musicFrom >= 0) {novelMusic.setPlayingOffset(sf::seconds(musicFrom)); novelMusic_from = musicFrom; } else novelMusic_from = 0;
+                        novelMusic.play();
+                    }
+                }
+            }
+            if (focus && isNovelSelected)
+            {
+                // TODO
             }
         }
     }
