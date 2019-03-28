@@ -86,19 +86,19 @@ namespace ns
                                 }
                                 else if (nss::Command(command, L"scale "))
                                 {
-                                    scaleX = nss::ParseAsFloat(command);
-                                    scaleY = scaleX;
+                                    scaleRawX = nss::ParseAsFloat(command);
+                                    scaleRawY = scaleRawX;
                                 }
                                 else if (nss::Command(command, L"scalexy "))
                                 {
-                                    scaleX = nss::ParseAsFloat(command);
+                                    scaleRawX = nss::ParseAsFloat(command);
                                     SkipSpaces(command);
-                                    scaleY = nss::ParseAsFloat(command);
+                                    scaleRawY = nss::ParseAsFloat(command);
                                 }
                                 else if (nss::Command(command, L"scalex "))
-                                    scaleX = nss::ParseAsFloat(command);
+                                    scaleRawX = nss::ParseAsFloat(command);
                                 else if (nss::Command(command, L"scaley "))
-                                    scaleY = nss::ParseAsFloat(command);
+                                    scaleRawY = nss::ParseAsFloat(command);
                                 else if (nss::Command(command, L"parallax "))
                                 {
                                     std::wstring possibleParallax = nss::ArgumentAsString(command);
@@ -112,8 +112,7 @@ namespace ns
                                         parallaxPower = ns::GlobalSettings::defaultParallaxBackground;
                                     else if (possibleParallax == L"frontground" || possibleParallax == L"front" || possibleParallax == L"f")
                                         parallaxPower = ns::GlobalSettings::defaultParallaxFrontground;
-                                    else
-                                        parallaxPower = base::atof(possibleParallax);
+                                    else parallaxPower = base::atof(possibleParallax);
                                 }
                                 
                                 eof = stateReading ? false : true;
