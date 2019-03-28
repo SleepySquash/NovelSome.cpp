@@ -1,11 +1,23 @@
+show Юи normal cright fade:0!
+show Юи nopantyhose cleft fade:0!
 "..."
+hide Юи
+"..."
+show Юи normal left!
+show Юи nopantyhose right!
 var backgroundNeko = "Неко.jpg"
 var infoInteger = 123
 var booleanyeah = true
 
 Background "Неко.jpg"
+hide Юи!
+
+gui "skin.nskin" menu
+gui gamepause "skin.nskin"!
 
 Юи "Nya :3"
+
+gui hide all
 
 //choice "hi"
 //    "Yay, hi!"
@@ -66,11 +78,11 @@ delete backgroundNeko
 //debug::outputVariables
 
 
-show Юи normal_f right with message:no
-show Юи normal_f left with message:no
-show Юи normal_n cleft with message:no
-show Юи normal_n cright with message:no
-show Юи normal_c center with message:no
+show Юи normal_f right!
+show Юи normal_f left!
+show Юи normal_n cleft!
+show Юи normal_n cright!
+show Юи normal_c center!
 
 "now showing!!"
 hide all

@@ -72,6 +72,15 @@ sound
 gui menu
 {
     //...
+    rectangle
+    {
+        posx: .width/3
+        posy: .height/3
+        width: .width/6
+        height: .height/6
+        fill: yellow
+        alpha: .6
+    }
 }
 
 gui choose
