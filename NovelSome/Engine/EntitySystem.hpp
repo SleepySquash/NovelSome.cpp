@@ -11,27 +11,21 @@
 
 #include <iostream>
 #include <list>
-using std::list;
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "StaticMethods.hpp"
+#include "Settings.hpp"
+#include "MessageHolder.hpp"
+
+using std::list;
 
 namespace ns
 {
     struct Component;
     struct Entity;
     struct EntitySystem;
-    
-    struct MessageHolder
-    {
-        std::string info{ "" };
-        
-        MessageHolder();
-        MessageHolder(const std::string& info) : info(info) { }
-    };
     
     struct Component
     {
@@ -47,12 +41,9 @@ namespace ns
         virtual void PollEvent(sf::Event& event);
         virtual void ReceiveMessage(MessageHolder& message);
         virtual void Destroy();
-        void SetPriority(int priority);
-        void SetEntity(Entity* entity);
-        Entity* GetEntity();
     };
     
-    struct Entity
+    struct Entity : MessageSender
     {
         EntitySystem* system{ nullptr };
         bool offline{ false };
@@ -65,16 +56,15 @@ namespace ns
         void Resize(unsigned int width, unsigned int height);
         void PollEvent(sf::Event& event);
         void PopComponent(Component* component);
-        void SendMessage(MessageHolder message);
+        void SendMessage(MessageHolder message) override;
         void ReceiveMessage(MessageHolder& message);
         void Destroy();
-        void SetEntitySystem(EntitySystem* system);
         template<typename T, typename ...Args> T* AddComponent(Args... args)
         {
             T* component = new T(args...);
             components.push_back(component);
             
-            component->SetEntity(this);
+            component->entity = this;
             component->Init();
             component->Resize(gs::width, gs::height);
             
@@ -95,7 +85,7 @@ namespace ns
             if (!done)
                 components.push_back(component);
             
-            component->SetEntity(this);
+            component->entity = this;
             component->Init();
             component->Resize(gs::width, gs::height);
             
@@ -103,7 +93,7 @@ namespace ns
         }
     };
     
-    struct EntitySystem
+    struct EntitySystem : MessageSender
     {
         list<Entity*> entities;
         
@@ -114,7 +104,7 @@ namespace ns
         void PollEvent(sf::Event& event);
         Entity* AddEntity();
         void PopEntity(Entity* entity);
-        void SendMessage(MessageHolder message);
+        void SendMessage(MessageHolder message) override;
         void clear();
     };
 }

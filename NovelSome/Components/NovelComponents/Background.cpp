@@ -6,101 +6,83 @@
 //  Copyright © 2018 Melancholy Hill. All rights reserved.
 //
 
-#include "Novel.hpp"
+#include "Background.hpp"
 
 namespace ns
 {
     namespace NovelComponents
     {
-        void Background::LoadImage(const sf::String& path)
+        Background::Background(const std::wstring& folderPath) : folderPath(folderPath) { }
+        void Background::LoadImage(const std::wstring& path)
         {
-            spriteLoaded = false;
-            backgroundLoaded = false;
-            if (novel != nullptr)
+            sf::Texture* texture = ic::RequestHigherTexture(folderPath + path, novelSystem, 1);
+            if ((spriteLoaded = texture))
             {
-                sf::Texture* texturePtr = ic::LoadTexture(novel->GetFolderPath() + path, 1);
-                if (texturePtr != nullptr)
-                {
-                    imagePath = novel->GetFolderPath() + sf::String(path);
-                    spriteLoaded = true;
-                    sprite.setTexture(*texturePtr);
-                    
-                    Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
-                }
-                
-                if (!spriteLoaded)
-                {
-                    if (sendMessageBack != noMessage)
-                        novel->UnHold(this);
-                    this->GetNovelSystem()->PopComponent(this);
-                }
+                imagePath = folderPath + path;
+                sprite.setTexture(*texture); Resize(gs::width, gs::height);
             }
-            else
-                cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
+            
+            if (!spriteLoaded)
+            {
+                if (sendMessageBack != noMessage) novelSystem->SendMessage({"UnHold", this});
+                novelSystem->PopComponent(this);
+            }
         }
         void Background::Resize(unsigned int width, unsigned int height)
         {
             CalculateScale(width, height);
             if (doParallax && !(gs::isPauseEnabled && gs::isPause))
-                CalculateParallax(sf::Mouse::getPosition(*ns::gs::window).x, sf::Mouse::getPosition(*ns::gs::window).y);
+                CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
         }
         void Background::Update(const sf::Time& elapsedTime)
         {
             switch (mode)
             {
                 case appearing: gs::requestWindowRefresh = true;
-                    if (currentTime < appearTime)
-                        currentTime += elapsedTime.asSeconds();
-                    
+                    if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
                     {
-                        alpha = maxAlpha;
-                        currentTime = 0.f;
+                        alpha = maxAlpha; currentTime = 0.f;
                         mode = afterAppearSwitchTo;
-                        
-                        if (novel != nullptr)
-                            if (sendMessageBack == atAppearance)
-                                novel->UnHold(this);
+                        if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else
-                        alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
                 case disappearing: gs::requestWindowRefresh = true;
-                    if (currentTime < disappearTime)
-                        currentTime += elapsedTime.asSeconds();
-                    
+                    if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= disappearTime)
                     {
-                        alpha = 0;
-                        currentTime = 0.f;
+                        alpha = 0; currentTime = 0.f;
                         mode = deprecated;
-                        
-                        if (novel != nullptr)
-                            if (sendMessageBack == atDeprecated)
-                                novel->UnHold(this);
+                        if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else
-                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
-                    
-                case deprecated: gs::requestWindowRefresh = true; this->GetNovelSystem()->PopComponent(this); break;
+
+                case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
                 default: break;
             }
         }
         void Background::Draw(sf::RenderWindow* window) { if (spriteLoaded && visible) window->draw(sprite); }
-        void Background::Destroy()
-        {
-            if (imagePath.toWideString().length() != 0)
-                ic::DeleteImage(imagePath);
-            if (novel != nullptr) novel->RemoveFromGroup(groupPointer);
-        }
+        void Background::Destroy() { if (imagePath.length() != 0) ic::DeleteImage(imagePath); novelSystem->SendMessage({"Destroy", this}); }
         void Background::PollEvent(sf::Event& event)
         {
             if (event.type == sf::Event::MouseMoved && mode != deprecated && visible && doParallax && parallaxPower > 0)
                 CalculateParallax(event.mouseMove.x, event.mouseMove.y);
+        }
+        void Background::ReceiveMessage(MessageHolder &message)
+        {
+            if (nss::Command(message.info, "Request") && message.additional == imagePath)
+            {
+                sf::Texture* texture = ic::LoadTexture(imagePath);
+                if (texture) { sprite.setTexture(*texture, true); CalculateScale(gs::width, gs::height);
+                    if (doParallax && !(gs::isPauseEnabled && gs::isPause))
+                        CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                }
+            }
         }
         void Background::CalculateParallax(int mouseX, int mouseY)
         {
@@ -111,19 +93,6 @@ namespace ns
                 sprite.setPosition(posX, posY);
             }
         }
-        void Background::SetNovel(Novel* novel)
-        {
-            this->novel = novel;
-            if (novel != nullptr)
-            {
-                appearTime = novel->skin.background.appearTime;
-                disappearTime = novel->skin.background.disappearTime;
-                maxAlpha = novel->skin.background.maxAlpha;
-                doParallax = novel->skin.background.doParallax;
-                parallaxPower = novel->skin.background.parallaxPower;
-            }
-        }
-        void Background::SetGroup(const list<Background*>::iterator& element) { this->groupPointer = element; }
         void Background::CalculateScale(unsigned int width, unsigned int height)
         {
             if (spriteLoaded)
@@ -137,7 +106,6 @@ namespace ns
                         scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
                         sprite.setScale(scaleFactor, scaleFactor);
                         break;
-                        
                     case fillCentre:
                         scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
                         sprite.setScale(scaleFactor, scaleFactor);
@@ -145,7 +113,6 @@ namespace ns
                         defaultPositionY = (float)ns::gs::height/2 - sprite.getLocalBounds().height/2*sprite.getScale().y - sprite.getOrigin().y*sprite.getScale().y;
                         sprite.setPosition(defaultPositionX, defaultPositionY);
                         break;
-                        
                     case stretch: sprite.setScale(scaleFactorX, scaleFactorY); break;
                     default: break;
                 }
@@ -155,11 +122,8 @@ namespace ns
         {
             if (mode != newMode && mode != deprecated)
             {
-                currentTime = 0.f;
-                mode = newMode;
-                if (novel != nullptr)
-                    if (newMode == disappearing && sendMessageBack == atDisappearing)
-                        novel->UnHold(this);
+                currentTime = 0.f; mode = newMode;
+                if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
             }
         }
     }

@@ -18,7 +18,8 @@
 #include "../../Essentials/Base.hpp"
 #include "../../Engine/List.hpp"
 #include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/StaticMethods.hpp"
+#include "../../Engine/Settings.hpp"
+#include "../../Engine/Collectors.hpp"
 
 namespace nekoui
 {

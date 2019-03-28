@@ -16,7 +16,8 @@
 #include <SFML/Graphics.hpp>
 
 #include "../Engine/EntitySystem.hpp"
-#include "../Engine/StaticMethods.hpp"
+#include "../Engine/Settings.hpp"
+#include "../Engine/Collectors/Font.hpp"
 
 using std::cin;
 using std::cout;
@@ -39,7 +40,7 @@ namespace ns
             bool firstCalculate{ true };
             
         public:
-            DebugComponent(sf::String build);
+            DebugComponent(const sf::String& build);
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;

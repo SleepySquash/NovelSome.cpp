@@ -18,7 +18,8 @@
 #include <SFML/Graphics.hpp>
 
 #include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/StaticMethods.hpp"
+#include "../../Engine/Settings.hpp"
+#include "../../Engine/Collectors.hpp"
 
 using std::cin;
 using std::cout;

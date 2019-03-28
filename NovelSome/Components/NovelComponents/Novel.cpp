@@ -12,21 +12,57 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Novel::Novel(const std::wstring& path, NovelInfo* nvl) : nsdataPath(path), nvl(nvl)
+        EventListener::EventListener(Novel* novel) : novel(novel) { }
+        void EventListener::ReceiveMessage(MessageHolder& message) { if (message.info == "UnHold" || message.info == "Destroy" || message.info == "ChooseAction" || message.info == "ChooseUnHold") novel->ForwardMessage(message); }
+        
+        Novel::Novel(const std::wstring& path, NovelInfo* nvl) : nsdataPath(path), nvl(nvl) { }
+        Novel::Novel(NovelInfo* nvl) : nvl(nvl) { }
+        void Novel::Init()
         {
-            folderPath = base::GetFolderPath(path);
+            layers.PrioritizeComponent<EventListener>(-31000, this);
             
-            localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-            localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
+            scenarioPath = nsdataPath;
+            if (!(nsdataPath.length() == 0 || nsdataPath == L"") && nvl) nsdataPath = nvl->path;
+            if ((nsdataPath.length() == 0 || nsdataPath == L"") && nvl)
+            {
+                std::wstring scenario = L"";
+                std::wifstream wifn; bool done{ false };
+#ifdef _WIN32
+                wifn.open(nvl->path);
+#else
+                wifn.open(base::utf8(nvl->path));
+#endif
+                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                
+                if (wifn.is_open())
+                {
+                    std::wstring line; nss::CommandSettings command;
+                    while (!wifn.eof() && !done)
+                    {
+                        std::getline(wifn, line); command.Command(line);
+                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                    }
+                    wifn.close();
+                }
+                
+                if (scenario != L"")
+                {
+                    //std::wstring path = nvl->path + scenario;
+                    scenarioPath = base::GetFolderPath(nvl->path) + scenario;
+                    nsdataPath = nvl->path;
+                }
+            }
             
-            library.SetNovel(this);
-            library.ScanForCharacters();
+            folderPath = base::GetFolderPath(nsdataPath);
             
-            gamePause.novel = this;
-            skin.dialogue.gui.SetNovel(this);
+            VariableSystem::localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
+            VariableSystem::localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
+            VariableSystem::localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
+            CharacterLibrary::ScanForCharacters(folderPath);
+            
+            gamePause = entity->AddComponent<GamePause>(&interface.guiPause);
             std::wstring skinPath = L"skin.nskin";
-            if (nvl != nullptr)
+            if (nvl)
             {
                 std::wifstream wifn; bool done{ false };
 #ifdef _WIN32
@@ -47,11 +83,15 @@ namespace ns
                     wifn.close();
                 }
             }
-            skin.LoadFromFile(folderPath + skinPath);
+            
+            if (Skin::self) delete Skin::self;
+            Skin::self = new Skin();
+            Skin::self->LoadFromFile(folderPath + skinPath);
+            interface.LoadFromFile(folderPath + skinPath);
             
             
-            std::wstring filePath = path;
-            if (!base::FileExists(path)) filePath = base::utf16(resourcePath()) + filePath;
+            std::wstring filePath = scenarioPath;
+            if (!base::FileExists(scenarioPath)) filePath = base::utf16(resourcePath()) + filePath;
 #ifdef _WIN32
             wif.open(filePath);
 #else
@@ -60,76 +100,17 @@ namespace ns
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
             
             if (!(fileOpened = wif.is_open()))
-                cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(path) << endl;
-        }
-        Novel::Novel(NovelInfo* nvl) : nvl(nvl)
-        {
-            if (nvl != nullptr)
-            {
-                std::wstring scenario = L"";
-                std::wifstream wifn; bool done{ false };
-    #ifdef _WIN32
-                wifn.open(nvl->path);
-    #else
-                wifn.open(base::utf8(nvl->path));
-    #endif
-                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                
-                if (wifn.is_open())
-                {
-                    std::wstring line; nss::CommandSettings command;
-                    while (!wifn.eof() && !done)
-                    {
-                        std::getline(wifn, line); command.Command(line);
-                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
-                    }
-                    wifn.close();
-                }
-                
-                if (scenario != L"")
-                {
-                    std::wstring path = nvl->path + scenario;
-                    nsdataPath = path;
-                    folderPath = base::GetFolderPath(path);
-                    
-                    localVariables.insert({L"@dialogue", new NovelVariable(std::wstring(L""))});
-                    localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
-                    localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
-                    
-                    library.SetNovel(this);
-                    library.ScanForCharacters();
-                    
-                    gamePause.novel = this;
-                    skin.dialogue.gui.SetNovel(this);
-                    skin.LoadFromFile(folderPath + L"skin.nskin");
-                    
-                    std::wstring filePath = path;
-                    if (!base::FileExists(path)) filePath = base::utf16(resourcePath()) + filePath;
-        #ifdef _WIN32
-                    wif.open(filePath);
-        #else
-                    wif.open(base::utf8(filePath));
-        #endif
-                    wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                    
-                    if (!(fileOpened = wif.is_open()))
-                        cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(path) << endl;
-                } else cout << "Error :: NovelComponent :: File couldn't be opened, scenario: " << base::utf8(scenario) << endl;
-            }
+                cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(scenarioPath) << endl;
         }
         Novel::~Novel()
         {
-            entity->SendMessage(MessageHolder("NovelComponents :: Novel :: Returning to the menu"));
+            entity->SendMessage(MessageHolder("NovelComponents :: Novel :: Destroying"));
+            if (gamePause) entity->PopComponent(gamePause);
+            VariableSystem::clear();
+            CharacterLibrary::clear();
             
-            wif.close();
-            layers.clear();
-            skin.dialogue.gui.Clear();
-            skin.gamePauseGUI.Clear();
-            //ns::ic::FreeImages();
-            
-            for (auto& key : localVariables)
-                if (key.second != nullptr)
-                    delete key.second;
+            wif.close(); layers.clear();
+            if (Skin::self) { delete Skin::self; Skin::self = nullptr; }
             
             FreeGroup<Background>(backgroundGroup);
             FreeGroup<Character>(characterGroup);
@@ -146,6 +127,8 @@ namespace ns
             while (lines.size() <= preloadLinesAmount && !wif.eof())
             {
                 std::getline(wif, line);
+                if (line.length() && line[line.length() - 1] == 13) line.erase(line.begin() + (line.size() - 1));
+                
                 nss::CommandSettings settings;
                 settings.Command(line);
                 
@@ -155,18 +138,18 @@ namespace ns
                 else if (!nss::ContainsUsefulInformation(line)) shouldPush = false;
                 else if (nss::Command(settings, L"background hide")) { }
                 else if (nss::Command(settings, L"hide ")) { }
-                else if (nss::Command(settings, L"sound stop ")) { }
+                else if (nss::Command(settings, L"sound stop")) { }
                 else if (nss::Command(settings, L"background add ") || nss::Command(settings, L"background "))
                 {
                     std::wstring filePath = nss::ParseAsQuoteString(settings);
-                    ic::PreloadTexture(folderPath + filePath, 1);
+                    ic::PreloadTexture(folderPath + filePath, 1, true, &layers);
                 }
                 else if (nss::Command(settings, L"show "))
                 {
                     std::wstring possibleName = nss::ParseUntil(settings, ' ');
                     if (possibleName.length() != 0)
                     {
-                        if (library.characterLibrary.find(possibleName) != library.characterLibrary.end())
+                        if (CharacterLibrary::exists(possibleName))
                         {
                             std::wstring state{ L"" };
                             
@@ -193,7 +176,7 @@ namespace ns
                                 }
                             }
                             
-                            CharacterData* characterData = library.characterLibrary[possibleName];
+                            CharacterData* characterData = CharacterLibrary::at(possibleName);
                             sf::String fullPath = sf::String(resourcePath()) + folderPath + characterData->filePath;
                             std::wstring lookForSpritePath = base::GetFolderPath(folderPath + characterData->filePath);
                             std::wstring spritePath{ L"" };
@@ -248,7 +231,7 @@ namespace ns
                                 }
                             }
                             wifc.close();
-                            if (spritePath.length() != 0) ic::PreloadTexture(lookForSpritePath + spritePath, 2);
+                            if (spritePath.length() != 0) ic::PreloadTexture(lookForSpritePath + spritePath, 2, true, &layers);
                         }
                     }
                 }
@@ -261,87 +244,97 @@ namespace ns
                 if (shouldPush) lines.push_front(line);
             }
         }
-        void Novel::Draw(sf::RenderWindow* window)
+        void Novel::Draw(sf::RenderWindow* window) { if (fileOpened) layers.Draw(window); }
+        void Novel::Resize(unsigned int width, unsigned int height) { if (fileOpened) layers.Resize(width, height); }
+        void Novel::PollEvent(sf::Event& event) { if (fileOpened && !(gs::isPause)) layers.PollEvent(event); }
+        void Novel::ForwardMessage(MessageHolder& message)
         {
-            if (fileOpened)
-                layers.Draw(window);
-            gamePause.Draw(window);
+            if (message.info == "UnHold") UnHold(reinterpret_cast<NovelObject*>(message.address));
+            else if (message.info == "Destroy")
+            {
+                std::list<Background*>::iterator it1 = std::find(backgroundGroup.begin(), backgroundGroup.end(), message.address);
+                if (it1 != backgroundGroup.end()) backgroundGroup.erase(it1);
+                
+                std::list<Character*>::iterator it2 = std::find(characterGroup.begin(), characterGroup.end(), message.address);
+                if (it2 != characterGroup.end()) characterGroup.erase(it2);
+                
+                std::list<Dialogue*>::iterator it3 = std::find(dialogueGroup.begin(), dialogueGroup.end(), message.address);
+                if (it3 != dialogueGroup.end()) dialogueGroup.erase(it3);
+                
+                std::list<Choose*>::iterator it4 = std::find(chooseGroup.begin(), chooseGroup.end(), message.address);
+                if (it4 != chooseGroup.end()) chooseGroup.erase(it4);
+                
+                std::list<MusicPlayer*>::iterator it5 = std::find(musicGroup.begin(), musicGroup.end(), message.address);
+                if (it5 != musicGroup.end()) musicGroup.erase(it5);
+                
+                std::list<SoundPlayer*>::iterator it6 = std::find(soundGroup.begin(), soundGroup.end(), message.address);
+                if (it6 != soundGroup.end()) soundGroup.erase(it6);
+                
+                std::list<MusicPlayer*>::iterator it8 = std::find(ambientGroup.begin(), ambientGroup.end(), message.address);
+                if (it8 != ambientGroup.end()) ambientGroup.erase(it8);
+                
+                std::list<GUISystem*>::iterator it7 = std::find(GUIGroup.begin(), GUIGroup.end(), message.address);
+                if (it7 != GUIGroup.end()) GUIGroup.erase(it7);
+            }
+            else if (message.info == "ChooseAction") lines.push_back(message.additional);
+            else if (message.info == "ChooseUnHold")
+            {
+                UnHold(reinterpret_cast<NovelObject*>(message.address));
+                if (dialogueGroup.size() != 0)
+                    for (auto d : dialogueGroup)
+                        if (d->mode == Dialogue::modeEnum::waitingForChoose)
+                            d->SetStateMode(Dialogue::modeEnum::disappearing);
+            }
         }
-        void Novel::Resize(unsigned int width, unsigned int height)
-        {
-            if (fileOpened)
-                layers.Resize(width, height);
-            gamePause.Resize(width, height);
-        }
-        void Novel::PollEvent(sf::Event& event)
-        {
-            if (fileOpened && !(ns::GlobalSettings::isPause))
-                layers.PollEvent(event);
-            gamePause.PollEvent(event);
-        }
+        void Novel::ReceiveMessage(MessageHolder &message) { if (message.info == "GamePause :: Return to menu") entity->PopComponent(this); }
         void Novel::OnHold(NovelObject* component) { onHold.insert(onHold.begin(), component); }
         void Novel::UnHold(NovelObject* component)
         {
             std::list<NovelObject*>::iterator it = std::find(onHold.begin(), onHold.end(), component);
-            if (it != onHold.end())
-            {
-                onHold.erase(it);
-            }
+            if (it != onHold.end()) onHold.erase(it);
         }
-        std::wstring Novel::GetFolderPath() { return folderPath; }
         
         
         
         
         
         
-        NovelVariable* Novel::FindVariable(const std::wstring& variableName)
-        {
-            return (localVariables.find(variableName) != localVariables.end()) ? localVariables.at(variableName) : nullptr;
-        }
         void Novel::VariableChange(const std::wstring& name)
         {
-            skin.dialogue.gui.VariableChange(name);
-            skin.choose.guiChoose.VariableChange(name);
-            skin.gamePauseGUI.VariableChange(name);
-            if (GUIGroup.size() != 0)
-                for (auto g : GUIGroup)
-                    g->VariableChange(name);
+            interface.guiDialogue.VariableChange(name);
+            interface.guiChoose.VariableChange(name);
+            interface.guiPause.VariableChange(name);
+            if (GUIGroup.size() != 0) for (auto g : GUIGroup) g->VariableChange(name);
         }
         void Novel::LocalVariables_Set(const std::wstring& name, std::wstring value)
         {
             NovelVariable *nvar;
-            if (localVariables.find(name) == localVariables.end())
+            if (var::localVariables.find(name) == var::localVariables.end())
             {
                 nvar = new NovelVariable();
-                localVariables.insert({name, nvar});
+                var::localVariables.insert({name, nvar});
             }
-            else
-                nvar = localVariables.at(name);
+            else nvar = var::localVariables.at(name);
             
             bool callChange{ false };
             if (nvar->type != nvar->NotSet)
             {
-                if (nvar->type == nvar->String)
-                    callChange = (nvar->value.asString != value);
-                else
-                    callChange = true;
+                if (nvar->type == nvar->String) callChange = (nvar->value.asString != value);
+                else callChange = true;
             }
             
             nvar->Set(value);
-            if (callChange)
-                VariableChange(name);
+            if (callChange) VariableChange(name);
         }
         void Novel::LocalVariables_Set(const std::wstring& name, bool value)
         {
             NovelVariable *nvar;
-            if (localVariables.find(name) == localVariables.end())
+            if (var::localVariables.find(name) == var::localVariables.end())
             {
                 nvar = new NovelVariable();
-                localVariables.insert({name, nvar});
+                var::localVariables.insert({name, nvar});
             }
-            else
-                nvar = localVariables.at(name);
+            else nvar = var::localVariables.at(name);
             
             bool callChange{ false };
             if (nvar->type != nvar->NotSet)
@@ -349,19 +342,17 @@ namespace ns
                     callChange = (nvar->value.asBoolean != value);
             
             nvar->Set(value);
-            if (callChange)
-                VariableChange(name);
+            if (callChange) VariableChange(name);
         }
         void Novel::LocalVariables_Set(const std::wstring& name, int value)
         {
             NovelVariable *nvar;
-            if (localVariables.find(name) == localVariables.end())
+            if (var::localVariables.find(name) == var::localVariables.end())
             {
                 nvar = new NovelVariable();
-                localVariables.insert({name, nvar});
+                var::localVariables.insert({name, nvar});
             }
-            else
-                nvar = localVariables.at(name);
+            else nvar = var::localVariables.at(name);
             
             bool callChange{ false };
             if (nvar->type != nvar->NotSet)
@@ -369,22 +360,8 @@ namespace ns
                     callChange = (nvar->value.asInt != value);
             
             nvar->Set(value);
-            if (callChange)
-                VariableChange(name);
+            if (callChange) VariableChange(name);
         }
-        
-        
-        
-        
-        
-        
-        void Novel::RemoveFromGroup(const list<Background*>::iterator& groupPointer) { backgroundGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<Dialogue*>::iterator& groupPointer) { dialogueGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<Choose*>::iterator& groupPointer) { chooseGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<Character*>::iterator& groupPointer) { characterGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<SoundPlayer*>::iterator& groupPointer) { soundGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<MusicPlayer*>::iterator& groupPointer) { musicGroup.erase(groupPointer); }
-        void Novel::RemoveFromGroup(const list<GUISystem*>::iterator& groupPointer) { GUIGroup.erase(groupPointer); }
     }
 }
 

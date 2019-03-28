@@ -17,12 +17,9 @@ namespace ns
     void NovelObject::Resize(unsigned int width, unsigned int height) { }
     void NovelObject::PollEvent(sf::Event& event) { }
     void NovelObject::Destroy() { }
+    void NovelObject::ReceiveMessage(MessageHolder&) { }
     void NovelObject::SetPriority(int priority) { this->priority = priority; /* TODO: Sorting */ }
-    void NovelObject::ChangePriority(int priority) {
-        if (novelSystem != nullptr)
-            novelSystem->ChangePriorityOf(this, priority); }
-    void NovelObject::SetNovelSystem(NovelSystem* novelSystem) { this->novelSystem = novelSystem; }
-    NovelSystem* NovelObject::GetNovelSystem() { return novelSystem; }
+    void NovelObject::ChangePriority(int priority) { if (novelSystem) novelSystem->ChangePriorityOf(this, priority); }
     
     
     
@@ -58,6 +55,12 @@ namespace ns
     {
         component->offline = true;
         component->Destroy();
+    }
+    void NovelSystem::SendMessage(MessageHolder message) { NovelSystem::ReceiveMessage(message); }
+    void NovelSystem::ReceiveMessage(MessageHolder& message) {
+        if (objects.size())
+            for (auto e : objects)
+                if (!e->offline) e->ReceiveMessage(message);
     }
     void NovelSystem::clear()
     {

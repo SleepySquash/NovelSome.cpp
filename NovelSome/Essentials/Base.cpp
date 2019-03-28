@@ -101,21 +101,6 @@ namespace ns
             return (stat(u8str.c_str(), &buffer) == 0);
 #endif
         }
-        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath)
-        {
-            if (!FileExists(currentPath))
-            {
-                std::wstring getExtention = GetExtentionFromString(currentPath);
-                std::wstring woExtention = GetStringWithNoExtention(currentPath);
-                
-                if (FileExists(woExtention + L"@3x" + getExtention)) return true;
-                else if (FileExists(woExtention + L"@2x" + getExtention)) return true;
-                else if (FileExists(woExtention + L"@1x" + getExtention)) return true;
-                else if (FileExists(woExtention + L"@0x" + getExtention)) return true;
-            } else return true;
-            
-            return false;
-        }
         /// Thanks to Maxim Suslov ( https://stackoverflow.com/users/3364871/maxim-suslov ) ///
         bool CreateDirectory(const std::wstring& path)
         {
@@ -162,6 +147,25 @@ namespace ns
         
         
         
+        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath)
+        {
+            if (!FileExists(currentPath))
+            {
+                std::wstring getExtention = GetExtentionFromString(currentPath);
+                std::wstring woExtention = GetStringWithNoExtention(currentPath);
+                
+                if (FileExists(woExtention + L"@3x" + getExtention)) return true;
+                else if (FileExists(woExtention + L"@2x" + getExtention)) return true;
+                else if (FileExists(woExtention + L"@1x" + getExtention)) return true;
+                else if (FileExists(woExtention + L"@0x" + getExtention)) return true;
+            } else return true;
+            
+            return false;
+        }
+        
+        
+        
+        
         //TODO: Documentation
         std::wstring GetFolderPath(const std::wstring& path)
         {
@@ -204,15 +208,10 @@ namespace ns
         
         size_t GetLengthWONewLinesAndSpaces(const std::wstring& string)
         {
-            size_t size = 0;
-            size_t i = 0;
-            while (string[i] != '\0')
-            {
-                if (string[i] != '\n' && string[i] != ' ')
-                    size++;
-                i++;
-            }
-            
+            size_t size = 0, i = 0;
+            while (string[i] != '\0') {
+                if (string[i] != '\n' && string[i] != ' ') size++;
+                ++i; }
             return size;
         }
         

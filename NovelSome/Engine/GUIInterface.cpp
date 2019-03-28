@@ -179,6 +179,83 @@ namespace ns
         
         
         
+        
+        SpriteButtons::~SpriteButtons() { if (textureName != L"") ic::DeleteImage(textureName); }
+        void SpriteButtons::Draw(sf::RenderTarget* window)
+        {
+            if (spriteLoaded && visible)
+            {
+                if (anyButtonPressed && index == pressedIndex) sprite.setColor(sf::Color::Yellow);
+                window->draw(sprite);
+                if (anyButtonPressed && index == pressedIndex) sprite.setColor(sf::Color::White);
+            }
+        }
+        void SpriteButtons::Resize(unsigned int width, unsigned int height)
+        {
+            if (characterScale) sprite.setScale(scale * gs::scScale, scale * gs::scScale);
+            else sprite.setScale(scale * gs::scale, scale * gs::scale);
+        }
+        bool SpriteButtons::PollEvent(sf::Event& event)
+        {
+            if (!active) return false;
+            if ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) || event.type == sf::Event::TouchEnded)
+            {
+                if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y };
+                else dot = { event.touch.x, event.touch.y };
+                
+                if (pressedIndex == index && (anyButtonPressed || ignoreWasPressed))
+                {
+                    sprite.setColor(sf::Color::White);
+                    bool constains = sprite.getGlobalBounds().contains(dot.x, dot.y);
+                    if (constains) { pressedIndex = -1; anyButtonPressed = false; event = sf::Event(); }
+                    
+                    return constains;
+                }
+            }
+            else if ((event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) || event.type == sf::Event::TouchBegan)
+            {
+                if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y };
+                else dot = { event.touch.x, event.touch.y };
+                
+                bool wasPressed = sprite.getGlobalBounds().contains(dot.x, dot.y);
+                if (wasPressed) { pressedIndex = index; anyButtonPressed = true; }
+            }
+            return false;
+        }
+        void SpriteButtons::eventPolled(sf::Event& event) { if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded) anyButtonPressed = false; }
+        void SpriteButtons::setAlpha(const sf::Int8& alpha)
+        {
+            if (spriteLoaded)
+            {
+                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
+            }
+        }
+        void SpriteButtons::setPosition(float x, float y)
+        {
+            switch (halign)
+            {
+                case Halign::Left: sprite.setOrigin(0, sprite.getOrigin().y); break;
+                case Halign::Center: sprite.setOrigin(sprite.getLocalBounds().width/2, sprite.getOrigin().y); break;
+                case Halign::Right: sprite.setOrigin(sprite.getLocalBounds().width, sprite.getOrigin().y); break;
+            }
+            switch (valign)
+            {
+                case Valign::Top: sprite.setOrigin(sprite.getOrigin().x, 0); break;
+                case Valign::Center: sprite.setOrigin(sprite.getOrigin().x, sprite.getLocalBounds().height/2); break;
+                case Valign::Bottom: sprite.setOrigin(sprite.getOrigin().x, sprite.getLocalBounds().height); break;
+            }
+            sprite.setPosition(x, y);
+        }
+        void SpriteButtons::setTexture(const std::wstring& texture) { textureName = texture; setTexture(ic::LoadTexture(texture)); }
+        void SpriteButtons::setTexture(sf::Texture* texture) { if ((spriteLoaded = (texture != nullptr))) sprite.setTexture(*texture, true); }
+        void SpriteButtons::setScale(const float& scl) { scale = scl; Resize(gs::width, gs::height); }
+        
+        
+        
+        
+        
+        
         RectangleButton::RectangleButton()
         {
             text.setFillColor(sf::Color::White);

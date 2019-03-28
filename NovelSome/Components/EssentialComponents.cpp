@@ -12,10 +12,7 @@ namespace ns
 {
     namespace EssentialComponents
     {
-        DebugComponent::DebugComponent(sf::String build)
-        {
-            buildText.setString(build);
-        }
+        DebugComponent::DebugComponent(const sf::String& build) { buildText.setString(build); }
         void DebugComponent::Init()
         {
             buildText.setFillColor(sf::Color::White);

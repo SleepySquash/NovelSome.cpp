@@ -10,7 +10,6 @@
 
 namespace ns
 {
-    MessageHolder::MessageHolder() { }
     Component::~Component() { }
     void Component::Init() { }
     void Component::Update(const sf::Time&) { }
@@ -19,9 +18,6 @@ namespace ns
     void Component::PollEvent(sf::Event&) { }
     void Component::ReceiveMessage(MessageHolder&) { }
     void Component::Destroy() { }
-    void Component::SetEntity(Entity* entity) { this->entity = entity; }
-    Entity* Component::GetEntity() { return entity; }
-    void Component::SetPriority(int priority) { this->priority = priority; }
     
     
     Entity::Entity() { }
@@ -70,7 +66,6 @@ namespace ns
             for (auto e : components)
                 if (!e->offline) e->ReceiveMessage(message);
     }
-    void Entity::SetEntitySystem(EntitySystem* system) { this->system = system; }
     
     
     

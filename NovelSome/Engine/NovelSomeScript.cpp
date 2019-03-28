@@ -16,10 +16,11 @@ namespace nss
         this->line = line;
         lastPos = 0;
     }
-    
-    void CommandSettings::Step()
+    bool CommandSettings::ExplicitNoMessage()
     {
-        lastPos++;
+        if (line.length() && line[line.length() - 1] == L'!') {
+            line.erase(line.begin() + (line.size() - 1)); return true; }
+        return false;
     }
     
     ///----------------------------------------------------------
@@ -152,19 +153,10 @@ namespace nss
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until)
     {
         unsigned int pos{ results.lastPos };
-        std::wstring text = L"";
-        bool Found{ true };
-        
+        std::wstring text = L""; bool Found{ true };
         while (Found && pos < results.line.length())
-        {
-            if ((Found = (results.line[pos] == until)))
-            {
-                if (results.line[pos] != 13)
-                    text += results.line[pos];
-                pos++;
-            }
-        }
-        
+            if ((Found = (results.line[pos] == until))) {
+                if (results.line[pos] != 13) text += results.line[pos]; pos++; }
         return text;
     }
     
@@ -505,12 +497,21 @@ namespace nss
     std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift)
     {
         sf::Text tempText = text;
+        
+        std::wstring currentLine = L"";
+        bool shiftShifted{ false };
+        if (shift < 0)
+        {
+            tempText.setString(L""); width -= shift;
+            while (tempText.getLocalBounds().width < abs(shift))
+                currentLine += L' ', tempText.setString(currentLine);
+            shiftShifted = true;
+        }
+        
         tempText.setString(line);
         if (tempText.getLocalBounds().width >= width)
         {
             std::wstring finalLine = L"";
-            std::wstring currentLine = L"";
-            bool shiftShifted{ false };
             for (int i = 0; i < line.length(); i++)
             {
                 currentLine += line[i];
@@ -535,13 +536,12 @@ namespace nss
                                 toFinalLine += L'\n';
                                 finalLine += toFinalLine;
                                 
-                                if (shift != 0 && !shiftShifted)
-                                    width -= shiftShifted, shiftShifted = true;
+                                if (shift != 0 && !shiftShifted) { width -= shift; shiftShifted = true; }
                                 std::wstring newCurrentLine = L"";
                                 if (shift != 0 && shift < width/4)
                                 {
                                     tempText.setString(L"");
-                                    while (tempText.getLocalBounds().width < shift)
+                                    while (tempText.getLocalBounds().width < abs(shift))
                                         newCurrentLine += L' ', tempText.setString(newCurrentLine);
                                 }
                                 for (int k = j + 1; k < currentLine.length(); k++)
@@ -556,12 +556,11 @@ namespace nss
                         currentLine[currentLine.length() - 1] = L'\n';
                         finalLine += currentLine;
                         
-                        if (shift != 0 && !shiftShifted)
-                            width -= shiftShifted, shiftShifted = true;
+                        if (shift != 0 && !shiftShifted) { width -= shift; shiftShifted = true; }
                         if (shift != 0 && shift < width/10)
                         {
                             tempText.setString(L"");
-                            while (tempText.getLocalBounds().width < shift)
+                            while (tempText.getLocalBounds().width < abs(shift))
                                 currentLine += L' ', tempText.setString(currentLine);
                         }
                         currentLine = L"";
@@ -573,7 +572,7 @@ namespace nss
             finalLine += currentLine;
             return finalLine;
         }
-        return std::wstring(line);
+        if (shift < 0) return currentLine + line; else return line;
     }
     std::wstring GetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width)
     {

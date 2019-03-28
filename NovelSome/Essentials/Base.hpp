@@ -38,7 +38,7 @@
 // __linux__
 // __unix__
 
-
+#undef CreateDirectory
 namespace ns
 {
     namespace base
@@ -50,8 +50,9 @@ namespace ns
         
         std::wstring GetCurrentWorkingDir();
         bool FileExists(const std::wstring& path);
-        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath);
         bool CreateDirectory(const std::wstring& path);
+        
+        bool DoesFileExistWithResolutionClass(const std::wstring& currentPath);
         
         std::wstring GetFolderPath(const std::wstring& path);
         std::wstring GetExtentionFromString(const std::wstring& filename);

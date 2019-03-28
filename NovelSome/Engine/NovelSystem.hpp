@@ -11,17 +11,18 @@
 
 #include <iostream>
 #include <list>
-using std::list;
 
 #include <SFML/Main.hpp>
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "StaticMethods.hpp"
+#include "Settings.hpp"
+#include "MessageHolder.hpp"
 
 using std::cout;
 using std::cin;
 using std::endl;
+using std::list;
 
 namespace ns
 {
@@ -42,13 +43,12 @@ namespace ns
         virtual void Resize(unsigned int width, unsigned int height);
         virtual void PollEvent(sf::Event& event);
         virtual void Destroy();
+        virtual void ReceiveMessage(MessageHolder& message);
         void SetPriority(int priority);
         void ChangePriority(int priority);
-        void SetNovelSystem(NovelSystem* novelSystem);
-        NovelSystem* GetNovelSystem();
     };
     
-    class NovelSystem
+    class NovelSystem : public MessageSender
     {
     public:
         list<NovelObject*> objects;
@@ -59,6 +59,8 @@ namespace ns
         void Resize(unsigned int width, unsigned int height);
         void PollEvent(sf::Event& event);
         void PopComponent(NovelObject* component);
+        void SendMessage(MessageHolder message) override;
+        void ReceiveMessage(MessageHolder& message);
         void clear();
         bool empty();
         void ChangePriorityOf(NovelObject* component, int priority);
@@ -68,7 +70,7 @@ namespace ns
             T* component = new T(args...);
             objects.push_back(component);
             
-            component->SetNovelSystem(this);
+            component->novelSystem = this;
             component->Init();
             component->Resize(gs::width, gs::height);
             
@@ -89,7 +91,7 @@ namespace ns
             if (!done)
                 objects.push_back(component);
             
-            component->SetNovelSystem(this);
+            component->novelSystem = this;
             component->Init();
             component->Resize(gs::width, gs::height);
             

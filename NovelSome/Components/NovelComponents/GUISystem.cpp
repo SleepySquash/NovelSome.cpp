@@ -6,21 +6,52 @@
 //  Copyright © 2018 Melancholy Hill. All rights reserved.
 //
 
-#include "Novel.hpp"
+#include "GUISystem.hpp"
 
 namespace ns
 {
     namespace NovelComponents
     {
-        GUISystem::~GUISystem() { Clear(); }
-        GUISystem::GUISystem(Novel* novel) { this->novel = novel; }
+        GUISystem::~GUISystem() {  }
+        GUISystem::GUISystem() {  }
+        void GUISystem::Destroy() { if (isNovel) novelSystem->SendMessage({"Destroy", this}); clear(); }
         void GUISystem::Update(const sf::Time& elapsedTime)
         {
+            if (isNovel)
+            {
+                switch (mode)
+                {
+                    case appearing: gs::requestWindowRefresh = true;
+                        if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
+                        if (currentTime >= appearTime)
+                        {
+                            alpha = maxAlpha; currentTime = 0.f;
+                            mode = existing;
+                            if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                        }
+                        else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                        SetAlpha(alpha);
+                        break; 
+                    case disappearing: gs::requestWindowRefresh = true;
+                        if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
+                        if (currentTime >= disappearTime)
+                        {
+                            alpha = 0; currentTime = 0.f;
+                            mode = deprecated;
+                            if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                        }
+                        else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                        SetAlpha(alpha);
+                        break;
+                    case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
+                    default: break;
+                }
+            }
             for (auto g : guiObjects)
             {
                 g->Update(elapsedTime);
                 if (g->regulateFadings) g->FadingUpdate(elapsedTime);
-                if (g->child != nullptr) g->child->Update(elapsedTime);
+                if (g->child) g->child->Update(elapsedTime);
             }
         }
         void GUISystem::Draw(sf::RenderWindow* window)
@@ -29,7 +60,7 @@ namespace ns
                 if (g->visible)
                 {
                     g->Draw(window);
-                    if (g->child != nullptr) g->child->Draw(window);
+                    if (g->child) g->child->Draw(window);
                 }
         }
         void GUISystem::Resize(unsigned int width, unsigned int height)
@@ -47,7 +78,7 @@ namespace ns
                         g->PreCalculate(width, height);
                         g->constrains.Recalculate(*g, width, height);
                         g->Resize(width, height);
-                        if (g->child != nullptr) g->child->Resize(width, height);
+                        if (g->child) g->child->Resize(width, height);
                     }
             }
         }
@@ -62,7 +93,7 @@ namespace ns
                     g->PreCalculate(width, height);
                     g->constrains.Recalculate(*g, width, height);
                     g->Resize(width, height);
-                    if (g->child != nullptr) g->child->Resize(width, height);
+                    if (g->child) g->child->Resize(width, height);
                 }
         }
         void GUISystem::VariableChange(const std::wstring& varName)
@@ -71,7 +102,7 @@ namespace ns
                 if (!g->ignoreVariableChange)
                 {
                     g->VariableChange(varName);
-                    if (g->child != nullptr) g->child->VariableChange(varName);
+                    if (g->child) g->child->VariableChange(varName);
                 }
         }
         void GUISystem::SetAlpha(sf::Int8 alpha)
@@ -81,7 +112,7 @@ namespace ns
                 if (!g->regulateFadings)
                 {
                     g->SetAlpha(alpha);
-                    if (g->child != nullptr) g->child->SetAlpha(alpha);
+                    if (g->child) g->child->SetAlpha(alpha);
                 }
         }
         void GUISystem::SetAlphaIfBigger(sf::Int8 alpha)
@@ -93,17 +124,17 @@ namespace ns
                     if (!g->regulateFadings)
                     {
                         g->SetAlpha(alpha);
-                        if (g->child != nullptr) g->child->SetAlphaIfBigger(alpha);
+                        if (g->child) g->child->SetAlphaIfBigger(alpha);
                     }
             }
         }
-        void GUISystem::Clear()
+        void GUISystem::clear()
         {
             for (auto g : guiObjects)
             {
-                if (g->child != nullptr)
+                if (g->child)
                 {
-                    g->child->Clear();
+                    g->child->clear();
                     delete g->child;
                 }
                 g->Destroy();
@@ -111,8 +142,6 @@ namespace ns
             }
             guiObjects.clear();
         }
-        void GUISystem::SetNovel(Novel* novel) { this->novel = novel; }
-        void GUISystem::SetParent(GUIObject* parent) { this->parent = parent; }
         void GUISystem::ResetResize()
         {
             lastWidth = 0; lastHeight = 0;
@@ -121,15 +150,14 @@ namespace ns
         
         
         
+        GUIConstrainsResult::GUIConstrainsResult() { }
+        GUIConstrainsResult::GUIConstrainsResult(int res, bool depends, bool consta, bool needs) : result(res), dependsOnVariable(depends), constant(consta), needsToBeScaled(needs) { }
         GUIConstrainsResult GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height, std::wstring& line)
         {
             //TODO: Words parsing, so the can be compared to variables and keywords
             //      Seperators: ',' '+' '-' '*' '/' etc
             std::wstring finalLine = L"";
-            bool mustBeRecalculated{ false };
-            bool reallyOnlyScaled{ false };
-            bool onlyNeedsScaling{ true };
-            bool dependVariable{ false };
+            bool mustBeRecalculated{ false }, reallyOnlyScaled{ false }, onlyNeedsScaling{ true }, dependVariable{ false };
             
             bool itsBeingSummed{ true };
             wchar_t before = L'\0';
@@ -140,12 +168,7 @@ namespace ns
                 std::wstring word = L"";
                 
                 //looking for "words"
-                bool wordFound{ false };
-                bool itHasAPoint{ false };
-                bool doScale{ true };
-                bool forceScale{ false };
-                bool itWasANumber{ true };
-                
+                bool wordFound{ false }, itHasAPoint{ false }, doScale{ true }, forceScale{ false }, itWasANumber{ true };
                 for (int i = lastPos; i < line.length() && !wordFound; i++)
                 {
                     if (line[i] == L'.')
@@ -192,38 +215,31 @@ namespace ns
                             {
                                 NovelVariable *nvar{ nullptr };
                                 std::wstring possibleVariable = L"";
-                                for (int j = 0; j < i; j++)
-                                    possibleVariable += word[j];
-                                if (possibleVariable.length() != 0)
-                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr)
-                                        nvar = guiObject.guiSystem->novel->FindVariable(possibleVariable);
+                                for (int j = 0; j < i; j++) possibleVariable += word[j];
+                                if (possibleVariable.length() != 0) nvar = VariableSystem::FindVariable(possibleVariable);
                                 
                                 bool availableToSelf{ false };
                                 if (possibleVariable == L"@text")
                                 {
                                     GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
-                                    if (textPtr != nullptr)
-                                        availableToSelf = true, nvar = new NovelVariable(textPtr->textString);
+                                    if (textPtr) { availableToSelf = true; nvar = new NovelVariable(textPtr->textString); }
                                 }
                                 
-                                if (possibleVariable.length() != 0 && nvar == nullptr)
+                                if (possibleVariable.length() != 0 && !nvar)
                                     cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::utf8(possibleVariable) << "'." << endl;
                                 else
                                 {
                                     std::wstring possibleFunction = L"";
-                                    for (int j = i; j < word.length(); j++)
-                                        possibleFunction += word[j];
-                                    
+                                    for (int j = i; j < word.length(); j++) possibleFunction += word[j];
                                     if (possibleFunction == L".width")
                                     {
                                         mustBeRecalculated = true;
                                         onlyNeedsScaling = false;
                                         if (possibleVariable.length() == 0)
                                         {
-                                            if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                                            if (guiObject.guiSystem && guiObject.guiSystem->parent)
                                                 replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.width);
-                                            else
-                                                replaceBy += std::to_wstring(ns::gs::width);
+                                            else replaceBy += std::to_wstring(ns::gs::width);
                                         }
                                         else
                                         {
@@ -237,28 +253,25 @@ namespace ns
                                                 
                                                 if (possibleVariable == L"@name")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
+                                                    if (TemporarySettings::name)
                                                     {
-                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup.front()->charText;
+                                                        sf::Text text = *TemporarySettings::name;
                                                         text.setString(nvar->value.asString);
                                                         replaceBy += std::to_wstring((int)text.getLocalBounds().width);
                                                     }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup.front()->text.getLocalBounds().width);
+                                                    if (TemporarySettings::dialogue)
+                                                        replaceBy += std::to_wstring((int)TemporarySettings::dialogue->getLocalBounds().width);
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
                                                     GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
-                                                    if (textPtr != nullptr)
-                                                        replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().width);
-                                                    else
-                                                        cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                    if (textPtr) replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().width);
+                                                    else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                                 }
-                                                else
-                                                    cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                             }
                                         }
                                     }
@@ -269,10 +282,9 @@ namespace ns
                                         
                                         if (possibleVariable.length() == 0)
                                         {
-                                            if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+                                            if (guiObject.guiSystem && guiObject.guiSystem->parent)
                                                 replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.height);
-                                            else
-                                                replaceBy += std::to_wstring(ns::gs::height);
+                                            else replaceBy += std::to_wstring(ns::gs::height);
                                         }
                                         else
                                         {
@@ -286,28 +298,25 @@ namespace ns
                                                 
                                                 if (possibleVariable == L"@name")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
+                                                    if (TemporarySettings::name)
                                                     {
-                                                        sf::Text text = guiObject.guiSystem->novel->dialogueGroup.front()->charText;
+                                                        sf::Text text = *TemporarySettings::name;
                                                         text.setString(nvar->value.asString);
                                                         replaceBy += std::to_wstring((int)text.getLocalBounds().height);
                                                     }
                                                 }
                                                 else if (possibleVariable == L"@dialogue")
                                                 {
-                                                    if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr && guiObject.guiSystem->novel->dialogueGroup.size() != 0)
-                                                        replaceBy += std::to_wstring((int)guiObject.guiSystem->novel->dialogueGroup.front()->text.getLocalBounds().height);
+                                                    if (TemporarySettings::dialogue)
+                                                        replaceBy += std::to_wstring((int)TemporarySettings::dialogue->getLocalBounds().height);
                                                 }
                                                 else if (possibleVariable == L"@text")
                                                 {
                                                     GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
-                                                    if (textPtr != nullptr)
-                                                        replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().height);
-                                                    else
-                                                        cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                    if (textPtr) replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().height);
+                                                    else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                                 }
-                                                else
-                                                    cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                             }
                                         }
                                     }
@@ -321,13 +330,11 @@ namespace ns
                                             {
                                                 dependOnVariables.insert({possibleVariable, true});
                                                 dependVariable = true;
-                                                
                                                 replaceBy += std::to_wstring(std::wstring(nvar->value.asString).length());
                                             }
                                     }
                                     
-                                    if (availableToSelf)
-                                        delete nvar;
+                                    if (availableToSelf) delete nvar;
                                 }
                             }
                         }
@@ -345,13 +352,10 @@ namespace ns
                     {
                         if (!itWasANumber)
                         {
-                            NovelVariable *nvar{ nullptr };
-                            if (guiObject.guiSystem != nullptr && guiObject.guiSystem->novel != nullptr)
-                                nvar = guiObject.guiSystem->novel->FindVariable(word);
-                            
-                            if (word.length() != 0 && nvar == nullptr)
+                            NovelVariable *nvar{ VariableSystem::FindVariable(word) };
+                            if (word.length() != 0 && !nvar)
                                 cout << "Warning :: GUI :: Unknown expression when recalculating: '" << base::utf8(word) << "'." << endl;
-                            else if (nvar != nullptr)
+                            else if (nvar)
                             {
                                 dependVariable = true;
                                 mustBeRecalculated = true;
@@ -361,22 +365,17 @@ namespace ns
                                 
                                 switch (nvar->type)
                                 {
-                                    case NovelVariable::String:
-                                        doScale = false;
+                                    case NovelVariable::String: doScale = false;
                                         word = std::wstring(nvar->value.asString);
                                         break;
-                                    case NovelVariable::Boolean:
-                                        doScale = false;
-                                        if (nvar->value.asBoolean)
-                                            word = L"true";
-                                        else
-                                            word = L"false";
+                                    case NovelVariable::Boolean: doScale = false;
+                                        if (nvar->value.asBoolean) word = L"true";
+                                        else word = L"false";
                                         break;
                                     case NovelVariable::Integer:
                                         word = std::to_wstring(nvar->value.asInt);
                                         break;
-                                    default:
-                                        doScale = false;
+                                    default: doScale = false;
                                         word = L"NotSet";
                                         break;
                                 }
@@ -387,9 +386,7 @@ namespace ns
                         if ((doScale && itsBeingSummed) || forceScale)
                         {
                             mustBeRecalculated = true;
-                            
-                            if (onlyNeedsScaling)
-                                reallyOnlyScaled = true;
+                            if (onlyNeedsScaling) reallyOnlyScaled = true;
                             
                             float left = base::atof(word);
                             left = left * ns::gs::scale;
@@ -406,44 +403,30 @@ namespace ns
                                     if ((word[j] >= 48 && word[j] <= 57) || word[j] == '.')
                                         finalLine += word[j];
                             }
-                            else
-                                finalLine += word;
+                            else finalLine += word;
                             
                             if (lastPos <= line.length() && lastPos > 0)
                                 finalLine += line[lastPos - 1];
                         }
                     }
                 }
-                else
-                    if (lastPos <= line.length() && lastPos > 0)
-                        finalLine += line[lastPos - 1];
+                else if (lastPos <= line.length() && lastPos > 0)
+                    finalLine += line[lastPos - 1];
             }
             
-            if (!onlyNeedsScaling)
-                reallyOnlyScaled = false;
-            
+            if (!onlyNeedsScaling) reallyOnlyScaled = false;
             float left = nss::MathParser(finalLine);
             return GUIConstrainsResult(left, dependVariable, !mustBeRecalculated, reallyOnlyScaled);
         }
         void GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height)
         {
             GUIConstrainsResult res;
-            
-            left = 0;
-            right = 0;
-            bottom = 0;
-            top = 0;
-            this->width = 0;
-            this->height = 0;
-            posX = 0;
-            posY = 0;
+            left = right = bottom = top = this->width = this->height = posX = posY = 0;
             
             if (!notSet[0])
             {
-                if (constant[0])
-                    left = sleft;
-                else if (onlyNeedsToBeScaled[0])
-                    left = sleft * gs::scale;
+                if (constant[0]) left = sleft;
+                else if (onlyNeedsToBeScaled[0]) left = sleft * gs::scale;
                 else if (leftS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, leftS);
@@ -451,20 +434,16 @@ namespace ns
                     
                     constant[0] = res.constant;
                     onlyNeedsToBeScaled[0] = res.needsToBeScaled;
-                    if (constant[0] || onlyNeedsToBeScaled[0])
-                        sleft = (float)left/gs::scale;
+                    if (constant[0] || onlyNeedsToBeScaled[0]) sleft = (float)left/gs::scale;
                     isDependsOnVariable[0] = res.dependsOnVariable;
                 }
-                else
-                    notSet[0] = true;
+                else notSet[0] = true;
             }
             
             if (!notSet[1])
             {
-                if (constant[1])
-                    right = sright;
-                else if (onlyNeedsToBeScaled[1])
-                    right = sright * gs::scale;
+                if (constant[1]) right = sright;
+                else if (onlyNeedsToBeScaled[1]) right = sright * gs::scale;
                 else if (rightS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, rightS);
@@ -472,20 +451,16 @@ namespace ns
                     
                     constant[1] = res.constant;
                     onlyNeedsToBeScaled[1] = res.needsToBeScaled;
-                    if (constant[1] || onlyNeedsToBeScaled[1])
-                        sright = (float)right/gs::scale;
+                    if (constant[1] || onlyNeedsToBeScaled[1]) sright = (float)right/gs::scale;
                     isDependsOnVariable[1] = res.dependsOnVariable;
                 }
-                else
-                    notSet[1] = true;
+                else notSet[1] = true;
             }
             
             if (!notSet[2])
             {
-                if (constant[2])
-                    bottom = sbottom;
-                else if (onlyNeedsToBeScaled[2])
-                    bottom = sbottom * gs::scale;
+                if (constant[2]) bottom = sbottom;
+                else if (onlyNeedsToBeScaled[2]) bottom = sbottom * gs::scale;
                 else if (bottomS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, bottomS);
@@ -493,20 +468,16 @@ namespace ns
                     
                     constant[2] = res.constant;
                     onlyNeedsToBeScaled[2] = res.needsToBeScaled;
-                    if (constant[2] || onlyNeedsToBeScaled[2])
-                        sbottom = (float)bottom/gs::scale;
+                    if (constant[2] || onlyNeedsToBeScaled[2]) sbottom = (float)bottom/gs::scale;
                     isDependsOnVariable[2] = res.dependsOnVariable;
                 }
-                else
-                    notSet[2] = true;
+                else notSet[2] = true;
             }
             
             if (!notSet[3])
             {
-                if (constant[3])
-                    top = stop;
-                else if (onlyNeedsToBeScaled[3])
-                    top = stop * gs::scale;
+                if (constant[3]) top = stop;
+                else if (onlyNeedsToBeScaled[3]) top = stop * gs::scale;
                 else if (topS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, topS);
@@ -514,20 +485,16 @@ namespace ns
                     
                     constant[3] = res.constant;
                     onlyNeedsToBeScaled[3] = res.needsToBeScaled;
-                    if (constant[3] || onlyNeedsToBeScaled[3])
-                        stop = (float)top/gs::scale;
+                    if (constant[3] || onlyNeedsToBeScaled[3]) stop = (float)top/gs::scale;
                     isDependsOnVariable[3] = res.dependsOnVariable;
                 }
-                else
-                    notSet[3] = true;
+                else notSet[3] = true;
             }
             
             if (!notSet[4])
             {
-                if (constant[4])
-                    this->width = swidth;
-                else if (onlyNeedsToBeScaled[4])
-                    this->width = swidth * gs::scale;
+                if (constant[4]) this->width = swidth;
+                else if (onlyNeedsToBeScaled[4]) this->width = swidth * gs::scale;
                 else if (widthS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, widthS);
@@ -535,20 +502,16 @@ namespace ns
                     
                     constant[4] = res.constant;
                     onlyNeedsToBeScaled[4] = res.needsToBeScaled;
-                    if (constant[4] || onlyNeedsToBeScaled[4])
-                        swidth = (float)(this->width)/gs::scale;
+                    if (constant[4] || onlyNeedsToBeScaled[4]) swidth = (float)(this->width)/gs::scale;
                     isDependsOnVariable[4] = res.dependsOnVariable;
                 }
-                else
-                    notSet[4] = true;
+                else notSet[4] = true;
             }
             
             if (!notSet[5])
             {
-                if (constant[5])
-                    this->height = sheight;
-                else if (onlyNeedsToBeScaled[5])
-                    this->height = sheight * gs::scale;
+                if (constant[5]) this->height = sheight;
+                else if (onlyNeedsToBeScaled[5]) this->height = sheight * gs::scale;
                 else if (heightS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, heightS);
@@ -556,20 +519,16 @@ namespace ns
                     
                     constant[5] = res.constant;
                     onlyNeedsToBeScaled[5] = res.needsToBeScaled;
-                    if (constant[5] || onlyNeedsToBeScaled[5])
-                        sheight = (float)(this->height)/gs::scale;
+                    if (constant[5] || onlyNeedsToBeScaled[5]) sheight = (float)(this->height)/gs::scale;
                     isDependsOnVariable[5] = res.dependsOnVariable;
                 }
-                else
-                    notSet[5] = true;
+                else notSet[5] = true;
             }
             
             if (!notSet[6])
             {
-                if (constant[6])
-                    posX = sposX;
-                else if (onlyNeedsToBeScaled[6])
-                    posX = sposX * gs::scale;
+                if (constant[6]) posX = sposX;
+                else if (onlyNeedsToBeScaled[6]) posX = sposX * gs::scale;
                 else if (posXS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, posXS);
@@ -577,20 +536,16 @@ namespace ns
                     
                     constant[6] = res.constant;
                     onlyNeedsToBeScaled[6] = res.needsToBeScaled;
-                    if (constant[6] || onlyNeedsToBeScaled[6])
-                        sposX = (float)posX/gs::scale;
+                    if (constant[6] || onlyNeedsToBeScaled[6]) sposX = (float)posX/gs::scale;
                     isDependsOnVariable[6] = res.dependsOnVariable;
                 }
-                else
-                    notSet[6] = true;
+                else notSet[6] = true;
             }
             
             if (!notSet[7])
             {
-                if (constant[7])
-                    posY = sposY;
-                else if (onlyNeedsToBeScaled[7])
-                    posY = sposY * gs::scale;
+                if (constant[7]) posY = sposY;
+                else if (onlyNeedsToBeScaled[7]) posY = sposY * gs::scale;
                 else if (posYS.length() != 0)
                 {
                     res = Recalculate(guiObject, width, height, posYS);
@@ -598,41 +553,33 @@ namespace ns
                     
                     constant[7] = res.constant;
                     onlyNeedsToBeScaled[7] = res.needsToBeScaled;
-                    if (constant[7] || onlyNeedsToBeScaled[7])
-                        sposY = (float)posY/gs::scale;
+                    if (constant[7] || onlyNeedsToBeScaled[7]) sposY = (float)posY/gs::scale;
                     isDependsOnVariable[7] = res.dependsOnVariable;
                 }
-                else
-                    notSet[7] = true;
+                else notSet[7] = true;
             }
             
-            if (guiObject.guiSystem != nullptr && guiObject.guiSystem->parent != nullptr)
+            if (guiObject.guiSystem && guiObject.guiSystem->parent)
             {
                 if (notSet[4] || this->width == 0)
                     this->width = guiObject.guiSystem->parent->constrains.width - right - left;
                 if (notSet[5] || this->height == 0)
                     this->height = guiObject.guiSystem->parent->constrains.height - top - bottom;
                 
-                if (notSet[6])
-                    posX = guiObject.guiSystem->parent->constrains.posX + left;
-                else
-                    posX += guiObject.guiSystem->parent->constrains.posX;
+                if (notSet[6]) posX = guiObject.guiSystem->parent->constrains.posX + left;
+                else posX += guiObject.guiSystem->parent->constrains.posX;
                 
                 if (notSet[7])
                 {
                     if (!notSet[2] && notSet[3])
                     {
                         posY = guiObject.guiSystem->parent->constrains.posY + guiObject.guiSystem->parent->constrains.height - this->height - bottom;
-                        if (notSet[5])
-                            posY -= bottom;
+                        if (notSet[5]) posY -= bottom;
                     }
-                    else if (notSet[2] && !notSet[3])
-                        posY = guiObject.guiSystem->parent->constrains.posY + top;
-                    else
-                        posY = guiObject.guiSystem->parent->constrains.posY + top;
+                    else if (notSet[2] && !notSet[3]) posY = guiObject.guiSystem->parent->constrains.posY + top;
+                    else posY = guiObject.guiSystem->parent->constrains.posY + top;
                 }
-                else
-                    posY += guiObject.guiSystem->parent->constrains.posY;
+                else posY += guiObject.guiSystem->parent->constrains.posY;
                 
                 left += guiObject.guiSystem->parent->constrains.left;
                 right += guiObject.guiSystem->parent->constrains.right;
@@ -641,15 +588,11 @@ namespace ns
             }
             else
             {
-                if (notSet[4] || this->width == 0)
-                    this->width = width - right - left;
-                if (notSet[5] || this->height == 0)
-                    this->height = height - top - bottom;
+                if (notSet[4] || this->width == 0) this->width = width - right - left;
+                if (notSet[5] || this->height == 0) this->height = height - top - bottom;
                 
-                if (notSet[6])
-                    posX = left;
-                if (notSet[7])
-                    posY = height - top - bottom - this->height;
+                if (notSet[6]) posX = left;
+                if (notSet[7]) posY = height - top - bottom - this->height;
             }
         }
         
@@ -670,15 +613,13 @@ namespace ns
                         
                         alpha = 255;
                         SetAlpha(alpha);
-                        if (child != nullptr)
-                            child->SetAlpha(alpha);
+                        if (child) child->SetAlpha(alpha);
                     }
                     else
                     {
                         alpha = (sf::Int8)(255 * currentTime/appearTime);
                         SetAlpha(alpha);
-                        if (child != nullptr)
-                            child->SetAlpha(alpha);
+                        if (child) child->SetAlpha(alpha);
                     }
                     break;
                     
@@ -691,15 +632,13 @@ namespace ns
                         
                         alpha = 0;
                         SetAlpha(alpha);
-                        if (child != nullptr)
-                            child->SetAlpha(alpha);
+                        if (child) child->SetAlpha(alpha);
                     }
                     else
                     {
                         alpha = (sf::Int8)(255 - 255 * currentTime/disappearTime);
                         SetAlpha(alpha);
-                        if (child != nullptr)
-                            child->SetAlpha(alpha);
+                        if (child) child->SetAlpha(alpha);
                     }
                     break;
                     
@@ -905,20 +844,17 @@ namespace ns
                 }*/
             }
         }
-        void GUIObject::SetGUISystem(GUISystem *system) { this->guiSystem = system; }
         GUISystem* GUIObject::GetChildSystem()
         {
-            if (child == nullptr)
+            if (!child)
             {
                 child = new GUISystem();
-                child->SetParent(this);
-                child->SetNovel(guiSystem->novel);
+                child->parent = this;
                 return child;
             }
-            else
-                return child;
+            else return child;
         }
-        bool GUISystem::LoadFromFile(const std::wstring& fileName, Skin* skin, std::wstring guiScope)
+        bool GUISystem::LoadFromFile(const std::wstring& fileName, std::wstring guiScope)
         {
             bool skinLoaded{ false };
             std::wstring fullPath = fileName;
@@ -964,19 +900,15 @@ namespace ns
                                 std::wstring nameParsed;
                                 if (command.line[command.lastPos] == L'"')
                                     nameParsed = nss::ParseAsQuoteString(command);
-                                else
-                                    nameParsed = nss::ParseUntil(command, ' ');
+                                else nameParsed = nss::ParseUntil(command, ' ');
                                 
                                 parsingGUI = (nameParsed == guiScope);
                                 if (parsingGUI)
                                 {
-                                    skinLoaded = true;
-                                    
-                                    bool typeFound{ false };
+                                    skinLoaded = true; bool typeFound{ false };
                                     for (int i = 0; i < line.length() && !typeFound; i++)
                                         typeFound = (line[i] == L'{');
-                                    if (!typeFound)
-                                        knownType = 1;
+                                    if (!typeFound) knownType = 1;
                                 }
                             }
                         }
@@ -985,16 +917,12 @@ namespace ns
                             bool thatsAScope{ false };
                             for (int i = 0; i < line.length(); ++i)
                             {
-                                if (line[i] == L'{' && knownType != 1)
-                                    thatsAScope = true;
-                                else if (line[i] == L'{')
-                                    knownType = 0;
+                                if (line[i] == L'{' && knownType != 1) thatsAScope = true;
+                                else if (line[i] == L'{') knownType = 0;
                                 else if (line[i] == L'}')
                                 {
-                                    if (thatsAScope)
-                                        thatsAScope = false;
-                                    else if (scope.size() != 0)
-                                        scope.erase(scope.begin());
+                                    if (thatsAScope) thatsAScope = false;
+                                    else if (scope.size() != 0) scope.erase(scope.begin());
                                 }
                             }
                             
@@ -1004,30 +932,21 @@ namespace ns
                                 {
                                     if (knownType == 0)
                                     {
-                                        if (nss::Command(command, L"rectangle"))
-                                            knownType = 2;
-                                        else if (nss::Command(command, L"text"))
-                                            knownType = 3;
-                                        else if (nss::Command(command, L"image"))
-                                            knownType = 4;
-                                        else if (nss::Command(command, L"@dialogue"))
-                                            knownType = 5;
-                                        else if (nss::Command(command, L"@name"))
-                                            knownType = 6;
-                                        
-                                        if (knownType != 0)
-                                            forArgumentsParsing = line;
+                                        if (nss::Command(command, L"rectangle"))      knownType = 2;
+                                        else if (nss::Command(command, L"text"))      knownType = 3;
+                                        else if (nss::Command(command, L"image"))     knownType = 4;
+                                        else if (nss::Command(command, L"@dialogue")) knownType = 5;
+                                        else if (nss::Command(command, L"@name"))     knownType = 6;
+                                        if (knownType != 0) forArgumentsParsing = line;
                                     }
                                     
                                     if (knownType != 0)
                                     {
                                         GUISystem* guiSystemToAddTo{ nullptr };
-                                        if (scope.front() != nullptr)
-                                            guiSystemToAddTo = scope.front()->GetChildSystem();
-                                        else if (scope.front() == nullptr && scope.size() == 1)
-                                            guiSystemToAddTo = this;
+                                        if (scope.front()) guiSystemToAddTo = scope.front()->GetChildSystem();
+                                        else if (!scope.front() && scope.size() == 1) guiSystemToAddTo = this;
                                         
-                                        if (guiSystemToAddTo != nullptr)
+                                        if (guiSystemToAddTo)
                                         {
                                             GUIObjects::Rectangle* rect{ nullptr };
                                             GUIObjects::Image* img{ nullptr };
@@ -1042,7 +961,7 @@ namespace ns
                                                     break;
                                                 case 3:
                                                     text = guiSystemToAddTo->AddComponent<GUIObjects::Text>();
-                                                    text->SetFont(skin->defaultFontName);
+                                                    if (Skin::self) text->SetFont(Skin::self->defaultFontName);
                                                     component = text;
                                                     break;
                                                 case 4:
@@ -1052,16 +971,14 @@ namespace ns
                                                 case 5:
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
                                                     component = dconstr;
-                                                    novel->skin.dialogue.textConstrains = component;
+                                                    if (Skin::self) Skin::self->dialogue.textConstrains = component;
                                                     break;
                                                 case 6:
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
                                                     component = dconstr;
-                                                    novel->skin.dialogue.nameConstrains = component;
+                                                    if (Skin::self) Skin::self->dialogue.nameConstrains = component;
                                                     break;
-                                                default:
-                                                    component = nullptr;
-                                                    break;
+                                                default: component = nullptr; break;
                                             }
                                             
                                             nss::CommandSettings argumentLine;
@@ -1081,15 +998,15 @@ namespace ns
                                                 else if (nss::Command(argument, L"@name")) { /* ignoring */ }
                                                 else if (nss::Command(argument, L"\""))
                                                 {
-                                                    if (knownType == 3 && text != nullptr)
+                                                    if (knownType == 3 && text)
                                                     {
-                                                        argument.lastPos--;
+                                                        --argument.lastPos;
                                                         std::wstring str = nss::ParseAsQuoteString(argument);
                                                         text->SetString(str);
                                                     }
-                                                    else if (knownType == 4 && img != nullptr)
+                                                    else if (knownType == 4 && img)
                                                     {
-                                                        argument.lastPos--;
+                                                        --argument.lastPos;
                                                         std::wstring path = nss::ParseAsQuoteString(argument);
                                                         img->LoadImage(base::GetFolderPath(fileName) + path);
                                                     }
@@ -1098,13 +1015,13 @@ namespace ns
                                                 else if (nss::Command(argument, L"{")) { /* ignoring */ }
                                                 else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
                                                 {
-                                                    skin->dialogue.nameRect = component;
-                                                    skin->dialogue.nameRect->SetFadings(GUIObject::offline);
+                                                    if (Skin::self) { Skin::self->dialogue.nameRect = component;
+                                                        Skin::self->dialogue.nameRect->SetFadings(GUIObject::offline); }
                                                 }
-                                                else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue")
-                                                    skin->dialogue.dialogueRect = component;
-                                                else if (nss::Command(argument, L"choose") && guiScope == L"choose")
-                                                    skin->choose.chooseRect = component;
+                                                else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue" && Skin::self)
+                                                    Skin::self->dialogue.dialogueRect = component;
+                                                else if (nss::Command(argument, L"choose") && guiScope == L"choose" && Skin::self)
+                                                    Skin::self->choose.chooseRect = component;
                                             }
                                         }
                                     }
@@ -1124,7 +1041,7 @@ namespace ns
                                     else if (nss::ContainsUsefulInformation(command))
                                     {
                                         knownType = 0;
-                                        if (scope.front() != nullptr)
+                                        if (scope.front())
                                         {
                                             if (nss::Command(command, L"left:") || nss::Command(command, L"left "))
                                             {
@@ -1188,8 +1105,7 @@ namespace ns
                                                      nss::Command(command, L"color:") || nss::Command(command, L"colour:"))
                                             {
                                                 sf::Color possibleColor = nss::ParseColor(command);
-                                                if (possibleColor.a != 255)
-                                                    scope.front()->SetColor(possibleColor);
+                                                if (possibleColor.a != 255) scope.front()->SetColor(possibleColor);
                                             }
                                             else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") ||
                                                      nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour ") ||
@@ -1197,32 +1113,29 @@ namespace ns
                                                      nss::Command(command, L"ocolor:") || nss::Command(command, L"ocolour:"))
                                             {
                                                 GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr != nullptr)
+                                                if (textPtr)
                                                 {
                                                     sf::Color possibleColor = nss::ParseColor(command);
-                                                    if (possibleColor.a != 255)
-                                                        textPtr->text.setOutlineColor(possibleColor);
+                                                    if (possibleColor.a != 255) textPtr->text.setOutlineColor(possibleColor);
                                                 }
                                             }
                                             else if (nss::Command(command, L"thickness ") || nss::Command(command, L"thickness:"))
                                             {
                                                 GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr != nullptr)
+                                                if (textPtr)
                                                 {
                                                     float thickness = nss::ArgumentAsFloat(command);
-                                                    if (thickness >= 0)
-                                                        textPtr->SetOutlineThickness(thickness);
+                                                    if (thickness >= 0) textPtr->SetOutlineThickness(thickness);
                                                 }
                                             }
                                             else if (nss::Command(command, L"size ") || nss::Command(command, L"size:") ||
                                                      nss::Command(command, L"charactersize ") || nss::Command(command, L"charactersize:"))
                                             {
                                                 GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr != nullptr)
+                                                if (textPtr)
                                                 {
                                                     unsigned int characterSize = nss::ArgumentAsInt(command);
-                                                    if (characterSize > 0)
-                                                        textPtr->SetCharacterSize(characterSize);
+                                                    if (characterSize > 0) textPtr->SetCharacterSize(characterSize);
                                                 }
                                             }
                                             else if (nss::Command(command, L"font ") || nss::Command(command, L"font:") ||
@@ -1232,8 +1145,7 @@ namespace ns
                                                 if (textPtr != nullptr)
                                                 {
                                                     std::wstring fontName = nss::ParseAsMaybeQuoteStringFull(command);
-                                                    if (fontName.length() != 0)
-                                                        textPtr->SetFont(fontName);
+                                                    if (fontName.length() != 0) textPtr->SetFont(fontName);
                                                 }
                                             }
                                         }
@@ -1248,8 +1160,7 @@ namespace ns
                             }
                         }
                     }
-                    else
-                        eof = true;
+                    else eof = true;
                 }
             }
             wif.close();
@@ -1286,20 +1197,28 @@ namespace ns
         
         
         
+        
+        
+        
+        void GUIObject::Init() { }
+        void GUIObject::Update(const sf::Time& elapsedTime) { }
+        void GUIObject::Draw(sf::RenderWindow* window) { }
+        void GUIObject::PreCalculate(unsigned int width, unsigned int height) { }
+        void GUIObject::Resize(unsigned int width, unsigned int height) { }
+        void GUIObject::Destroy() { }
+        void GUIObject::SetAlpha(sf::Int8 alpha) { }
+        void GUIObject::SetColor(const sf::Color& fillColour) { }
+        
+        
+        
+        
+        
+        
+        
         namespace GUIObjects
         {
-            void Rectangle::Init()
-            {
-                shape.setFillColor(sf::Color::Black);
-            }
-            void Rectangle::Update(const sf::Time& elapsedTime)
-            {
-                
-            }
-            void Rectangle::Draw(sf::RenderWindow* window)
-            {
-                window->draw(shape);
-            }
+            void Rectangle::Init() { shape.setFillColor(sf::Color::Black); }
+            void Rectangle::Draw(sf::RenderWindow* window) { window->draw(shape); }
             void Rectangle::Resize(unsigned int width, unsigned int height)
             {
                 shape.setSize({static_cast<float>(constrains.width), static_cast<float>(constrains.height)});
@@ -1310,10 +1229,7 @@ namespace ns
                 unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
             }
-            void Rectangle::SetColor(const sf::Color& fillColour)
-            {
-                shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a));
-            }
+            void Rectangle::SetColor(const sf::Color& fillColour) { shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a)); }
             
             
             
@@ -1323,35 +1239,20 @@ namespace ns
                 text.setString(textString);
                 text.setPosition(0, 0);
             }
-            void Text::Update(const sf::Time& elapsedTime)
-            {
-                
-            }
-            void Text::Draw(sf::RenderWindow* window)
-            {
-                if (fontLoaded)
-                    window->draw(text);
-            }
+            void Text::Draw(sf::RenderWindow* window) { if (fontLoaded) window->draw(text); }
             void Text::PreCalculate(unsigned int width, unsigned int height)
             {
                 text.setCharacterSize((unsigned int)(characterSize * gs::scale));
-                if (thickness != 0)
-                    text.setOutlineThickness(thickness * gs::scale);
+                if (thickness != 0) text.setOutlineThickness(thickness * gs::scale);
             }
-            void Text::Resize(unsigned int width, unsigned int height)
-            {
-                text.setPosition(constrains.posX, constrains.posY);
-            }
+            void Text::Resize(unsigned int width, unsigned int height) { text.setPosition(constrains.posX, constrains.posY); }
             void Text::SetAlpha(sf::Int8 alpha)
             {
                 unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
             }
-            void Text::SetColor(const sf::Color& fillColour)
-            {
-                text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a));
-            }
+            void Text::SetColor(const sf::Color& fillColour) { text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
             void Text::SetString(const std::wstring& wstr)
             {
                 textString = wstr;
@@ -1360,7 +1261,7 @@ namespace ns
             void Text::SetFont(const std::wstring& font)
             {
                 fontName = font;
-                if ((fontLoaded = (ns::FontCollector::GetFont(font) != nullptr)))
+                if ((fontLoaded = (ns::FontCollector::GetFont(font))))
                     text.setFont(*ns::FontCollector::GetFont(font));
             }
             void Text::SetOutlineThickness(const float& thickness)
@@ -1376,14 +1277,8 @@ namespace ns
             
             
             
-            void Image::Init()
-            {
-                
-            }
-            void Image::Update(const sf::Time& elapsedTime)
-            {
-                
-            }
+            void Image::Init() { }
+            void Image::Update(const sf::Time& elapsedTime) { }
             void Image::Draw(sf::RenderWindow* window) { window->draw(sprite); }
             void Image::Resize(unsigned int width, unsigned int height)
             {
@@ -1395,22 +1290,18 @@ namespace ns
                 unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
                 sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
             }
-            void Image::SetColor(const sf::Color& fillColour)
-            {
-                sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a));
-            }
+            void Image::SetColor(const sf::Color& fillColour) { sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a)); }
             void Image::LoadImage(const std::wstring& path)
             {
                 spriteLoaded = false;
                 sf::Image* imagePtr = ic::LoadImage(path);
-                if (imagePtr != nullptr)
+                if (imagePtr)
                 {
                     imagePath = path;
                     bool textureLoaded{ false };
                     if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
                         textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
-                    else
-                        textureLoaded = texture.loadFromImage(*imagePtr);
+                    else textureLoaded = texture.loadFromImage(*imagePtr);
                     
                     if (textureLoaded)
                     {
@@ -1418,7 +1309,7 @@ namespace ns
                         texture.setSmooth(true);
                         sprite.setTexture(texture);
                         
-                        Resize(ns::GlobalSettings::width, ns::GlobalSettings::height);
+                        Resize(gs::width, gs::height);
                     }
                 }
             }

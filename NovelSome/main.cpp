@@ -65,7 +65,9 @@
 //TODO: Settings in the GamePause (and in the menu for future): changing the ResolutionClass.
 
 
-//TODO: Make minEH be able to "send messages" to other components. Like, for example, message to the MainMenu from Novel about its ending and exiting, so the MainMenu starts to draw itself again. Or if there's no MainMenu, then the message is destroyed.
+
+//TODO: Change the way negative offset is being made.
+
 
 
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
@@ -89,6 +91,8 @@
 //DONE: Getting the color and getting the alpha should have its own NSS functions.
 //      (usage in GUI parsing and in Skin parsing)
 //DONE: Correct scaling speed when ratio is big.
+//DONE: Make minEH be able to "send messages" to other components. Like, for example, message to the MainMenu from Novel about its ending and exiting, so the MainMenu starts to draw itself again. Or if there's no MainMenu, then the message is destroyed.
+//DONE: "music" and "ambient" commands should stop currently playing music.
 
 // PARSINGS:
 //          NovelUpdate
@@ -120,7 +124,7 @@
 
 #include "Essentials/ResourcePath.hpp"
 #include "Engine/EntitySystem.hpp"
-#include "Engine/StaticMethods.hpp"
+#include "Engine/Settings.hpp"
 
 #include "Components/EssentialComponents.hpp"
 #include "Components/NSMenuComponents/MainMenu.hpp"
@@ -155,6 +159,7 @@ void CalculateScaleRatios(unsigned int width, unsigned int height)
     
     float ratioFactorX = (float)width/(float)height;
     float ratioFactorY = (float)height/(float)width;
+    gs::verticalOrientation = ratioFactorX < 1.23;
     
     gs::scale = factorX > factorY ? factorX : factorY;
     gs::scScale = gs::scale;
@@ -309,6 +314,7 @@ int main()
     window.setFramerateLimit(gs::framerateLimit);
     window.setVerticalSyncEnabled(gs::isVerticalSyncEnabled);
     
+    
 #if defined(SFML_SYSTEM_ANDROID)
     const char* androidFilesPath1 = sf::getNativeActivity()->internalDataPath;
     int i; for (i = 0; androidFilesPath1[i] != '\0'; ++i) androidFilesPath[i] = androidFilesPath1[i];
@@ -445,11 +451,12 @@ int main()
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 18");
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 19");
 #if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
         Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
     }
+    gs::lastMousePos = { sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y };
     
     bool active{ true };
     sf::Clock clock;
@@ -487,14 +494,22 @@ int main()
                     break;
 #endif
                     
-                case sf::Event::MouseWheelScrolled:
-                case sf::Event::TouchEnded:
-                case sf::Event::TouchMoved:
-                case sf::Event::TouchBegan:
-                case sf::Event::MouseButtonReleased:
-                case sf::Event::MouseMoved:
-                case sf::Event::MouseButtonPressed:
+                case sf::Event::MouseWheelScrolled: system.PollEvent(event); break;
+                case sf::Event::TouchEnded: case sf::Event::TouchBegan:
+                    gs::lastMousePos = { event.touch.x, event.touch.y };
                     system.PollEvent(event);
+                    break;
+                case sf::Event::MouseButtonReleased: case sf::Event::MouseButtonPressed:
+                    gs::lastMousePos = { event.mouseButton.x, event.mouseButton.y };
+                    system.PollEvent(event);
+                    break;
+                case sf::Event::TouchMoved:
+                    system.PollEvent(event);
+                    gs::lastMousePos = { event.touch.x, event.touch.y };
+                    break;
+                case sf::Event::MouseMoved:
+                    system.PollEvent(event);
+                    gs::lastMousePos = { event.mouseMove.x, event.mouseMove.y };
                     break;
                     
                 case sf::Event::KeyPressed:
@@ -566,7 +581,7 @@ int main()
                 window.display(); //TODO: Might crash here if app is not running
                 
                 gs::requestWindowRefresh = false;
-            }
+            } else sf::sleep(sf::milliseconds(10));
         } else sf::sleep(sf::milliseconds(100));
 #else
         system.Update(clock.restart());
@@ -578,7 +593,7 @@ int main()
             window.display();
             
             gs::requestWindowRefresh = false;
-        }
+        } else sf::sleep(sf::milliseconds(10));
 #endif
     }
     

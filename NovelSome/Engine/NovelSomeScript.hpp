@@ -38,7 +38,7 @@ namespace nss
         bool lowercaseCommand{ true };
         
         void Command(std::wstring line);
-        void Step();
+        bool ExplicitNoMessage();
     };
     
     ///----------------------------------------------------------
@@ -82,7 +82,6 @@ namespace nss
     
     //TODO: Documentation
     std::wstring ParseArgument(CommandSettings& results);
-    //wchar_t** ParseArguments(CommandSettings& results);
     void ParseArguments(CommandSettings& results, std::vector<std::wstring>& vec);
     std::wstring ArgumentAsString(CommandSettings& results);
     std::wstring ArgumentAsStringWOLowerCase(CommandSettings& results);

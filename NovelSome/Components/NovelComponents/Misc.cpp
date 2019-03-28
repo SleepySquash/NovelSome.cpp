@@ -6,13 +6,13 @@
 //  Copyright © 2018 Melancholy Hill. All rights reserved.
 //
 
-#include "Novel.hpp"
+#include "Misc.hpp"
 
 namespace ns
 {
     namespace NovelComponents
     {
-        GamePause::GamePause()
+        GamePause::GamePause(GUISystem* guiSystem) : guiSystem(guiSystem)
         {
             shape.setFillColor(sf::Color(0,0,0,0));
             menuBackButton.setCharacterSize(60);
@@ -22,8 +22,7 @@ namespace ns
         GamePause::~GamePause() { gs::isPause = false; }
         void GamePause::Update(const sf::Time& elapsedTime)
         {
-            if (alpha != 0 && novel != nullptr)
-                novel->skin.gamePauseGUI.Update(elapsedTime);
+            if (alpha && guiSystem) guiSystem->Update(elapsedTime); 
             
             if (countdownLastTouchedMoment)
             {
@@ -38,7 +37,7 @@ namespace ns
             switch (mode)
             {
                 case appearing: gs::requestWindowRefresh = true;
-                    if (alpha == 0 && novel) Resize(gs::width, gs::height);
+                    if (alpha == 0) Resize(gs::width, gs::height);
                     
                     if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
@@ -48,7 +47,7 @@ namespace ns
                         mode = appeared;
                     }
                     else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-                    if (novel) novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    if (guiSystem) guiSystem->SetAlpha(alpha);
                     menuBackButton.setAlpha(alpha);
                     break;
                     
@@ -61,7 +60,7 @@ namespace ns
                         mode = waiting;
                     }
                     else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
-                    if (novel) novel->skin.gamePauseGUI.SetAlpha(alpha);
+                    if (guiSystem) guiSystem->SetAlpha(alpha);
                     menuBackButton.setAlpha(alpha);
                     break;
                     
@@ -70,8 +69,8 @@ namespace ns
         }
         void GamePause::PollEvent(sf::Event& event)
         {
-            if (gs::isPause && menuBackButton.PollEvent(event)) { gs::isPause = false; if (novel) entity->PopComponent(novel); }
-            if (novel) novel->skin.gamePauseGUI.PollEvent(event);
+            if (gs::isPause && menuBackButton.PollEvent(event)) { gs::isPause = false; entity->SendMessage({"GamePause :: Return to menu"}); }
+            if (guiSystem) guiSystem->PollEvent(event);
             if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
                 || (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Right))
             {
@@ -92,8 +91,7 @@ namespace ns
                     {
                         lastTouchedMoment = 0.f;
                         countdownLastTouchedMoment = false;
-                        
-                        ns::GlobalSettings::isPause = !ns::GlobalSettings::isPause;
+                        gs::isPause = !gs::isPause;
                         mode = ns::GlobalSettings::isPause? appearing : disappearing;
                         currentTime = 0.f;
                     }
@@ -103,17 +101,17 @@ namespace ns
         }
         void GamePause::Draw(sf::RenderWindow *window)
         {
-            if (mode != waiting && novel)
+            if (mode != waiting)
             {
-                novel->skin.gamePauseGUI.Draw(window);
+                if (guiSystem) guiSystem->Draw(window);
                 menuBackButton.Draw(window);
             }
         }
         void GamePause::Resize(unsigned int width, unsigned int height)
         {
-            if (mode != waiting && novel)
+            if (mode != waiting)
             {
-                novel->skin.gamePauseGUI.Resize(width, height);
+                if (guiSystem) guiSystem->Resize(width, height);
                 
                 menuBackButton.Resize(width, height);
                 menuBackButton.setPosition(width/2, height - height/5);
@@ -127,20 +125,8 @@ namespace ns
         
         void Waiting::Update(const sf::Time& elapsedTime)
         {
-            if (novel != nullptr)
-            {
-                if (currentTime < waitingTime)
-                    currentTime += elapsedTime.asSeconds();
-                else
-                {
-                    novel->UnHold(this);
-                    GetNovelSystem()->PopComponent(this);
-                }
-            }
-        }
-        void Waiting::SetNovel(Novel* novel)
-        {
-            this->novel = novel;
+            if (currentTime < waitingTime) currentTime += elapsedTime.asSeconds();
+            else { novelSystem->SendMessage({"UnHold", this}); novelSystem->PopComponent(this); }
         }
     }
 }

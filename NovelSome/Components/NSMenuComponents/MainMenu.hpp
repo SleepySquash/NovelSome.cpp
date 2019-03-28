@@ -27,12 +27,12 @@
 
 #include "../../Essentials/Base.hpp"
 #include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/StaticMethods.hpp"
+#include "../../Engine/Settings.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
-#include "../NovelComponents/Novel.hpp"
 #include "NovelsLibrary.hpp"
+#include "../NovelComponents/Novel.hpp"
 
 using std::cin;
 using std::cout;
@@ -65,7 +65,6 @@ namespace ns
             GUI::TextButton backButton;
             
             long yyNovels{ 0 }, yyNovels_from{ 0 }, yyNovels_to{ 0 };
-            bool verticalOrientation{ false };
             bool isNovelSelected{ false };
             list<NovelInfo>::iterator novelSelected;
             unsigned long novelsLoaded{ 0 };
@@ -77,6 +76,13 @@ namespace ns
             bool novelShowBackground{ false }; sf::Sprite novelBackground; std::wstring novelBackTexture{ L"" };
             std::unique_ptr<char[]> fileInMemory;
             sf::Music novelMusic; float novelMusic_from{ 0 };
+#ifdef _WIN32
+            int scrollSensitivity{ 28 };
+#else
+            int scrollSensitivity{ 14 };
+#endif
+            int scrollThershold{ 30 }, scrolldx{ 0 };
+            sf::Vector2i scrollDot{ 0, 0 }, dot{ 0, 0 };
             
             MainMenu();
             ~MainMenu();
@@ -86,6 +92,8 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void ReceiveMessage(MessageHolder& message) override;
             void CalculateParallax(sf::Sprite& sprite, int dotX, int dotY);
+            void CalculateScrollBounds();
+            void ChangePageTo(const Page& to);
         };
     }
 }

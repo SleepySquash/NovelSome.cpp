@@ -12,20 +12,20 @@ namespace ns
 {
     namespace NSMenuComponents
     {
-        MainMenu::MainMenu()
+        MainMenu::MainMenu() { }
+        MainMenu::~MainMenu() { ic::DeleteImage(L"Data/Images/background.jpg"); }
+        void MainMenu::Init()
         {
-            sf::Texture* texture = ic::LoadTexture(L"Data/Images/background.jpg");
-            if ((spriteLoaded = (texture != nullptr)))
+            sf::Texture* texture = ic::RequestHigherTexture(L"Data/Images/background.jpg", entity);//ic::LoadTexture(L"Data/Images/background.jpg");
+            if ((spriteLoaded = texture))
             {
                 background.setTexture(*texture);
                 background.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
             }
-        }
-        MainMenu::~MainMenu() { ic::DeleteImage(L"Data/Images/background.jpg"); }
-        void MainMenu::Init()
-        {
+            
+            
             novelSelected = Novels::info.end();
-            if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf") != nullptr))) welcomeToNovelSome.setFont(*fc::GetFont(L"Pacifica.ttf"));
+            if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf")))) welcomeToNovelSome.setFont(*fc::GetFont(L"Pacifica.ttf"));
             welcomeToNovelSome.setFillColor(sf::Color::White);
             welcomeToNovelSome.setOutlineColor(sf::Color::Black);
             welcomeToNovelSome.setString("Welcome to the NovelSome");
@@ -78,13 +78,20 @@ namespace ns
             novelText.setFillColor(sf::Color::White);
             novelText.setOutlineColor(sf::Color::Black);
         }
+        void MainMenu::ChangePageTo(const Page& to)
+        {
+            /*switch (to)
+            {
+                    case
+            }*/
+        }
         void MainMenu::PollEvent(sf::Event& event)
         {
             if (!active) return;
             
             if (doParallax && event.type == sf::Event::MouseMoved)
             {
-                if (novelShowBackground) CalculateParallax(novelBackground, event.mouseMove.x, event.mouseMove.y);
+                if (novelShowBackground && page == Page::Novels) CalculateParallax(novelBackground, event.mouseMove.x, event.mouseMove.y);
                 else CalculateParallax(background, event.mouseMove.x, event.mouseMove.y);
             }
             
@@ -94,22 +101,9 @@ namespace ns
                 case Page::Main:
                     if (novelsButton.PollEvent(event))
                     {
+                        if (doParallax && novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                         page = Page::Novels; if (novelMusic.getStatus() == sf::Music::Status::Paused) novelMusic.play();
-                        if (!novelsLoaded) {
-                            novelsLoaded = Novels::LoadNovels();
-                            if (Novels::info.size())
-                            {
-                                long yyNovelsHeight = (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10) * Novels::info.size();
-                                if (yyNovelsHeight < gs::relativeHeight - gs::relativeHeight/4) {
-                                    yyNovels_from = gs::relativeHeight/2 - yyNovelsHeight/2;
-                                    yyNovels_to = yyNovels_from;
-                                } else {
-                                    yyNovels_from = gs::relativeHeight/15 - (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
-                                    yyNovels_to = yyNovels_from + (yyNovelsHeight - gs::relativeHeight + gs::relativeHeight/4) + (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
-                                }
-                                yyNovels = yyNovels_to;
-                            }
-                        }
+                        if (!novelsLoaded) { novelsLoaded = Novels::LoadNovels(); CalculateScrollBounds(); yyNovels = yyNovels_to; }
                     }
                     else if (editorButton.PollEvent(event)) page = Page::Editor;
                     else if (settingsButton.PollEvent(event)) page = Page::Settings;
@@ -120,29 +114,38 @@ namespace ns
                     break;
                 case Page::Novels:
                     if (backButton.PollEvent(event)) {
-                        if (isNovelSelected && verticalOrientation)
+                        if (isNovelSelected && gs::verticalOrientation)
                         {
                             if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
                             isNovelSelected = false; novelMusic.stop();
-                        } else { page = Page::Main; novelMusic.pause(); } }
+                        } else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); } }
                     else
                     {
                         if (event.type == sf::Event::MouseWheelScrolled)
                         {
                             if (event.mouseWheelScroll.delta != 0 && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
                             {
-                                yyNovels += 14 * event.mouseWheelScroll.delta;
+                                yyNovels += scrollSensitivity * event.mouseWheelScroll.delta;
                                 if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
                                 if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
                             }
                         }
+                        else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
                         else
                         {
-                            bool unselectNovelSelected{ true };
-                            if (event.type != sf::Event::MouseButtonReleased && event.type != sf::Event::TouchEnded)
-                                unselectNovelSelected = false;
+                            if ((event.type == sf::Event::MouseMoved && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) || event.type == sf::Event::TouchMoved)
+                            {
+                                if (event.type == sf::Event::MouseMoved) dot = { event.mouseMove.x, event.mouseMove.y }; else dot = { event.touch.x, event.touch.y };
+                                yyNovels += (dot.y - gs::lastMousePos.second)/gs::scaley;
+                                if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
+                                if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
+                                scrollThershold += abs(dot.y - gs::lastMousePos.second)/gs::scaley;
+                            }
                             
-                            if (!verticalOrientation || !isNovelSelected)
+                            bool unselectNovelSelected{ false };
+                            if (((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) || event.type == sf::Event::TouchEnded) && scrollThershold < 4) unselectNovelSelected = true;
+                            if (scrollThershold > 4) novelButtons.anyButtonPressed = false;
+                            if ((!gs::verticalOrientation || !isNovelSelected) && scrollThershold < 4)
                             {
                                 yy = yyNovels*gs::scaley; long i = 0;
                                 for (auto it = Novels::info.begin(); it != Novels::info.end() && active; ++it)
@@ -205,7 +208,7 @@ namespace ns
                                             if (back != L"" && back.length())
                                             {
                                                 std::wstring path = base::GetFolderPath((*it).path) + back;
-                                                sf::Texture* texture = ic::LoadTexture(path, 1);
+                                                sf::Texture* texture = ic::RequestHigherTexture(path, entity, 1);//ic::LoadTexture(path, 1);
                                                 if (texture)
                                                 {
                                                     novelBackTexture = path;
@@ -293,11 +296,16 @@ namespace ns
                                     novelMusic.stop();
                                 }
                             }
+                            if ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) || event.type == sf::Event::TouchEnded) scrollThershold = 0;
                         }
                     }
                     break;
-                case Page::Editor: if (backButton.PollEvent(event)) page = Page::Main; break;
-                case Page::Settings: if (backButton.PollEvent(event)) page = Page::Main; break;
+                case Page::Editor: if (backButton.PollEvent(event)) page = Page::Main;
+                    else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                    break;
+                case Page::Settings: if (backButton.PollEvent(event)) page = Page::Main;
+                    else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                    break;
                 default: break;
             }
         }
@@ -347,13 +355,12 @@ namespace ns
 #endif
             
             novelBackShape.setOutlineThickness(2.f * gs::scale);
-            verticalOrientation = ((float)width/height < 1);
-            if (verticalOrientation)
+            if (gs::verticalOrientation)
             {
-                novelBackShape.setSize({gs::width * 4.4f/5, gs::height * 4.f/5});
-                novelBackShape.setPosition(0.6*gs::width/10, gs::height/15);
-                novelButtons.setSize({gs::width * 4.f/5, 120*gs::scScale});
-                novelButtons.setPosition(gs::width/10, 0);
+                novelBackShape.setSize({gs::width * 4.65f/5, gs::height * 4.f/5});
+                novelBackShape.setPosition(0.35*gs::width/10, gs::height/15);
+                novelButtons.setSize({gs::width * 4.7f/5, 120*gs::scScale});
+                novelButtons.setPosition(0.3*gs::width/10, 0);
             } else {
                 novelBackShape.setSize({(1280 - 630 - 30)*gs::scalex, gs::height * 4.f/5});
                 novelBackShape.setPosition(15*gs::scalex, gs::height/15);
@@ -366,20 +373,7 @@ namespace ns
             novelText.setOutlineThickness(2 * gs::scale);
             yyNovelText = novelBackShape.getPosition().y;
             
-            if (Novels::info.size())
-            {
-                long yyNovelsHeight = (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10) * Novels::info.size();
-                if (yyNovelsHeight < gs::relativeHeight - gs::relativeHeight/4) {
-                    yyNovels_from = gs::relativeHeight/2 - yyNovelsHeight/2;
-                    yyNovels_to = yyNovels_from;
-                } else {
-                    yyNovels_from = gs::relativeHeight/15 - (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
-                    yyNovels_to = yyNovels_from + (yyNovelsHeight - gs::relativeHeight + gs::relativeHeight/4) + (novelButtons.shape.getGlobalBounds().height/gs::scaley + 10);
-                }
-                if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
-                if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
-            }
-            
+            CalculateScrollBounds();
             if (novelShowBackground)
             {
                 float factorX = (float)width / novelBackground.getTexture()->getSize().x * (doParallax? 1 + parallaxPower : 1);
@@ -399,6 +393,24 @@ namespace ns
             {
                 if (novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                 else CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+            }
+        }
+        void MainMenu::CalculateScrollBounds()
+        {
+            if (Novels::info.size())
+            {
+                int yyHeight = (novelButtons.shape.getLocalBounds().height/gs::scaley + 10);
+                long yyNovelsHeight = yyHeight * Novels::info.size();
+                if (yyNovelsHeight < gs::relativeHeight - gs::relativeHeight/4) {
+                    yyNovels_from = gs::relativeHeight/2 - yyNovelsHeight/2;
+                    yyNovels_to = yyNovels_from;
+                } else {
+                    float yyOnScreen = (float)gs::relativeHeight/yyHeight;
+                    yyNovels_from = -yyNovelsHeight + yyHeight*yyOnScreen/2;//(yyOnScreen - 0.5)*yyHeight;
+                    yyNovels_to = yyOnScreen/2 * yyHeight;
+                }
+                if (yyNovels < yyNovels_from) yyNovels = yyNovels_from;
+                if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
             }
         }
         void MainMenu::Draw(sf::RenderWindow* window)
@@ -444,7 +456,7 @@ namespace ns
                         novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, yy);
                         window->draw(novelText); yy += novelText.getGlobalBounds().height + 15*gs::scaley;
                     }
-                    if (!isNovelSelected || !verticalOrientation)
+                    if (!isNovelSelected || !gs::verticalOrientation)
                     {
                         yy = yyNovels*gs::scaley;
                         for (auto it = Novels::info.begin(); it != Novels::info.end(); ++it)
@@ -465,7 +477,7 @@ namespace ns
         }
         void MainMenu::ReceiveMessage(MessageHolder& message)
         {
-            if (message.info == "NovelComponents :: Novel :: Returning to the menu")
+            if (message.info == "NovelComponents :: Novel :: Destroying")
             {
                 active = true;
                 if (novelMusic.getStatus() == sf::Music::Status::Paused) {
@@ -473,6 +485,44 @@ namespace ns
                 gs::requestWindowRefresh = true;
                 Resize(gs::width, gs::height);
                 message = MessageHolder();
+            }
+            else if (nss::Command(message.info, "Request"))
+            {
+                if (message.additional == L"Data/Images/background.jpg")
+                {
+                    spriteLoaded = false;
+                    sf::Texture* texture = ic::LoadTexture(L"Data/Images/background.jpg");
+                    if (texture)
+                    {
+                        background.setTexture(*texture, true);
+                        background.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                        
+                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                        float scaleFactor = factorX > factorY ? factorX : factorY;
+                        background.setScale(scaleFactor, scaleFactor);
+                        background.setPosition(gs::width/2, gs::height/2);
+                        
+                        if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                        
+                        spriteLoaded = true;
+                    }
+                }
+                else if (message.additional == novelBackTexture && novelShowBackground)
+                {
+                    sf::Texture* texture = ic::LoadTexture(novelBackTexture);
+                    if (texture)
+                    {
+                        novelBackground.setTexture(*texture, true);
+                        novelBackground.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                        float scaleFactor = factorX > factorY ? factorX : factorY;
+                        novelBackground.setScale(scaleFactor, scaleFactor);
+                        novelBackground.setPosition(gs::width/2, gs::height/2);
+                        if (doParallax) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                    }
+                }
             }
         }
         void MainMenu::CalculateParallax(sf::Sprite& sprite, int dotX, int dotY)
