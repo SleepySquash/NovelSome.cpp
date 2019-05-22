@@ -68,18 +68,215 @@ sound
 
 
 
+
+gui 1test
+{
+    rectangle
+    {
+        left: 60
+        right: 60
+        top: 60
+        bottom: 60
+        alpha: .5
+
+        rectangle
+        {
+            left: 60
+            right: 60
+            top: 60
+            bottom: 60
+            alpha: .5
+
+            rectangle
+            {
+                x: .width/4
+                y: .height/4
+                width: .width/2
+                height: .height/2
+                alpha: .5
+            }
+
+            rectangle
+            {
+                left: 10
+                right: 10
+                bottom: 10
+                width: .width/1.2
+                height: .height/10
+                fill: yellow
+                alpha: .5
+            }
+        }
+    }
+}
+
+
+
+gui test2
+{
+    rectangle as Choose
+    {
+        alpha: .8
+
+        x: .width/2 - 280
+        y: .height/2 - 160
+        width: 560
+        height: 320
+    }
+}
+
+
+
+gui test3
+{
+    rectangle as Dialogue
+    {
+        alpha: .66
+
+        left: 30
+        right: 30
+        bottom: 10
+        height: .height/4.6
+
+        @dialogue
+        {
+            left: 10
+            right: 10
+            top: 10
+            bottom: 2
+
+            alpha: .9
+            color: magenta
+        }
+
+        button "GUI/hide.png"
+        {
+            x: .width - 30
+            y: -30
+            scale: 0.5
+        }
+
+        button texture: "GUI/pause.png"
+        {
+            x: .width - 30 - 70s
+            y: -30
+            scale: 0.4
+        }
+    }
+}
+
+
+
+
+
+gui test
+{
+    rectangle
+    {
+        left: 60
+        right: 60
+        top: 60
+        bottom: 60
+        alpha: .5
+
+        rectangle
+        {
+            left: 60
+            right: 60
+            top: 60
+            bottom: 60
+            alpha: .5
+
+            rectangle
+            {
+                left: 0
+                right: 0
+                top: 0
+                bottom: 0
+                width: .width/2
+                height: .height/2
+                alpha: .5
+
+                text "Я очень длинный текст прям очень да"
+                {
+                    font: "Arial.ttf"
+                    x: .width/2
+                    y: .height/2
+                    h: left
+
+                    fill: white
+                    outline: red
+                    thickness: 2
+                    size: 20
+                }
+            }
+
+            rectangle
+            {
+                left: 10
+                right: 10
+                bottom: 10
+                width: .width/1.2
+                height: .height/10
+                fill: yellow
+                alpha: .5
+            }
+        }
+    }
+}
+
+
+
+
 //или просто menu {
 gui menu
 {
     //...
     rectangle
     {
-        posx: .width/3
-        posy: .height/3
+        x: .width/3 + 100
+        y: .height/3
         width: .width/6
         height: .height/6
         fill: yellow
         alpha: .6
+    }
+    text "*(нет, это не хитбокс кнопки, это просто обычный прямоугольник, вот, а текст очень длинный шоб уж ващееее дададада)"
+    {
+        wrap: true
+        x: .width/3 + 10
+        y: 200
+        size: 30
+        thickness: 1
+
+        text "Я текст прямо под текстом"
+        {
+            top: .height + 5
+            x: .width/2
+            h: center
+            size: 30
+            thickness: 1
+        }
+    }
+    button:"I'm button!"
+    {
+        x: .width/2
+        y: .height/2
+        font: "Arial.ttf"
+        size:60
+        // action: background "image.jpg" <- если строчка всего одна
+        action
+        {
+            // Сначала делать проверку nss::Command специальных, которые гуишные, а потом кидать в NovelUpdate вне очереди.
+            gui choose "skin.nskin"
+            background "DVa.jpg" fade:2
+        }
+    }
+    button "GUI/hide.png"
+    {
+        x: .width/3
+        y: .height/3
+        action: menu
     }
 }
 
@@ -89,16 +286,16 @@ gui choose
     {
         alpha: .8
 
-        posx: .width/2 - 280
-        posy: .height/2 - 160
+        x: .width/2 - 280
+        y: .height/2 - 160
         width: 560
         height: 320
     }
 
     text "СУДЬБОНОСНОЕ РЕШЕНИЕ"
     {
-        posx: .width/2 - @text.width/2
-        posy: .height/4
+        x: .width/2 - @text.width/2
+        y: .height/4
 
         fill: white
         outline: magenta
@@ -107,23 +304,80 @@ gui choose
     }
 }
 
-
-gui gamepause
+gui somegui
 {
     rectangle
     {
-        alpha: .8
+        alpha: .6
+
+        x: .width/2 - 50
+        y: 100
+        width: 100
+        height: 100
     }
 
-    text "Game pause"
+    text "Привет. Я просто текст."
     {
-        posx: .width/2 - @text.width/2
-        posy: .height/4.5
+        x: .width/2 - @text.width/2
+        y: .height/2
+
+        fill: white
+        outline: magenta
+        thickness: 1
+        size: 48
+    }
+}
+
+rectangle
+{
+    alpha: .8
+}
+gui gamepause
+{
+    background "GUI/preview.png" { }
+
+    text "Пауза (длинный, зараза, текст лол)"
+    {
+        x: .width/2
+        y: .height/4.5
+        h: center
 
         fill: white
         outline: red
         thickness: 2
         size: 96
+    }
+
+    button:"Продолжить"
+    {
+        x: .width/2
+        y: .height/2
+        size: 56
+        action pause off
+    }
+
+    button:"Сохранение"
+    {
+        action: save
+        x: .width/2
+        y: .height/2 + 60
+        size: 56
+    }
+
+    button:"Загрузка"
+    {
+        action: load
+        x: .width/2
+        y: .height/2 + 120
+        size: 56
+    }
+
+    button:"Выйти"
+    {
+        x: .width/2
+        y: .height - .height/5
+        size: 56
+        action menu
     }
 }
 
@@ -131,6 +385,7 @@ gui gamepause
 
 gui dialogue
 {
+
     rectangle as Dialogue
     {
         alpha: .66
@@ -138,8 +393,6 @@ gui dialogue
         left: 30
         right: 30
         bottom: 10
-        //height: .height/2
-        //posy: .height/4
         height: .height/4.6
 
         @dialogue
@@ -147,10 +400,31 @@ gui dialogue
             left: 10
             right: 10
             top: 10
-            //width: ".width - 20"
+            bottom: 2
 
             alpha: .9
             color: magenta
+        }
+
+        button "GUI/hide.png"
+        {
+            v: bottom
+            h: right
+            action: { switch
+                gui plsreturn((( "skin.nskin" fade:0! }
+            posx: .width - 30
+            posy: -30
+            scale: 0.5
+        }
+
+        button texture: "GUI/pause.png"
+        {
+            v: bottom
+            h: right
+            action: { pause }
+            posx: .width - 100
+            posy: -30
+            scale: 0.4
         }
 
         rectangle as Name
@@ -158,7 +432,6 @@ gui dialogue
             maxAlpha: .66
 
             left: 10
-            //top: -15 - @name.height
             bottom: .height + 5
             width: @name.width + 20
             height: @name.height + 10
@@ -172,6 +445,18 @@ gui dialogue
     }
 }
 
+gui plsreturn(((
+{
+    button "GUI/hide.png"
+    {
+        action: { switch
+            gui hide plsreturn((( fade:0! }
+        x: .width - 60
+        y: .height -50
+        scale: 0.5
+    }
+}
+
 
 //bottom: - это отступ от нижнего края вышестоящего объекта
 //top: - это отступ от верхнего края вышестоящего объекта
@@ -179,52 +464,3 @@ gui dialogue
 // 1) работать с posy
 // 2) или сделать отступ от верхнего края (top:) просто-напросто отрицательным
 // 3) или сделать отступ от нижнего края (bottom:) равным высоте вышестоящего объекта плюс какие-то значения
-
-
-//или просто dialogue {
-gui sdialogue
-{
-    //глобальные задания переменных на данный скоп
-    font: "NotoSansCJK-Regular.ttc"
-    characterSize: 30
-
-    rectangle {
-        color black
-        alpha: 170
-
-        left: 30
-        right: 30
-        bottom: 10
-        height: ".height/5 - 10"
-
-        text @dialogue {
-            left: 10
-            top: 10
-            width: .width - 20
-
-            font: "NotoSansCJK-Regular.ttc"
-            size: 30
-        }
-
-        rectangle as Name {
-            color: black
-            maxAlpha: 170
-
-            left: 10
-            bottom: .height + 5
-            width: @name.width + 20
-            height: @name.height + 10
-
-            fadings as nameRect
-
-            text @name {
-                left: 5
-                top: 5
-                width: .width - 20
-
-                font: "NotoSansCJK-Regular.ttc"
-                size: 30
-            }
-        }
-    }
-}

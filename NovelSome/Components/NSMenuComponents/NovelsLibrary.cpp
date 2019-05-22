@@ -25,7 +25,7 @@ namespace ns
 #else
         wif.open(base::utf8(path));
 #endif
-        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
         
         if (wif.is_open())
         {
@@ -111,8 +111,7 @@ namespace ns
                             std::wstring extension = fileName.substr(pos, fileName.length());
                             if (extension == L".nsdata") Novels::info.push_back(NovelInfo((*it) + fileName));
                         }
-                        else
-                            directories.push_back((*it) + fileName + L"/");
+                        else directories.push_back((*it) + fileName + L"/");
                     }
                 }
                 _closedir(directory);

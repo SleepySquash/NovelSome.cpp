@@ -23,22 +23,8 @@ namespace ns
             std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
             return converter.from_bytes(str);
         }
-        std::string utf8(const wchar_t& wchar)
-        {
-            std::wstring str = L"";
-            str[0] = wchar;
-            
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.to_bytes(str);
-        }
-        std::wstring utf16(const char& wchar)
-        {
-            std::string str = "";
-            str[0] = wchar;
-            
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.from_bytes(str);
-        }
+        std::string utf8(const wchar_t& wchar) { std::wstring str = L""; str[0] = wchar; return utf8(str); }
+        std::wstring utf16(const char& wchar) { std::string str = ""; str[0] = wchar; return utf16(str); }
         
         
 #ifdef _WIN32
@@ -60,7 +46,6 @@ namespace ns
             
             //TODO: change the way it converts
             std::wstring wcurrent_working_dir(current_working_dir.begin(), current_working_dir.end());
-            
             return wcurrent_working_dir+L'\\';
         }
 #endif
@@ -111,9 +96,7 @@ namespace ns
             mode_t mode = 0755;
             int ret = mkdir(upath.c_str(), mode);
 #endif
-            if (ret == 0)
-                return true;
-            
+            if (ret == 0) return true;
             switch (errno)
             {
                 case ENOENT:
@@ -136,12 +119,8 @@ namespace ns
                     return (0 == mkdir(upath.c_str(), mode));
 #endif
                     
-                case EEXIST:
-                    // done!
-                    return FileExists(path);
-                    
-                default:
-                    return false;
+                case EEXIST: return FileExists(path); // done!
+                default: return false;
             }
         }
         

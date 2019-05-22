@@ -54,6 +54,14 @@ namespace ns
             GUIObjects::Rectangle* pauseRect = guiPause.AddComponent<GUIObjects::Rectangle>();
             pauseRect->shape.setFillColor(sf::Color::Black);
             pauseRect->maxAlpha = 170;
+            GUIObjects::Button* menuButton = guiPause.AddComponent<GUIObjects::Button>(GUIObjects::Button::Text);
+            menuButton->text->setColor(sf::Color::White);
+            menuButton->text->setFont(L"Pacifica.ttf");
+            menuButton->text->setCharacterSize(56);
+            menuButton->text->setString(L"Back to menu");
+            menuButton->actions.push_back(L"menu");
+            menuButton->constrains.posXS = L".width/2";
+            menuButton->constrains.posYS = L".height - .height/5";
         }
         void Interface::LoadFromFile(const std::wstring& fileName)
         {
@@ -110,6 +118,14 @@ namespace ns
                 GUIObjects::Rectangle* pauseRect = guiPause.AddComponent<GUIObjects::Rectangle>();
                 pauseRect->shape.setFillColor(sf::Color::Black);
                 pauseRect->maxAlpha = 170;
+                GUIObjects::Button* menuButton = guiPause.AddComponent<GUIObjects::Button>(GUIObjects::Button::Text);
+                menuButton->text->setColor(sf::Color::White);
+                menuButton->text->setFont(L"Pacifica.ttf");
+                menuButton->text->setCharacterSize(56);
+                menuButton->text->setString(L"Back to menu");
+                menuButton->actions.push_back(L"menu");
+                menuButton->constrains.posXS = L".width/2";
+                menuButton->constrains.posYS = L".height - .height/5";
             }
         }
     }

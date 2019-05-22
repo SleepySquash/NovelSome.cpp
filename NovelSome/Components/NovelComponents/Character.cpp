@@ -12,9 +12,10 @@ namespace ns
 {
     namespace NovelComponents
     {
-        void Character::LoadState(const std::wstring& state)
+        Character::Character() : Savable(L"Character") { }
+        void Character::LoadState(const std::wstring& stateName)
         {
-            spriteLoaded = false;
+            state = stateName; spriteLoaded = false;
             if (characterData)
             {
                 std::wstring fullPath = folderPath + characterData->filePath;
@@ -147,7 +148,7 @@ namespace ns
             }
             else cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
         }
-        void Character::Resize(unsigned int width, unsigned int height)
+        void Character::Resize(const unsigned int& width, const unsigned int& height)
         {
             if (spriteLoaded)
             {
@@ -245,5 +246,20 @@ namespace ns
             }
         }
         void Character::SetPosition(positionEnum pos, float x = 0, float y = 0) { position = pos; customX = x; customY = y; }
+        void Character::Save(std::wofstream& wof)
+        {
+            if (spriteLoaded)
+            {
+                if (characterData) wof << L"character->name: " << characterData->name << endl;
+                if (state.length() != 0) wof << L"state: " << state << endl;
+                if (position != center) wof << L"position: " << position << endl;
+                
+                if (mode != existing)
+                {
+                    wof << L"mode: " << mode << endl;
+                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                }
+            }
+        }
     }
 }

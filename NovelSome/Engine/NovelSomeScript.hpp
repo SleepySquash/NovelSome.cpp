@@ -27,6 +27,8 @@ using std::cout;
 using std::cin;
 using std::endl;
 using namespace ns;
+using base::utf8;
+using base::utf16;
 
 namespace nss
 {
@@ -37,7 +39,7 @@ namespace nss
         bool keepTheLastPos{ true };
         bool lowercaseCommand{ true };
         
-        void Command(std::wstring line);
+        void Command(const std::wstring& command, bool skipSpaces = false);
         bool ExplicitNoMessage();
     };
     
@@ -53,11 +55,13 @@ namespace nss
     /// \returns true if parsed string starts with specified command, false otherwise.
     ///----------------------------------------------------------
     bool Command(CommandSettings& results, const std::wstring& command);
-    bool Command(const std::wstring& line, const std::wstring& command);
+    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase = true);
     bool Command(const std::string& line, const std::string& command);
     
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results);
+    void RemoveSpaces(CommandSettings& results);
+    void RemoveSpaces(std::wstring& line);
     bool ContainsUsefulInformation(CommandSettings& results);
     bool ContainsUsefulInformation(const std::wstring& wstr);
     
@@ -67,6 +71,7 @@ namespace nss
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
     std::string ParseUntil(std::string line, const char until, unsigned int from = 0);
+    std::wstring ParseUntilReverse(std::wstring line, const wchar_t until, unsigned int from = 0);
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until);
     std::wstring ParseAsQuoteString(CommandSettings& results);
     std::wstring ParseAsMaybeQuoteString(CommandSettings& results);
@@ -91,8 +96,10 @@ namespace nss
     
     void SetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift = 0);
     void SetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
-    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift = 0);
+    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, unsigned int height = 0, int shift = 0);
     std::wstring GetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width);
+    
+    std::wstring GetPathWOResourcePath(const std::wstring& path);
     
     float MathParser(const std::wstring& finalLine);
 }

@@ -110,6 +110,13 @@ gui gamepause
         thickness: 2
         size: 96
     }
+    button:"Return to menu"
+    {
+        posx: .width/2
+        posy: .height - .height/5
+        size: 56
+        action menu
+    }
 }
 
 

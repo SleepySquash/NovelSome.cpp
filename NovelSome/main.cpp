@@ -65,6 +65,15 @@
 
 
 
+//TODO: Make GUIConstrains calculate in parts:
+//       Call GUIObject's PreCalculate()
+//      1) Calculate left, right, top, bottom, width and height
+//       Call GUIObject's function like PreCalculatedSize()
+//      3) Calculate posx, posy
+//       Call GUIObject's Resize()
+
+
+
 //DONE: Make nss::Command not case sensetive as an option in nss::CommandSettings
 //DONE: Global scaling factor
 //DONE: Text's new line when exceed the screen's width
@@ -164,23 +173,26 @@ void CalculateScaleRatios(unsigned int width, unsigned int height)
     
     gs::scale = factorX > factorY ? factorX : factorY;
     gs::scScale = gs::scale;
+    
+    if (ratioFactorX < 1.3 && ratioFactorY < 1.3) gs::scale *= 0.9;
+    if (ratioFactorX < 1.3 && ratioFactorY < 1.3) gs::scScale *= 0.9;
     if (ratioFactorY > 1)
     {
         float m = gs::scale;
         if (ratioFactorY < 1.2)
-            gs::scale = gs::scale - m*(ratioFactorY - 1)*1.5;
+            gs::scale = gs::scale - m*(ratioFactorY - 1)*1.6;
         else if (ratioFactorY < 2)
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(ratioFactorY - 1.2)*0.17;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(ratioFactorY - 1.2)*0.23;
         else if (ratioFactorY < 2.46)
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(ratioFactorY - 2)*0.12;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(2 - 1.2)*0.23 - m*(ratioFactorY - 2)*0.12;
         else if (ratioFactorY < 3)
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(2 - 1.2)*0.23 - m*(2.46 - 2)*0.12 - m*(ratioFactorY - 2.46)*0.07;
         else if (ratioFactorY < 4.8)
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(2 - 1.2)*0.23 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(ratioFactorY - 3)*0.04;
         else if (ratioFactorY < 8)
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(2 - 1.2)*0.23 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(ratioFactorY - 4.8)*0.02;
         else
-            gs::scale = gs::scale - m*(1.2 - 1)*1.5 - m*(2 - 1.2)*0.17 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
+            gs::scale = gs::scale - m*(1.2 - 1)*1.6 - m*(2 - 1.2)*0.23 - m*(2.46 - 2)*0.12 - m*(3 - 2.46)*0.07 - m*(4.8 - 3)*0.04 - m*(8 - 4.8)*0.02;
         
         m = gs::scScale;
         if (ratioFactorY < 1.2)
@@ -452,7 +464,7 @@ int main()
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 19");
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 20");
 #if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
         Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
@@ -497,10 +509,12 @@ int main()
                     
                 case sf::Event::MouseWheelScrolled: system.PollEvent(event); break;
                 case sf::Event::TouchEnded: case sf::Event::TouchBegan:
+                    if (gs::ignoreEvent) break;
                     gs::lastMousePos = { event.touch.x, event.touch.y };
                     system.PollEvent(event);
                     break;
                 case sf::Event::MouseButtonReleased: case sf::Event::MouseButtonPressed:
+                    if (gs::ignoreEvent) break;
                     gs::lastMousePos = { event.mouseButton.x, event.mouseButton.y };
                     system.PollEvent(event);
                     break;

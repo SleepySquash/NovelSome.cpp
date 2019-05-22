@@ -33,6 +33,7 @@
 
 #include "NovelsLibrary.hpp"
 #include "../NovelComponents/Novel.hpp"
+#include "../NovelComponents/GUISystem.hpp"
 
 using std::cin;
 using std::cout;
@@ -46,10 +47,12 @@ namespace ns
     {
         struct MainMenu : public Component
         {
+            NovelComponents::GUISystem guiSystem;
+            
             bool active{ true };
             sf::Sprite background;
             bool spriteLoaded{ false };
-            enum class Page { Main, Novels, Editor, Settings };
+            enum class Page { Main, Novels, Editor, Settings, Language };
             Page page{ Page::Main };
             
             bool doParallax{ gs::isParallaxEnabled };
@@ -62,7 +65,9 @@ namespace ns
             GUI::TextButton settingsButton;
             GUI::TextButton exitButton;
             GUI::TextButton accountButton;
+            GUI::TextButton languageButton;
             GUI::TextButton backButton;
+            GUI::TextButton tempButton;
             
             long yyNovels{ 0 }, yyNovels_from{ 0 }, yyNovels_to{ 0 };
             bool isNovelSelected{ false };
@@ -88,12 +93,13 @@ namespace ns
             ~MainMenu();
             void Init() override;
             void PollEvent(sf::Event& event) override;
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void Draw(sf::RenderWindow* window) override;
             void ReceiveMessage(MessageHolder& message) override;
             void CalculateParallax(sf::Sprite& sprite, int dotX, int dotY);
             void CalculateScrollBounds();
             void SelectNovel(list<NovelInfo>::iterator& it, bool focus = true, bool force = false);
+            void UnselectNovel();
             void ChangePageTo(const Page& to);
         };
     }

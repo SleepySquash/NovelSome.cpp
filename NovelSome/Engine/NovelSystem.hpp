@@ -26,12 +26,11 @@ using std::list;
 
 namespace ns
 {
-    class NovelObject;
-    class NovelSystem;
+    struct NovelObject;
+    struct NovelSystem;
     
-    class NovelObject
+    struct NovelObject : MessageSender
     {
-    public:
         NovelSystem* novelSystem{ nullptr };
         bool offline{ false };
         int priority{ 0 };
@@ -40,23 +39,23 @@ namespace ns
         virtual void Init();
         virtual void Update(const sf::Time&);
         virtual void Draw(sf::RenderWindow*);
-        virtual void Resize(unsigned int width, unsigned int height);
+        virtual void Resize(const unsigned int& width, const unsigned int& height);
         virtual void PollEvent(sf::Event& event);
         virtual void Destroy();
         virtual void ReceiveMessage(MessageHolder& message);
+        void SendMessage(MessageHolder message) override;
         void SetPriority(int priority);
         void ChangePriority(int priority);
     };
     
-    class NovelSystem : public MessageSender
+    struct NovelSystem : MessageSender
     {
-    public:
         list<NovelObject*> objects;
         
         NovelSystem();
         void Update(const sf::Time& elapsedTime);
         void Draw(sf::RenderWindow* window);
-        void Resize(unsigned int width, unsigned int height);
+        void Resize(const unsigned int& width, const unsigned int& height);
         void PollEvent(sf::Event& event);
         void PopComponent(NovelObject* component);
         void SendMessage(MessageHolder message) override;
@@ -64,6 +63,11 @@ namespace ns
         void clear();
         bool empty();
         void ChangePriorityOf(NovelObject* component, int priority);
+        
+        list<NovelObject*>::const_iterator cbegin() const;
+        list<NovelObject*>::const_iterator cend() const;
+        list<NovelObject*>::iterator begin();
+        list<NovelObject*>::iterator end();
         
         template<typename T, typename ...Args> T* AddComponent(Args... args)
         {

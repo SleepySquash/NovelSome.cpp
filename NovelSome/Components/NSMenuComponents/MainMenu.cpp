@@ -24,6 +24,10 @@ namespace ns
             }
             
             
+            tempButton.setString(L"Привет! Я кнопка справа.");
+            tempButton.setCharacterSize(60); tempButton.thickness = 2;
+            tempButton.setFont(L"Pacifica.ttf"); tempButton.halign = Halign::Right;
+            
             novelSelected = Novels::info.end();
             if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf")))) welcomeToNovelSome.setFont(*fc::GetFont(L"Pacifica.ttf"));
             welcomeToNovelSome.setFillColor(sf::Color::White);
@@ -51,10 +55,15 @@ namespace ns
             accountButton.setString(L"You are SleepySquash >");
             accountButton.setFont(L"Pacifica.ttf");
             accountButton.setCharacterSize(52);
+            languageButton.setString(L"Language");
+            languageButton.setFont(L"Pacifica.ttf");
+            languageButton.setCharacterSize(57);
+            languageButton.valign = Valign::Bottom;
+            languageButton.halign = Halign::Left;
             
             novelsButton.valign = editorButton.valign = settingsButton.valign = exitButton.valign = Valign::Top;
-            novelsButton.characterScale = editorButton.characterScale = settingsButton.characterScale = exitButton.characterScale = accountButton.characterScale = backButton.characterScale = true;
-            novelsButton.thickness = editorButton.thickness = settingsButton.thickness = exitButton.thickness = accountButton.thickness = backButton.thickness = 2;
+            novelsButton.characterScale = editorButton.characterScale = settingsButton.characterScale = exitButton.characterScale = accountButton.characterScale = backButton.characterScale = languageButton.characterScale = true;
+            novelsButton.thickness = editorButton.thickness = settingsButton.thickness = exitButton.thickness = accountButton.thickness = languageButton.thickness = backButton.thickness = 2;
             
             backButton.setString(L"< BACK");
             backButton.setFont(L"Pacifica.ttf");
@@ -77,6 +86,9 @@ namespace ns
             if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf") != nullptr))) novelText.setFont(*fc::GetFont(L"Pacifica.ttf"));
             novelText.setFillColor(sf::Color::White);
             novelText.setOutlineColor(sf::Color::Black);
+            
+            //guiSystem.LoadFromFile(L"Novels/Bundle/skin.nskin", L"test2");
+            //guiSystem.SetAlpha(255);
         }
         void MainMenu::ChangePageTo(const Page& to)
         {
@@ -103,7 +115,16 @@ namespace ns
                     {
                         if (doParallax && novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                         page = Page::Novels; if (novelMusic.getStatus() == sf::Music::Status::Paused) novelMusic.play();
-                        if (!novelsLoaded) { novelsLoaded = Novels::LoadNovels(); CalculateScrollBounds(); yyNovels = yyNovels_to; }
+                        if (!novelsLoaded) {
+                            novelsLoaded = Novels::LoadNovels(); CalculateScrollBounds();
+                            if (yyNovels_to == yyNovels_from) yyNovels = yyNovels_to;
+                            else
+                            {
+                                int yyHeight = (novelButtons.shape.getLocalBounds().height/gs::scaley + 10);
+                                float yyOnScreen = (float)gs::relativeHeight/yyHeight;
+                                yyNovels = yyNovels_to - yyOnScreen/3 * yyHeight;
+                            }
+                        }
                     }
                     else if (editorButton.PollEvent(event)) page = Page::Editor;
                     else if (settingsButton.PollEvent(event)) page = Page::Settings;
@@ -111,15 +132,15 @@ namespace ns
                     else if (exitButton.PollEvent(event)) exit(0);
 #endif
                     else if (accountButton.PollEvent(event)) { /* ... */ }
+                    else if (languageButton.PollEvent(event)) page = Page::Language;
                     break;
                 case Page::Novels:
-                    if (backButton.PollEvent(event)) {
+                    if (backButton.PollEvent(event))
+                    {
                         novelButtons.anyButtonPressed = false;
-                        if (isNovelSelected && gs::verticalOrientation)
-                        {
-                            if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
-                            isNovelSelected = false; novelMusic.stop();
-                        } else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); } }
+                        if (isNovelSelected && gs::verticalOrientation) UnselectNovel();
+                        else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
+                    }
                     else
                     {
                         if (event.type == sf::Event::MouseWheelScrolled)
@@ -131,7 +152,11 @@ namespace ns
                                 if (yyNovels > yyNovels_to) yyNovels = yyNovels_to;
                             }
                         }
-                        else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                        else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right))
+                        {
+                            if (isNovelSelected && gs::verticalOrientation) UnselectNovel();
+                            else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
+                        }
                         else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Down && isNovelSelected) {
                             ++novelSelected; if (novelSelected == Novels::info.end()) novelSelected = Novels::info.begin();
                             SelectNovel(novelSelected, true, true); }
@@ -181,7 +206,7 @@ namespace ns
     #else
                                 wif.open(base::utf8((*novelSelected).path));
     #endif
-                                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
                                 
                                 if (wif.is_open())
                                 {
@@ -222,16 +247,23 @@ namespace ns
                     }
                     break;
                 case Page::Editor: if (backButton.PollEvent(event)) page = Page::Main;
-                    else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
                     break;
                 case Page::Settings: if (backButton.PollEvent(event)) page = Page::Main;
-                    else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) page = Page::Main;
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
+                    else if (tempButton.PollEvent(event)) { gs::drawGUIBoundaries = !gs::drawGUIBoundaries;
+                        if (gs::drawGUIBoundaries) tempButton.setString(L"Да, рисуем границы!!!");
+                        else tempButton.setString(L"О нет! Границы не рисуем!"); }
+                    break;
+                case Page::Language: if (backButton.PollEvent(event)) page = Page::Main;
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
                     break;
                 default: break;
             }
         }
-        void MainMenu::Resize(unsigned int width, unsigned int height)
+        void MainMenu::Resize(const unsigned int& width, const unsigned int& height)
         {
+            //guiSystem.Resize(width, height);
             if (!active) return;
             if (spriteLoaded)
             {
@@ -241,6 +273,9 @@ namespace ns
                 background.setScale(scaleFactor, scaleFactor);
                 background.setPosition(width/2, height/2);
             }
+            
+            tempButton.Resize(width, height);
+            tempButton.setPosition(width/3, 3*height/4);
             
             welcomeToNovelSome.setCharacterSize(108 * gs::scScale);
             welcomeToNovelSome.setOutlineThickness(2 * gs::scScale);
@@ -260,9 +295,10 @@ namespace ns
             settingsButton.Resize(width, height);
             exitButton.Resize(width, height);
             
+            languageButton.Resize(width, height);
+            languageButton.setPosition(10*gs::scale, gs::height - 20*gs::scale);
             accountButton.Resize(width, height);
             accountButton.setPosition(gs::width/2, 30*gs::scale);
-            
             backButton.Resize(width, height);
             backButton.setPosition(40*gs::scalex, gs::height - 50*gs::scaley);
             
@@ -307,7 +343,7 @@ namespace ns
             {
                 novelText.setCharacterSize(35 * gs::scScale);
                 novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
-                novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
+                novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 0, 10*gs::scale);
             }
             
             if (doParallax)
@@ -352,6 +388,7 @@ namespace ns
                     exitButton.Draw(window);
 #endif
                     accountButton.Draw(window);
+                    languageButton.Draw(window);
                     break;
                 case Page::Novels:
                     if (isNovelSelected)
@@ -392,9 +429,12 @@ namespace ns
                     backButton.Draw(window);
                     break;
                 case Page::Editor: backButton.Draw(window); break;
-                case Page::Settings: backButton.Draw(window); break;
+                case Page::Settings: backButton.Draw(window); tempButton.Draw(window); break;
+                case Page::Language: backButton.Draw(window); break;
                 default: break;
             }
+            
+            //guiSystem.Draw(window);
         }
         void MainMenu::ReceiveMessage(MessageHolder& message)
         {
@@ -405,7 +445,6 @@ namespace ns
                     novelMusic.play(); novelMusic.setPlayingOffset(sf::seconds(novelMusic_from)); }
                 gs::requestWindowRefresh = true;
                 Resize(gs::width, gs::height);
-                message = MessageHolder();
             }
             else if (nss::Command(message.info, "Request"))
             {
@@ -472,7 +511,7 @@ namespace ns
 #else
                 wif.open(base::utf8((*novelSelected).path));
 #endif
-                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
                 
                 int infoRead{ 0 };
                 if (wif.is_open())
@@ -530,7 +569,7 @@ namespace ns
                     novelRawDescription = L"Описание: " + novelRawDescription;
                     novelText.setCharacterSize(35 * gs::scScale);
                     novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
-                    novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 10*gs::scale);
+                    novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 0, 10*gs::scale);
                 }
                 if (novelAuthor == L"") novelAuthor = L"???";
                 if (music != L"")
@@ -549,6 +588,11 @@ namespace ns
             {
                 // TODO
             }
+        }
+        void MainMenu::UnselectNovel()
+        {
+            if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
+            isNovelSelected = false; novelMusic.stop();
         }
     }
 }

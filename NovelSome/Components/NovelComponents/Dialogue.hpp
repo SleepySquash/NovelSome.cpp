@@ -26,9 +26,10 @@
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
-#include "Skin.hpp"
-#include "CharacterLibrary.hpp"
+#include "Abstract/Skin.hpp"
+#include "Abstract/CharacterLibrary.hpp"
 #include "GUISystem.hpp"
+#include "Abstract/Savable.hpp"
 
 using std::cin;
 using std::cout;
@@ -40,7 +41,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        struct Dialogue : NovelObject
+        struct Dialogue : NovelObject, Savable
         {
             sf::Text text;
             std::wstring textString{ L"" };
@@ -83,11 +84,14 @@ namespace ns
             void PollEvent(sf::Event& event) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void SetCharacter(CharacterData* character);
             void SetCharacterName(const sf::String& characterName);
             void SetDialogue(const sf::String& dialogue);
             void SetStateMode(modeEnum newMode);
+            void ReceiveMessage(MessageHolder &message) override;
+            
+            void Save(std::wofstream& wof) override;
         };
         
         
@@ -129,11 +133,12 @@ namespace ns
             void PollEvent(sf::Event& event) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void SetStateMode(modeEnum newMode);
             void AddChoice(const std::wstring& line);
             void AddAction(const std::wstring& line);
             void InitChoose();
+            void ReceiveMessage(MessageHolder &message) override;
         };
     }
 }

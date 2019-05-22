@@ -14,10 +14,11 @@ namespace ns
     void NovelObject::Init() { }
     void NovelObject::Update(const sf::Time&) { }
     void NovelObject::Draw(sf::RenderWindow*) { }
-    void NovelObject::Resize(unsigned int width, unsigned int height) { }
+    void NovelObject::Resize(const unsigned int& width, const unsigned int& height) { }
     void NovelObject::PollEvent(sf::Event& event) { }
     void NovelObject::Destroy() { }
     void NovelObject::ReceiveMessage(MessageHolder&) { }
+    void NovelObject::SendMessage(MessageHolder message) { ReceiveMessage(message); }
     void NovelObject::SetPriority(int priority) { this->priority = priority; /* TODO: Sorting */ }
     void NovelObject::ChangePriority(int priority) { if (novelSystem) novelSystem->ChangePriorityOf(this, priority); }
     
@@ -39,7 +40,7 @@ namespace ns
             for (auto e : objects)
                 if (!e->offline) e->Draw(window);
     }
-    void NovelSystem::Resize(unsigned int width, unsigned int height)
+    void NovelSystem::Resize(const unsigned int& width, const unsigned int& height)
     {
         if (objects.size())
             for (auto e : objects)
@@ -48,15 +49,15 @@ namespace ns
     void NovelSystem::PollEvent(sf::Event& event)
     {
         if (objects.size())
-            for (auto e : objects)
-                if (!e->offline) e->PollEvent(event);
+            for (auto it = objects.rbegin(); it != objects.rend(); ++it)
+                if (!(*it)->offline) (*it)->PollEvent(event);
     }
     void NovelSystem::PopComponent(NovelObject* component)
     {
         component->offline = true;
         component->Destroy();
     }
-    void NovelSystem::SendMessage(MessageHolder message) { NovelSystem::ReceiveMessage(message); }
+    void NovelSystem::SendMessage(MessageHolder message) { ReceiveMessage(message); }
     void NovelSystem::ReceiveMessage(MessageHolder& message) {
         if (objects.size())
             for (auto e : objects)
@@ -65,7 +66,7 @@ namespace ns
     void NovelSystem::clear()
     {
         list<NovelObject*>::iterator it = objects.begin();
-        while (it != objects.end()) { (*it)->Destroy(); delete (*it); objects.erase(it++); }
+        while (it != objects.end()) { if (!(*it)->offline) (*it)->Destroy(); delete (*it); objects.erase(it++); }
         objects.clear();
     }
     bool NovelSystem::empty() { return objects.empty(); }
@@ -87,4 +88,8 @@ namespace ns
                 objects.push_back(component);
         }
     }
+    list<NovelObject*>::iterator NovelSystem::begin() { return objects.begin(); }
+    list<NovelObject*>::iterator NovelSystem::end() { return objects.end(); }
+    list<NovelObject*>::const_iterator NovelSystem::cbegin() const { return objects.cbegin(); }
+    list<NovelObject*>::const_iterator NovelSystem::cend() const { return objects.cend(); }
 }

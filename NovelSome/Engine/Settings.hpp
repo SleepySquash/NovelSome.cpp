@@ -63,13 +63,19 @@ namespace ns
         static bool prefer0xRatherThatpx;
         
         static bool isPauseEnabled, isPause, inGame;
+        static bool ignoreEvent, ignoreDraw;
         static bool requestWindowRefresh;
+        
+        static std::vector<void*> activeInterfaces;
+        static void PushInterface(void*);
+        static void RemoveInterface(void*);
+        static bool isActiveInterface(void*);
         
         static bool isParallaxEnabled;
         static float defaultParallaxBackground, defaultParallaxFar, defaultParallaxNormal, defaultParallaxClose, defaultParallaxFrontground;
         static float maxVolumeGlobal, maxVolumeMusic, maxVolumeAmbeint, maxVolumeSound;
         
-        static bool forcePressInsideDialogue;
+        static bool forcePressInsideDialogue, drawGUIBoundaries;
     };
     
     typedef GlobalSettings gs;

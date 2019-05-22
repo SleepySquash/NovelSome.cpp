@@ -44,7 +44,7 @@ namespace ns
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             
         };
         

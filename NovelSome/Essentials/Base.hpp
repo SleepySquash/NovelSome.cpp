@@ -11,13 +11,13 @@
 
 #include <iostream>
 
+#include "ResourcePath.hpp"
 //FileExists
 #include <codecvt>
 #include <sys/stat.h>
 #include <SFML/Config.hpp>
 #ifdef SFML_SYSTEM_ANDROID
     #include <stdio.h>
-    #include "ResourcePath.hpp"
 
     #include <jni.h>
     #include <android/native_activity.h>

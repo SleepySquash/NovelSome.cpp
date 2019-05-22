@@ -12,8 +12,12 @@ namespace ns
 {
     namespace NovelComponents
     {
-        EventListener::EventListener(Novel* novel) : novel(novel) { }
-        void EventListener::ReceiveMessage(MessageHolder& message) { if (message.info == "UnHold" || message.info == "Destroy" || message.info == "ChooseAction" || message.info == "ChooseUnHold") novel->ForwardMessage(message); }
+        EventListener::EventListener(Novel* novel) : novel(novel), Savable(L"Novel") { }
+        void EventListener::ReceiveMessage(MessageHolder& message) { if (message.info == "UnHold" || message.info == "Destroy" || message.info == "Push" || message.info == "Execute" || message.info == "ExecuteNow" || message.info == "ExecuteInsert" || message.info == "ChooseUnHold" || message.info == "Save" || message.info == "Load") novel->ForwardMessage(message);
+            else if (message.info == "FinishedExecute" || message.info == "GamePause") novel->gamePause->ReceiveMessage(message);
+            else if (message.info == "GamePause :: Return to menu") novel->entity->ReceiveMessage(message);
+        }
+        void EventListener::Save(std::wofstream& wof) { novel->Save(wof); }
         
         Novel::Novel(const std::wstring& path, NovelInfo* nvl) : nsdataPath(path), nvl(nvl) { }
         Novel::Novel(NovelInfo* nvl) : nvl(nvl) { }
@@ -32,7 +36,7 @@ namespace ns
 #else
                 wifn.open(base::utf8(nvl->path));
 #endif
-                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
                 
                 if (wifn.is_open())
                 {
@@ -59,6 +63,7 @@ namespace ns
             VariableSystem::localVariables.insert({L"@name", new NovelVariable(std::wstring(L""))});
             VariableSystem::localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 18"))});
             CharacterLibrary::ScanForCharacters(folderPath);
+            interface.guiChoose.novelSystem = interface.guiPause.novelSystem = interface.guiDialogue.novelSystem = &layers;
             
             gamePause = entity->AddComponent<GamePause>(&interface.guiPause);
             std::wstring skinPath = L"skin.nskin";
@@ -70,7 +75,7 @@ namespace ns
 #else
                 wifn.open(base::utf8(nvl->path));
 #endif
-                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+                wifn.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
                 
                 if (wifn.is_open())
                 {
@@ -97,7 +102,7 @@ namespace ns
 #else
             wif.open(base::utf8(filePath));
 #endif
-            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
             
             if (!(fileOpened = wif.is_open()))
                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(scenarioPath) << endl;
@@ -245,8 +250,22 @@ namespace ns
             }
         }
         void Novel::Draw(sf::RenderWindow* window) { if (fileOpened) layers.Draw(window); }
-        void Novel::Resize(unsigned int width, unsigned int height) { if (fileOpened) layers.Resize(width, height); }
-        void Novel::PollEvent(sf::Event& event) { if (fileOpened && !(gs::isPause)) layers.PollEvent(event); }
+        void Novel::Resize(const unsigned int& width, const unsigned int& height) { if (fileOpened) layers.Resize(width, height); }
+        void Novel::PollEvent(sf::Event& event) { if (fileOpened && !gs::isPause) layers.PollEvent(event); }
+            /*if (fileOpened) {
+                if (!gs::isPause) {
+                    layers.PollEvent(event);
+                    interface.guiDialogue.PollEvent(event);
+                    if (interface.guiChoose.alpha != sf::Uint8(0)) interface.guiChoose.PollEvent(event);
+                } else if (interface.guiPause.alpha != sf::Uint8(0)) interface.guiPause.PollEvent(event);
+            }*/
+        void Novel::Save(std::wofstream& wof)
+        {
+            if (fileOpened)
+            {
+                wof << L"folderPath: " << folderPath << endl;
+            }
+        }
         void Novel::ForwardMessage(MessageHolder& message)
         {
             if (message.info == "UnHold") UnHold(reinterpret_cast<NovelObject*>(message.address));
@@ -276,7 +295,9 @@ namespace ns
                 std::list<GUISystem*>::iterator it7 = std::find(GUIGroup.begin(), GUIGroup.end(), message.address);
                 if (it7 != GUIGroup.end()) GUIGroup.erase(it7);
             }
-            else if (message.info == "ChooseAction") lines.push_back(message.additional);
+            else if (message.info == "Push") lines.push_back(message.additional);
+            else if (message.info == "ExecuteInsert") { if (execute.empty()) executePosInsert = execute.end(); else executePosInsert = execute.begin(); }
+            else if (message.info == "Execute") {++executeOnHold; execute.insert(executePosInsert, message.additional); }
             else if (message.info == "ChooseUnHold")
             {
                 UnHold(reinterpret_cast<NovelObject*>(message.address));
@@ -285,13 +306,73 @@ namespace ns
                         if (d->mode == Dialogue::modeEnum::waitingForChoose)
                             d->SetStateMode(Dialogue::modeEnum::disappearing);
             }
+            else if (message.info == "Save")
+            {
+                SaveGameState(utf16(documentsPath()) + L"Saves/Bundle/save.nsave", layers);
+                message = MessageHolder();
+            }
+            else if (message.info == "Load")
+            {
+                LoadGameState(utf16(documentsPath()) + L"Saves/Bundle/save.nsave", layers);
+                message = MessageHolder();
+            }
         }
         void Novel::ReceiveMessage(MessageHolder &message) { if (message.info == "GamePause :: Return to menu") entity->PopComponent(this); }
-        void Novel::OnHold(NovelObject* component) { onHold.insert(onHold.begin(), component); }
+        void Novel::OnHold(NovelObject* component) { onHold.push_front(component); if (!execute.empty()) onExecute.push_front(component); }
         void Novel::UnHold(NovelObject* component)
         {
             std::list<NovelObject*>::iterator it = std::find(onHold.begin(), onHold.end(), component);
             if (it != onHold.end()) onHold.erase(it);
+            if (!onExecute.empty())
+            {
+                std::list<NovelObject*>::iterator it = std::find(onExecute.begin(), onExecute.end(), component);
+                if (it != onExecute.end()) onExecute.erase(it);
+                if (execute.empty() && onExecute.empty()) layers.SendMessage({"FinishedExecute"});
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        void LoadGameState(std::wstring fileName, NovelSystem& system)
+        {
+            if (!base::FileExists(fileName)) fileName = utf16(resourcePath()) + fileName;
+            std::wifstream wif;
+#ifdef _WIN32
+            wif.open(fileName);
+#else
+            wif.open(base::utf8(fileName));
+#endif
+            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
+            if (wif.is_open())
+            {
+                std::wstring line; nss::CommandSettings command;
+                while (!wif.eof())
+                {
+                    std::getline(wif, line); command.Command(line);
+                    if (nss::Command(command, L"tag("))
+                    {
+                        int layer = base::atoi(nss::ParseUntil(command, L')'));
+                        if (nss::Command(command, L"=background"))
+                        {
+                            Background* background = new Background();
+                            background->Load(wif);
+                            delete background;
+                        }
+                        else if (nss::Command(command, L"=character"))
+                        {
+                            Character* character = new Character();
+                            character->Load(wif);
+                            delete character;
+                        }
+                    }
+                }
+                wif.close();
+            }
         }
         
         

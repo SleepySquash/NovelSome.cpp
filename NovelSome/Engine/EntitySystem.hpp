@@ -37,7 +37,7 @@ namespace ns
         virtual void Init();
         virtual void Update(const sf::Time&);
         virtual void Draw(sf::RenderWindow*);
-        virtual void Resize(unsigned int width, unsigned int height);
+        virtual void Resize(const unsigned int& width, const unsigned int& height);
         virtual void PollEvent(sf::Event& event);
         virtual void ReceiveMessage(MessageHolder& message);
         virtual void Destroy();
@@ -53,7 +53,7 @@ namespace ns
         Entity(EntitySystem* system);
         void Update(const sf::Time& elapsedTime);
         void Draw(sf::RenderWindow* window);
-        void Resize(unsigned int width, unsigned int height);
+        void Resize(const unsigned int& width, const unsigned int& height);
         void PollEvent(sf::Event& event);
         void PopComponent(Component* component);
         void SendMessage(MessageHolder message) override;
@@ -100,7 +100,7 @@ namespace ns
         EntitySystem();
         void Update(const sf::Time& elapsedTime);
         void Draw(sf::RenderWindow* window);
-        void Resize(unsigned int width, unsigned int height);
+        void Resize(const unsigned int& width, const unsigned int& height);
         void PollEvent(sf::Event& event);
         Entity* AddEntity();
         void PopEntity(Entity* entity);

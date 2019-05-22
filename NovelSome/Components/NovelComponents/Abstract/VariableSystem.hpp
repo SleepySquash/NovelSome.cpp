@@ -17,13 +17,13 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/List.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/NovelSystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/GUIInterface.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
+#include "../../../Essentials/Base.hpp"
+#include "../../../Engine/List.hpp"
+#include "../../../Engine/EntitySystem.hpp"
+#include "../../../Engine/NovelSystem.hpp"
+#include "../../../Engine/Settings.hpp"
+#include "../../../Engine/GUIInterface.hpp"
+#include "../../../Engine/NovelSomeScript.hpp"
 
 using std::cin;
 using std::cout;

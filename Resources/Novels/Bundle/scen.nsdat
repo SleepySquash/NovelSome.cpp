@@ -1,19 +1,15 @@
-show Юи normal cright fade:0!
-show Юи nopantyhose cleft fade:0!
+//Background "Неко.jpg" fade:0!
 "..."
-hide Юи
-"..."
-show Юи normal left!
-show Юи nopantyhose right!
+
 var backgroundNeko = "Неко.jpg"
 var infoInteger = 123
 var booleanyeah = true
 
 Background "Неко.jpg"
-hide Юи!
+gui menu "skin.nskin"
+"gui showcase"
 
-gui "skin.nskin" menu
-gui gamepause "skin.nskin"!
+gui somegui "skin.nskin"!
 
 Юи "Nya :3"
 

@@ -25,6 +25,7 @@
 #include "../../Engine/Collectors/Sound.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+#include "Abstract/Savable.hpp"
 
 using std::cin;
 using std::cout;
@@ -65,14 +66,14 @@ namespace ns
         
         
         
-        struct MusicPlayer : NovelObject
+        struct MusicPlayer : NovelObject, Savable
         {
         private:
             std::unique_ptr<char[]> fileInMemory;
             
             sf::Music music;
             bool audioLoaded{ false };
-            std::wstring audioPath{ L"" };
+            std::wstring audioPath{ L"" }, audioName{ L"" };
             float volume{ 0.f }, currentTime{ 0.f }, timeToStartDisappearing{ 0.f };
             
         public:
@@ -86,10 +87,12 @@ namespace ns
             float maxVolume{ 100 }, appearTime{ 1.f }, disappearTime{ 1.f };
             sf::Time playingOffset;
             
+            MusicPlayer();
             void Update(const sf::Time& elapsedTime) override;
             void Destroy() override;
             void LoadFromFile(const std::wstring& fileName);
             void SetStateMode(modeEnum newMode);
+            void Save(std::wofstream& wof) override;
         };
     }
 }

@@ -12,9 +12,10 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Background::Background(const std::wstring& folderPath) : folderPath(folderPath) { }
+        Background::Background(const std::wstring& folderPath) : folderPath(folderPath), Savable(L"Background") { }
         void Background::LoadImage(const std::wstring& path)
         {
+            imageName = path;
             sf::Texture* texture = ic::RequestHigherTexture(folderPath + path, novelSystem, 1);
             if ((spriteLoaded = texture))
             {
@@ -28,7 +29,7 @@ namespace ns
                 novelSystem->PopComponent(this);
             }
         }
-        void Background::Resize(unsigned int width, unsigned int height)
+        void Background::Resize(const unsigned int& width, const unsigned int& height)
         {
             CalculateScale(width, height);
             if (doParallax && !(gs::isPauseEnabled && gs::isPause))
@@ -125,6 +126,26 @@ namespace ns
                 currentTime = 0.f; mode = newMode;
                 if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
             }
+        }
+        void Background::Save(std::wofstream& wof)
+        {
+            if (spriteLoaded)
+            {
+                wof << L"path: " << imageName << endl;
+                if (!visible) wof << L"visible: " << visible << endl;
+                if (parallaxPower != gs::defaultParallaxBackground) wof << L"parallaxPower: " << parallaxPower << endl;
+                if (maxAlpha != 255) wof << L"maxAlpha: " << maxAlpha << endl;
+                
+                if (mode != existing)
+                {
+                    wof << L"mode: " << mode << endl;
+                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                }
+            }
+        }
+        void Background::Load(std::wifstream& wof)
+        {
+            cout << "load called" << endl;
         }
     }
 }

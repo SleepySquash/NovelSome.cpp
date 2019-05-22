@@ -25,6 +25,7 @@
 #include "../../Engine/Collectors/Image.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+#include "Abstract/Savable.hpp"
 
 using std::cin;
 using std::cout;
@@ -36,10 +37,10 @@ namespace ns
 {
     namespace NovelComponents
     {
-        struct Background : NovelObject
+        struct Background : NovelObject, Savable
         {
             sf::Sprite sprite;
-            std::wstring imagePath{ L"" }, folderPath{ L"" };
+            std::wstring imagePath{ L"" }, imageName{ L"" }, folderPath{ L"" };
             
             bool visible{ true };
             bool spriteLoaded{ false };
@@ -62,7 +63,7 @@ namespace ns
             
             Background(const std::wstring& folderPath = L"");
             void LoadImage(const std::wstring&);
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
@@ -71,6 +72,9 @@ namespace ns
             void CalculateScale(unsigned int width, unsigned int height);
             void CalculateParallax(int mouseX, int mouseY);
             void SetStateMode(modeEnum newMode);
+            
+            void Save(std::wofstream& wof) override;
+            void Load(std::wifstream& wof) override;
         };
     }
 }

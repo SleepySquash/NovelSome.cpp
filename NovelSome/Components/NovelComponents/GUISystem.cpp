@@ -15,6 +15,15 @@ namespace ns
         GUISystem::~GUISystem() {  }
         GUISystem::GUISystem() {  }
         void GUISystem::Destroy() { if (isNovel) novelSystem->SendMessage({"Destroy", this}); clear(); }
+        void GUISystem::PollEvent(sf::Event& event)
+        {
+            for (auto g : guiObjects)
+                if (g->visible)
+                {
+                    g->PollEvent(event);
+                    if (g->child) g->child->PollEvent(event);
+                }
+        }
         void GUISystem::Update(const sf::Time& elapsedTime)
         {
             if (isNovel)
@@ -29,7 +38,7 @@ namespace ns
                             mode = existing;
                             if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                         }
-                        else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                        else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                         SetAlpha(alpha);
                         break; 
                     case disappearing: gs::requestWindowRefresh = true;
@@ -40,7 +49,7 @@ namespace ns
                             mode = deprecated;
                             if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
                         }
-                        else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                        else alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                         SetAlpha(alpha);
                         break;
                     case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
@@ -54,35 +63,50 @@ namespace ns
                 if (g->child) g->child->Update(elapsedTime);
             }
         }
+        void GUISystem::Resize(const unsigned int& width, const unsigned int& height)
+        {
+            if (drawConstrains)
+            {
+                constrainsShape.setOutlineColor(sf::Color::Cyan);
+                constrainsShape.setFillColor(sf::Color::Transparent);
+                constrainsShape.setOutlineThickness(gs::scale);
+            }
+            if (width != lastWidth || height != lastHeight)
+            {
+                lastWidth = width; lastHeight = height;
+                for (auto g : guiObjects)
+                    if (g->visible)
+                    {
+                        //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
+                        g->constrains.Recalculcalation(*g, width, height);
+                        if (g->child) g->child->Resize(width, height);
+                    }
+            }
+        }
         void GUISystem::Draw(sf::RenderWindow* window)
         {
             for (auto g : guiObjects)
                 if (g->visible)
                 {
                     g->Draw(window);
+                    if (drawConstrains)
+                    {
+                        constrainsShape.setSize({ g->constrains.globalBounds.width, g->constrains.globalBounds.height });
+                        constrainsShape.setPosition(g->constrains.globalBounds.left, g->constrains.globalBounds.top);
+                        window->draw(constrainsShape);
+                    }
                     if (g->child) g->child->Draw(window);
                 }
         }
-        void GUISystem::Resize(unsigned int width, unsigned int height)
+        void GUISystem::ReceiveMessage(MessageHolder& message)
         {
-            if (width != lastWidth || height != lastHeight)
+            for (auto g : guiObjects)
             {
-                lastWidth = width;
-                lastHeight = height;
-                
-                for (auto g : guiObjects)
-                    if (g->visible)
-                    {
-                        //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
-                        
-                        g->PreCalculate(width, height);
-                        g->constrains.Recalculate(*g, width, height);
-                        g->Resize(width, height);
-                        if (g->child) g->child->Resize(width, height);
-                    }
+                g->ReceiveMessage(message);
+                if (g->child) g->child->ReceiveMessage(message);
             }
         }
-        void GUISystem::VariableResize(unsigned int width, unsigned int height)
+        void GUISystem::VariableResize(const unsigned int& width, const unsigned int& height)
         {
             lastWidth = width;
             lastHeight = height;
@@ -90,10 +114,8 @@ namespace ns
             for (auto g : guiObjects)
                 if (g->visible && !g->ignoreVariableChange)
                 {
-                    g->PreCalculate(width, height);
-                    g->constrains.Recalculate(*g, width, height);
-                    g->Resize(width, height);
-                    if (g->child) g->child->Resize(width, height);
+                    g->constrains.Recalculcalation(*g, width, height);
+                    if (g->child) g->child->VariableResize(width, height);
                 }
         }
         void GUISystem::VariableChange(const std::wstring& varName)
@@ -105,7 +127,7 @@ namespace ns
                     if (g->child) g->child->VariableChange(varName);
                 }
         }
-        void GUISystem::SetAlpha(sf::Int8 alpha)
+        void GUISystem::SetAlpha(sf::Uint8 alpha)
         {
             lastAlpha = alpha;
             for (auto g : guiObjects)
@@ -115,7 +137,7 @@ namespace ns
                     if (g->child) g->child->SetAlpha(alpha);
                 }
         }
-        void GUISystem::SetAlphaIfBigger(sf::Int8 alpha)
+        void GUISystem::SetAlphaIfBigger(sf::Uint8 alpha)
         {
             if ((unsigned int)lastAlpha < (unsigned int)alpha)
             {
@@ -151,25 +173,25 @@ namespace ns
         
         
         GUIConstrainsResult::GUIConstrainsResult() { }
-        GUIConstrainsResult::GUIConstrainsResult(int res, bool depends, bool consta, bool needs) : result(res), dependsOnVariable(depends), constant(consta), needsToBeScaled(needs) { }
-        GUIConstrainsResult GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height, std::wstring& line)
+        GUIConstrainsResult::GUIConstrainsResult(int res, bool depends, bool consta, bool needs, bool globfac) : result(res), dependsOnVariable(depends), constant(consta), needsToBeScaled(needs), scaledByGlobalFactor(globfac) { }
+        GUIConstrainsResult GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height, std::wstring& line, float scalingFactor)
         {
             //TODO: Words parsing, so the can be compared to variables and keywords
             //      Seperators: ',' '+' '-' '*' '/' etc
             std::wstring finalLine = L"";
-            bool mustBeRecalculated{ false }, reallyOnlyScaled{ false }, onlyNeedsScaling{ true }, dependVariable{ false };
+            bool mustBeRecalculated{ false }, reallyOnlyScaled{ false }, onlyNeedsScaling{ true }, dependVariable{ false },  scalByGlobalFactor{ false };
             
             bool itsBeingSummed{ true };
             wchar_t before = L'\0';
             
-            int lastPos = 0;
+            unsigned long lastPos = 0;
             while (lastPos < line.length())
             {
                 std::wstring word = L"";
                 
                 //looking for "words"
                 bool wordFound{ false }, itHasAPoint{ false }, doScale{ true }, forceScale{ false }, itWasANumber{ true };
-                for (int i = lastPos; i < line.length() && !wordFound; i++)
+                for (unsigned long i = lastPos; i < line.length() && !wordFound; i++)
                 {
                     if (line[i] == L'.')
                         itHasAPoint = true;
@@ -177,6 +199,8 @@ namespace ns
                         doScale = false;
                     if (line[i] == L'r' && itWasANumber && i != lastPos)
                         forceScale = true;
+                    if (line[i] == L's' && itWasANumber && i != lastPos)
+                        scalByGlobalFactor = true;
                     
                     if (line[i] == L'+' || line[i] == L'-' || line[i] == L'/' || line[i] == L'*')
                         wordFound = true;
@@ -184,7 +208,7 @@ namespace ns
                     {
                         itWasANumber = itWasANumber && ((line[i] >= 48 && line[i] <= 57) || line[i] == L'.' ||
                                                         (((line[i] == L'c' || line[i] == L'u')) && !doScale) ||
-                                                        (line[i] == L'r' && forceScale));
+                                                        (line[i] == L'r' && forceScale) || (line[i] == L's' && scalByGlobalFactor));
                         word += line[i];
                     }
                     
@@ -219,10 +243,12 @@ namespace ns
                                 if (possibleVariable.length() != 0) nvar = VariableSystem::FindVariable(possibleVariable);
                                 
                                 bool availableToSelf{ false };
-                                if (possibleVariable == L"@text")
-                                {
+                                if (possibleVariable == L"@text") {
                                     GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
                                     if (textPtr) { availableToSelf = true; nvar = new NovelVariable(textPtr->textString); }
+                                } else if (possibleVariable == L"@image") {
+                                    GUIObjects::Image* textPtr = reinterpret_cast<GUIObjects::Image*>(&guiObject);
+                                    if (textPtr) { availableToSelf = true; nvar = new NovelVariable(textPtr->imagePath); }
                                 }
                                 
                                 if (possibleVariable.length() != 0 && !nvar)
@@ -238,8 +264,8 @@ namespace ns
                                         if (possibleVariable.length() == 0)
                                         {
                                             if (guiObject.guiSystem && guiObject.guiSystem->parent)
-                                                replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.width);
-                                            else replaceBy += std::to_wstring(ns::gs::width);
+                                                replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.globalBounds.width);
+                                            else replaceBy += std::to_wstring(gs::width);
                                         }
                                         else
                                         {
@@ -271,6 +297,12 @@ namespace ns
                                                     if (textPtr) replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().width);
                                                     else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                                 }
+                                                else if (possibleVariable == L"@image")
+                                                {
+                                                    GUIObjects::Image* imagePtr = reinterpret_cast<GUIObjects::Image*>(&guiObject);
+                                                    if (imagePtr) replaceBy += std::to_wstring((int)imagePtr->sprite.getGlobalBounds().width);
+                                                    else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                }
                                                 else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                             }
                                         }
@@ -283,8 +315,8 @@ namespace ns
                                         if (possibleVariable.length() == 0)
                                         {
                                             if (guiObject.guiSystem && guiObject.guiSystem->parent)
-                                                replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.height);
-                                            else replaceBy += std::to_wstring(ns::gs::height);
+                                                replaceBy += std::to_wstring(guiObject.guiSystem->parent->constrains.globalBounds.height);
+                                            else replaceBy += std::to_wstring(gs::height);
                                         }
                                         else
                                         {
@@ -314,6 +346,12 @@ namespace ns
                                                 {
                                                     GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(&guiObject);
                                                     if (textPtr) replaceBy += std::to_wstring((int)textPtr->text.getLocalBounds().height);
+                                                    else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
+                                                }
+                                                else if (possibleVariable == L"@image")
+                                                {
+                                                    GUIObjects::Image* imagePtr = reinterpret_cast<GUIObjects::Image*>(&guiObject);
+                                                    if (imagePtr) replaceBy += std::to_wstring((int)imagePtr->sprite.getGlobalBounds().height);
                                                     else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
                                                 }
                                                 else cout << "Notification :: GUI :: I can't do that for now :'C" << endl;
@@ -375,9 +413,7 @@ namespace ns
                                     case NovelVariable::Integer:
                                         word = std::to_wstring(nvar->value.asInt);
                                         break;
-                                    default: doScale = false;
-                                        word = L"NotSet";
-                                        break;
+                                    default: doScale = false; word = L"NotSet"; break;
                                 }
                             }
                         }
@@ -389,7 +425,8 @@ namespace ns
                             if (onlyNeedsScaling) reallyOnlyScaled = true;
                             
                             float left = base::atof(word);
-                            left = left * ns::gs::scale;
+                            if (scalByGlobalFactor) left = left * scalingFactor;
+                            else left = left * gs::scale;
                             finalLine += std::to_wstring(left);
                             
                             if (lastPos <= line.length() && lastPos > 0)
@@ -414,193 +451,109 @@ namespace ns
                     finalLine += line[lastPos - 1];
             }
             
-            if (!onlyNeedsScaling) reallyOnlyScaled = false;
+            if (!onlyNeedsScaling) { reallyOnlyScaled = false; scalByGlobalFactor = false; }
             float left = nss::MathParser(finalLine);
-            return GUIConstrainsResult(left, dependVariable, !mustBeRecalculated, reallyOnlyScaled);
+            return GUIConstrainsResult(left, dependVariable, !mustBeRecalculated, reallyOnlyScaled, scalByGlobalFactor);
         }
-        void GUIConstrains::Recalculate(GUIObject& guiObject, unsigned int width, unsigned int height)
+        float GUIConstrains::RecalculateCompact(GUIObject& guiObject, GUIConstrainsResult& res, const unsigned int& width, const unsigned int& height, const unsigned int& i, std::wstring& analyze, int& sresult)
         {
+            float result = 0;
+            if (!notSet[i])
+            {
+                if (constant[i]) result = sresult;
+                else if (scaledByGlobalFactor[i]) result = sresult * gs::scalex;
+                else if (onlyNeedsToBeScaled[i]) result = sresult * gs::scale;
+                else if (analyze.length() != 0)
+                {
+                    res = Recalculate(guiObject, width, height, analyze, gs::scalex);
+                    result = res.result;
+                    
+                    constant[i] = res.constant;
+                    onlyNeedsToBeScaled[i] = res.needsToBeScaled;
+                    scaledByGlobalFactor[i] = res.scaledByGlobalFactor;
+                    if (scaledByGlobalFactor[i]) sresult = (float)result/gs::scalex;
+                    else if (constant[i] || onlyNeedsToBeScaled[i]) sresult = (float)result/gs::scale;
+                    isDependsOnVariable[i] = res.dependsOnVariable;
+                }
+                else notSet[i] = true;
+            }
+            return result;
+        }
+        void GUIConstrains::Recalculcalation(GUIObject& guiObject, unsigned int width, unsigned int height)
+        {
+            guiObject.PreCalculate(width, height);
+            
             GUIConstrainsResult res;
-            left = right = bottom = top = this->width = this->height = posX = posY = 0;
+            localBounds.left = localBounds.width = localBounds.top = localBounds.height = globalBounds.left = globalBounds.width = globalBounds.top = globalBounds.height = 0;
             
-            if (!notSet[0])
-            {
-                if (constant[0]) left = sleft;
-                else if (onlyNeedsToBeScaled[0]) left = sleft * gs::scale;
-                else if (leftS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, leftS);
-                    left = res.result;
-                    
-                    constant[0] = res.constant;
-                    onlyNeedsToBeScaled[0] = res.needsToBeScaled;
-                    if (constant[0] || onlyNeedsToBeScaled[0]) sleft = (float)left/gs::scale;
-                    isDependsOnVariable[0] = res.dependsOnVariable;
-                }
-                else notSet[0] = true;
-            }
+            localBounds.left = RecalculateCompact(guiObject, res, width, height, 0, leftS, sleft);
+            globalBounds.width = RecalculateCompact(guiObject, res, width, height, 4, widthS, swidth);
+            localBounds.width = RecalculateCompact(guiObject, res, width, height, 1, rightS, sright);
             
-            if (!notSet[1])
-            {
-                if (constant[1]) right = sright;
-                else if (onlyNeedsToBeScaled[1]) right = sright * gs::scale;
-                else if (rightS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, rightS);
-                    right = res.result;
-                    
-                    constant[1] = res.constant;
-                    onlyNeedsToBeScaled[1] = res.needsToBeScaled;
-                    if (constant[1] || onlyNeedsToBeScaled[1]) sright = (float)right/gs::scale;
-                    isDependsOnVariable[1] = res.dependsOnVariable;
-                }
-                else notSet[1] = true;
-            }
-            
-            if (!notSet[2])
-            {
-                if (constant[2]) bottom = sbottom;
-                else if (onlyNeedsToBeScaled[2]) bottom = sbottom * gs::scale;
-                else if (bottomS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, bottomS);
-                    bottom = res.result;
-                    
-                    constant[2] = res.constant;
-                    onlyNeedsToBeScaled[2] = res.needsToBeScaled;
-                    if (constant[2] || onlyNeedsToBeScaled[2]) sbottom = (float)bottom/gs::scale;
-                    isDependsOnVariable[2] = res.dependsOnVariable;
-                }
-                else notSet[2] = true;
-            }
-            
-            if (!notSet[3])
-            {
-                if (constant[3]) top = stop;
-                else if (onlyNeedsToBeScaled[3]) top = stop * gs::scale;
-                else if (topS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, topS);
-                    top = res.result;
-                    
-                    constant[3] = res.constant;
-                    onlyNeedsToBeScaled[3] = res.needsToBeScaled;
-                    if (constant[3] || onlyNeedsToBeScaled[3]) stop = (float)top/gs::scale;
-                    isDependsOnVariable[3] = res.dependsOnVariable;
-                }
-                else notSet[3] = true;
-            }
-            
-            if (!notSet[4])
-            {
-                if (constant[4]) this->width = swidth;
-                else if (onlyNeedsToBeScaled[4]) this->width = swidth * gs::scale;
-                else if (widthS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, widthS);
-                    this->width = res.result;
-                    
-                    constant[4] = res.constant;
-                    onlyNeedsToBeScaled[4] = res.needsToBeScaled;
-                    if (constant[4] || onlyNeedsToBeScaled[4]) swidth = (float)(this->width)/gs::scale;
-                    isDependsOnVariable[4] = res.dependsOnVariable;
-                }
-                else notSet[4] = true;
-            }
-            
-            if (!notSet[5])
-            {
-                if (constant[5]) this->height = sheight;
-                else if (onlyNeedsToBeScaled[5]) this->height = sheight * gs::scale;
-                else if (heightS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, heightS);
-                    this->height = res.result;
-                    
-                    constant[5] = res.constant;
-                    onlyNeedsToBeScaled[5] = res.needsToBeScaled;
-                    if (constant[5] || onlyNeedsToBeScaled[5]) sheight = (float)(this->height)/gs::scale;
-                    isDependsOnVariable[5] = res.dependsOnVariable;
-                }
-                else notSet[5] = true;
-            }
-            
-            if (!notSet[6])
-            {
-                if (constant[6]) posX = sposX;
-                else if (onlyNeedsToBeScaled[6]) posX = sposX * gs::scale;
-                else if (posXS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, posXS);
-                    posX = res.result;
-                    
-                    constant[6] = res.constant;
-                    onlyNeedsToBeScaled[6] = res.needsToBeScaled;
-                    if (constant[6] || onlyNeedsToBeScaled[6]) sposX = (float)posX/gs::scale;
-                    isDependsOnVariable[6] = res.dependsOnVariable;
-                }
-                else notSet[6] = true;
-            }
-            
-            if (!notSet[7])
-            {
-                if (constant[7]) posY = sposY;
-                else if (onlyNeedsToBeScaled[7]) posY = sposY * gs::scale;
-                else if (posYS.length() != 0)
-                {
-                    res = Recalculate(guiObject, width, height, posYS);
-                    posY = res.result;
-                    
-                    constant[7] = res.constant;
-                    onlyNeedsToBeScaled[7] = res.needsToBeScaled;
-                    if (constant[7] || onlyNeedsToBeScaled[7]) sposY = (float)posY/gs::scale;
-                    isDependsOnVariable[7] = res.dependsOnVariable;
-                }
-                else notSet[7] = true;
-            }
+            localBounds.top = RecalculateCompact(guiObject, res, width, height, 3, topS, stop);
+            globalBounds.height = RecalculateCompact(guiObject, res, width, height, 5, heightS, sheight);
+            localBounds.height = RecalculateCompact(guiObject, res, width, height, 2, bottomS, sbottom);
             
             if (guiObject.guiSystem && guiObject.guiSystem->parent)
             {
-                if (notSet[4] || this->width == 0)
-                    this->width = guiObject.guiSystem->parent->constrains.width - right - left;
-                if (notSet[5] || this->height == 0)
-                    this->height = guiObject.guiSystem->parent->constrains.height - top - bottom;
-                
-                if (notSet[6]) posX = guiObject.guiSystem->parent->constrains.posX + left;
-                else posX += guiObject.guiSystem->parent->constrains.posX;
-                
-                if (notSet[7])
-                {
-                    if (!notSet[2] && notSet[3])
-                    {
-                        posY = guiObject.guiSystem->parent->constrains.posY + guiObject.guiSystem->parent->constrains.height - this->height - bottom;
-                        if (notSet[5]) posY -= bottom;
-                    }
-                    else if (notSet[2] && !notSet[3]) posY = guiObject.guiSystem->parent->constrains.posY + top;
-                    else posY = guiObject.guiSystem->parent->constrains.posY + top;
-                }
-                else posY += guiObject.guiSystem->parent->constrains.posY;
-                
-                left += guiObject.guiSystem->parent->constrains.left;
-                right += guiObject.guiSystem->parent->constrains.right;
-                top += guiObject.guiSystem->parent->constrains.top;
-                bottom += guiObject.guiSystem->parent->constrains.bottom;
+                if (notSet[4] || globalBounds.width <= 0)
+                    globalBounds.width += guiObject.guiSystem->parent->constrains.globalBounds.width - localBounds.left - localBounds.width;
+                if (notSet[5] || globalBounds.height <= 0)
+                    globalBounds.height += guiObject.guiSystem->parent->constrains.globalBounds.height - localBounds.top - localBounds.height;
             }
             else
             {
-                if (notSet[4] || this->width == 0) this->width = width - right - left;
-                if (notSet[5] || this->height == 0) this->height = height - top - bottom;
-                
-                if (notSet[6]) posX = left;
-                if (notSet[7]) posY = height - top - bottom - this->height;
+                if (notSet[4] || globalBounds.width <= 0)
+                    globalBounds.width = width - localBounds.left - localBounds.width;
+                if (notSet[5] || globalBounds.height <= 0)
+                    globalBounds.height = height - localBounds.top - localBounds.height;
             }
+            
+            guiObject.PreCalculatedSize(width, height);
+            localBounds.left += RecalculateCompact(guiObject, res, width, height, 6, posXS, sposX);
+            localBounds.top += RecalculateCompact(guiObject, res, width, height, 7, posYS, sposY);
+            
+            if (guiObject.guiSystem && guiObject.guiSystem->parent)
+            {
+                if (notSet[6]) {
+                    if (notSet[0] && !notSet[1]) localBounds.left = guiObject.guiSystem->parent->constrains.globalBounds.width - globalBounds.width - localBounds.width;
+                    else if (!notSet[0] && !notSet[1]) localBounds.left = guiObject.guiSystem->parent->constrains.globalBounds.width/2 - (-localBounds.left + localBounds.width)/2 - globalBounds.width/2;
+                } globalBounds.left = guiObject.guiSystem->parent->constrains.globalBounds.left + localBounds.left;
+                
+                if (notSet[7]) {
+                    if (notSet[3] && !notSet[2])
+                        localBounds.top = guiObject.guiSystem->parent->constrains.globalBounds.height - globalBounds.height - localBounds.height;
+                    else if (!notSet[2] && !notSet[3]) localBounds.top = guiObject.guiSystem->parent->constrains.globalBounds.height/2 - (-localBounds.top + localBounds.height)/2 - globalBounds.height/2;
+                } globalBounds.top = guiObject.guiSystem->parent->constrains.globalBounds.top + localBounds.top;
+            }
+            else
+            {
+                if (notSet[4] || globalBounds.width <= 0)
+                    globalBounds.width = width - localBounds.left - localBounds.width;
+                if (notSet[5] || globalBounds.height <= 0)
+                    globalBounds.height = height - localBounds.top - localBounds.height;
+                
+                if (notSet[6]) {
+                    if (notSet[0] && !notSet[1]) localBounds.left = width - globalBounds.width - localBounds.width;
+                    else if (!notSet[0] && !notSet[1]) localBounds.left = width/2 - (-localBounds.left + localBounds.width)/2 - globalBounds.width/2;
+                } globalBounds.left = localBounds.left;
+                
+                if (notSet[7]) {
+                    if (notSet[3] && !notSet[2])
+                        localBounds.top = height - globalBounds.height - localBounds.height;
+                    else if (!notSet[2] && !notSet[3]) localBounds.top = height/2 - (-localBounds.top + localBounds.height)/2 - globalBounds.height/2;
+                } globalBounds.top = localBounds.top;
+            }
+            
+            cout << this << " " << globalBounds.left << " (" << localBounds.left << ") to " << globalBounds.width << " (" << localBounds.width << "); " << globalBounds.top << " (" << localBounds.top << ") to " << globalBounds.height << " (" << localBounds.height << ")" << endl;
+            guiObject.Resize(width, height);
         }
         
         
         
         void GUIObject::FadingUpdate(const sf::Time& elapsedTime)
         {
-            sf::Int8 alpha;
+            sf::Uint8 alpha;
             switch (fadingsMode)
             {
                 case appearing:
@@ -611,13 +564,12 @@ namespace ns
                         fadingsMode = offline;
                         regulateFadings = false;
                         
-                        alpha = 255;
-                        SetAlpha(alpha);
+                        alpha = 255; SetAlpha(alpha);
                         if (child) child->SetAlpha(alpha);
                     }
                     else
                     {
-                        alpha = (sf::Int8)(255 * currentTime/appearTime);
+                        alpha = (sf::Uint8)(255 * currentTime/appearTime);
                         SetAlpha(alpha);
                         if (child) child->SetAlpha(alpha);
                     }
@@ -630,54 +582,34 @@ namespace ns
                         currentTime = 0.f;
                         fadingsMode = offline;
                         
-                        alpha = 0;
-                        SetAlpha(alpha);
+                        alpha = 0; SetAlpha(alpha);
                         if (child) child->SetAlpha(alpha);
                     }
                     else
                     {
-                        alpha = (sf::Int8)(255 - 255 * currentTime/disappearTime);
+                        alpha = (sf::Uint8)(255 - 255 * currentTime/disappearTime);
                         SetAlpha(alpha);
                         if (child) child->SetAlpha(alpha);
                     }
                     break;
                     
-                default:
-                    break;
+                default: break;
             }
         }
         void GUIObject::SetFadings(fadingsModeEnum newMode, float forTime)
         {
-            if (newMode == appearing)
-                ignoreVariableChange = false;
-            else
-                ignoreVariableChange = true;
+            if (newMode == appearing) ignoreVariableChange = false;
+            else ignoreVariableChange = true;
             
-            if (fadingsMode != newMode)
-                currentTime = 0.f;
-            
-            if (newMode == appearing)
-            {
-                appearTime = forTime;
-                fadingsMode = newMode;
-            }
+            if (fadingsMode != newMode) currentTime = 0.f;
+            if (newMode == appearing) { appearTime = forTime; fadingsMode = newMode; }
             else if (newMode == disappearing)
             {
                 disappearTime = forTime;
-                
-                if ((unsigned char)guiSystem->lastAlpha == 0)
-                    fadingsMode = offline;
-                else
-                    fadingsMode = newMode;
+                if ((unsigned char)guiSystem->lastAlpha == 0) fadingsMode = offline;
+                else fadingsMode = newMode;
             }
-            
-            if (newMode == offline)
-            {
-                SetAlpha(0);
-                if (child != nullptr)
-                    child->SetAlpha(0);
-            }
-            
+            if (newMode == offline) { SetAlpha(0); if (child) child->SetAlpha(0); }
             regulateFadings = true;
         }
         void GUIObject::VariableChange(const std::wstring &varName)
@@ -714,12 +646,14 @@ namespace ns
                  }
                  }*/
                 
-                PreCalculate(gs::width, gs::height);
                 cout << "VariableResize's Resize" << endl;
-                constrains.Recalculate(*this, gs::width, gs::height);
-                if (child != nullptr)
-                    child->VariableResize(gs::width, gs::height);
-                Resize(gs::width, gs::height);
+                //PreCalculate(gs::width, gs::height);
+                //constrains.Recalculate(*this, gs::width, gs::height, 1);
+                //PreCalculatedSize(gs::width, gs::height);
+                //constrains.Recalculate(*this, gs::width, gs::height, 2);
+                constrains.Recalculcalation(*this, gs::width, gs::height);
+                if (child) child->VariableResize(gs::width, gs::height);
+                //Resize(gs::width, gs::height);
                 
                 /*bool changed{ false };
                 if (!constrains.leftC && constrains.isDependsOnVariable[0] && constrains.leftS.length() != 0)
@@ -874,12 +808,13 @@ namespace ns
                 cout << "Error :: Skin :: File couldn't be opened, path: " << base::utf8(fileName) << endl;
             else
             {
-                bool eof{ false };
-                std::wstring line;
+                scope = guiScope; this->fileName = fileName;
+                bool eof{ false }; std::wstring line;
                 nss::CommandSettings command;
+                std::wstring folderPath = base::GetFolderPath(fileName);
                 
                 bool parsingGUI{ (guiScope == L"") };
-                list<GUIObject*> scope; scope.push_back(nullptr);
+                list<GUIScopeStruct> scope; scope.emplace_front(nullptr);
                 unsigned int knownType = 0;
                 std::wstring forArgumentsParsing{ L"" };
                 GUIObject* component{ nullptr };
@@ -888,20 +823,14 @@ namespace ns
                 {
                     if (!wif.eof())
                     {
-                        std::getline(wif, line);
-                        command.Command(line);
-                        nss::SkipSpaces(command);
-                        
+                        std::getline(wif, line); nss::RemoveSpaces(line);
+                        command.Command(line, true);
                         if (!parsingGUI)
                         {
                             if (nss::Command(command, L"//")) { /* that's a comment */ }
                             else if (nss::Command(command, L"gui "))
                             {
-                                std::wstring nameParsed;
-                                if (command.line[command.lastPos] == L'"')
-                                    nameParsed = nss::ParseAsQuoteString(command);
-                                else nameParsed = nss::ParseUntil(command, ' ');
-                                
+                                std::wstring nameParsed = nss::ParseAsMaybeQuoteString(command);
                                 parsingGUI = (nameParsed == guiScope);
                                 if (parsingGUI)
                                 {
@@ -914,37 +843,46 @@ namespace ns
                         }
                         else
                         {
-                            bool thatsAScope{ false };
-                            for (int i = 0; i < line.length(); ++i)
-                            {
-                                if (line[i] == L'{' && knownType != 1) thatsAScope = true;
-                                else if (line[i] == L'{') knownType = 0;
-                                else if (line[i] == L'}')
+                            bool thatsAScope{ false }, onlyOneLine{ false };
+                            if (!nss::Command(command, L"action") && !nss::Command(command, L"action:"))
+                                for (int i = 0; i < line.length(); ++i)
                                 {
-                                    if (thatsAScope) thatsAScope = false;
-                                    else if (scope.size() != 0) scope.erase(scope.begin());
+                                    if (line[i] == L'{' && knownType != 1) thatsAScope = true;
+                                    else if (line[i] == L'{') knownType = 0;
+                                    else if (line[i] == L'}')
+                                    {
+                                        if (thatsAScope) { thatsAScope = false; onlyOneLine = true; }
+                                        else if (scope.size() != 0) scope.erase(scope.begin());
+                                    }
                                 }
-                            }
+                            else command.lastPos = 0;
                             
                             if (scope.size() != 0)
                             {
-                                if (thatsAScope)
+                                if (thatsAScope || onlyOneLine)
                                 {
                                     if (knownType == 0)
                                     {
-                                        if (nss::Command(command, L"rectangle"))      knownType = 2;
-                                        else if (nss::Command(command, L"text"))      knownType = 3;
-                                        else if (nss::Command(command, L"image"))     knownType = 4;
-                                        else if (nss::Command(command, L"@dialogue")) knownType = 5;
-                                        else if (nss::Command(command, L"@name"))     knownType = 6;
+                                        if (nss::Command(command, L"rectangle"))        knownType = 2;
+                                        else if (nss::Command(command, L"text"))        knownType = 3;
+                                        else if (nss::Command(command, L"image"))       knownType = 4;
+                                        else if (nss::Command(command, L"@dialogue"))   knownType = 5;
+                                        else if (nss::Command(command, L"@name"))       knownType = 6;
+                                        else if (command.line == L"background" ||
+                                                 nss::Command(command, L"background ")) knownType = 10;
+                                        else if (nss::Command(command, L"button:"))     knownType = 7;
+                                        else if (nss::Command(command, L"button") ||
+                                                 nss::Command(command, L"sbutton"))     knownType = 8;
+                                        else if (nss::Command(command, L"rbutton") ||
+                                                 nss::Command(command, L"rectbutton"))  knownType = 9;
                                         if (knownType != 0) forArgumentsParsing = line;
                                     }
                                     
                                     if (knownType != 0)
                                     {
                                         GUISystem* guiSystemToAddTo{ nullptr };
-                                        if (scope.front()) guiSystemToAddTo = scope.front()->GetChildSystem();
-                                        else if (!scope.front() && scope.size() == 1) guiSystemToAddTo = this;
+                                        if (scope.front().object.obj) guiSystemToAddTo = scope.front().object.obj->GetChildSystem();
+                                        else if (!scope.front().object.obj && scope.size() == 1) guiSystemToAddTo = this;
                                         
                                         if (guiSystemToAddTo)
                                         {
@@ -952,33 +890,50 @@ namespace ns
                                             GUIObjects::Image* img{ nullptr };
                                             GUIObjects::Text* text{ nullptr };
                                             GUIObjects::DialogueConstrains* dconstr{ nullptr };
+                                            GUIObjects::Button* button{ nullptr };
                                             switch (knownType)
                                             {
-                                                case 2:
+                                                case 2: /// rectangle
                                                     rect = guiSystemToAddTo->AddComponent<GUIObjects::Rectangle>();
                                                     rect->shape.setFillColor(sf::Color(0,0,0,0));
-                                                    component = rect;
+                                                    component = rect; scope.emplace_front(component, GUIScopeStruct::Rectangle);
                                                     break;
-                                                case 3:
+                                                case 3: /// text
                                                     text = guiSystemToAddTo->AddComponent<GUIObjects::Text>();
                                                     if (Skin::self) text->SetFont(Skin::self->defaultFontName);
-                                                    component = text;
+                                                    component = text; scope.emplace_front(component, GUIScopeStruct::Text);
                                                     break;
-                                                case 4:
+                                                case 4: /// image
                                                     img = guiSystemToAddTo->AddComponent<GUIObjects::Image>();
-                                                    component = img;
+                                                    component = img; scope.emplace_front(component, GUIScopeStruct::Image);
                                                     break;
-                                                case 5:
+                                                case 10: /// image (background)
+                                                    img = guiSystemToAddTo->AddComponent<GUIObjects::Image>(); img->fitMode = GUIObjects::Image::fillCentre;
+                                                    component = img; scope.emplace_front(component, GUIScopeStruct::Image);
+                                                    break;
+                                                case 5: /// @dialogue
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
-                                                    component = dconstr;
+                                                    component = dconstr; scope.emplace_front(component, GUIScopeStruct::DialogueConstrains);
                                                     if (Skin::self) Skin::self->dialogue.textConstrains = component;
                                                     break;
-                                                case 6:
+                                                case 6: /// @name
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
-                                                    component = dconstr;
+                                                    component = dconstr; scope.emplace_front(component, GUIScopeStruct::DialogueConstrains);
                                                     if (Skin::self) Skin::self->dialogue.nameConstrains = component;
                                                     break;
-                                                default: component = nullptr; break;
+                                                case 7: /// button: (text button)
+                                                    button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Text);
+                                                    component = button; scope.emplace_front(component, GUIScopeStruct::Button);
+                                                    break;
+                                                case 8: /// button (sprite button)
+                                                    button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Sprite);
+                                                    component = button; scope.emplace_front(component, GUIScopeStruct::Button);
+                                                    break;
+                                                case 9: /// button: (rectangle button)
+                                                    button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Rect);
+                                                    component = button; scope.emplace_front(component, GUIScopeStruct::Button);
+                                                    break;
+                                                default: component = nullptr; scope.emplace_front(component); break;
                                             }
                                             
                                             nss::CommandSettings argumentLine;
@@ -988,28 +943,18 @@ namespace ns
                                             nss::ParseArguments(argumentLine, arguments);
                                             for (auto arg : arguments)
                                             {
-                                                nss::CommandSettings argument;
-                                                argument.Command(arg);
-                                                
-                                                if (nss::Command(argument, L"rectangle")) { /* ignoring */ }
-                                                else if (nss::Command(argument, L"image")) { /* ignoring */ }
-                                                else if (nss::Command(argument, L"text")) { /* ignoring */ }
-                                                else if (nss::Command(argument, L"@dialogue")) { /* ignoring */ }
-                                                else if (nss::Command(argument, L"@name")) { /* ignoring */ }
+                                                nss::CommandSettings argument; argument.Command(arg);
+                                                if (nss::Command(argument, L"rectangle") || nss::Command(argument, L"image") || nss::Command(argument, L"background") || nss::Command(argument, L"text") || nss::Command(argument, L"@dialogue") || nss::Command(argument, L"@name") || nss::Command(argument, L"sbutton") || nss::Command(argument, L"rbutton") || nss::Command(argument, L"rectbutton")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"button:")) button->text->setString(nss::ParseAsMaybeQuoteString(argument));
+                                                else if (nss::Command(argument, L"button")) { /* ignoring */ }
+                                                else if (nss::Command(argument, L"texture:") || nss::Command(argument, L"sprite:") || nss::Command(argument, L"spr:"))
+                                                    button->sprite->setTexture(nss::ParseAsMaybeQuoteString(argument));
                                                 else if (nss::Command(argument, L"\""))
                                                 {
-                                                    if (knownType == 3 && text)
-                                                    {
-                                                        --argument.lastPos;
-                                                        std::wstring str = nss::ParseAsQuoteString(argument);
-                                                        text->SetString(str);
-                                                    }
-                                                    else if (knownType == 4 && img)
-                                                    {
-                                                        --argument.lastPos;
-                                                        std::wstring path = nss::ParseAsQuoteString(argument);
-                                                        img->LoadImage(base::GetFolderPath(fileName) + path);
-                                                    }
+                                                    --argument.lastPos; std::wstring str = nss::ParseAsQuoteString(argument);
+                                                    if (knownType == 3 && text) text->SetString(str);
+                                                    else if ((knownType == 4 || knownType == 10) && img) img->LoadImage(folderPath + str, this);
+                                                    else if (knownType == 8 && button) button->sprite->setTexture(folderPath + str, this);
                                                 }
                                                 else if (nss::Command(argument, L"}")) { /* ignoring */ }
                                                 else if (nss::Command(argument, L"{")) { /* ignoring */ }
@@ -1022,11 +967,19 @@ namespace ns
                                                     Skin::self->dialogue.dialogueRect = component;
                                                 else if (nss::Command(argument, L"choose") && guiScope == L"choose" && Skin::self)
                                                     Skin::self->choose.chooseRect = component;
+                                                else
+                                                {
+                                                    std::wstring str = nss::ParseAsMaybeQuoteString(argument);
+                                                    if (knownType == 3 && text && text->textString == L"") text->SetString(str);
+                                                    else if ((knownType == 4 || knownType == 10) && img && !img->spriteLoaded)
+                                                        img->LoadImage(folderPath + str, this);
+                                                    else if (knownType == 8 && button && !button->sprite->spriteLoaded)
+                                                        button->sprite->setTexture(folderPath + str, this);
+                                                }
                                             }
                                         }
                                     }
-                                    
-                                    scope.insert(scope.begin(), component);
+                                    if (onlyOneLine) scope.erase(scope.begin());
                                     knownType = 0;
                                 }
                                 else
@@ -1034,118 +987,274 @@ namespace ns
                                     if (nss::Command(command, L"//")) { /* that's a comment */ }
                                     else if (nss::Command(command, L"}")) { /* we've already handled this situation */ }
                                     else if (nss::Command(command, L"rectangle")) { forArgumentsParsing = line; knownType = 2; }
-                                    else if (nss::Command(command, L"text")) { forArgumentsParsing = line; knownType = 3; }
+                                    else if (command.line == L"text" || nss::Command(command, L"text ")) { forArgumentsParsing = line; knownType = 3; }
                                     else if (nss::Command(command, L"image")) { forArgumentsParsing = line; knownType = 4; }
+                                    else if (command.line == L"background" || nss::Command(command, L"background ")) { forArgumentsParsing = line; knownType = 10; }
                                     else if (nss::Command(command, L"@dialogue")) { forArgumentsParsing = line; knownType = 5; }
                                     else if (nss::Command(command, L"@name")) { forArgumentsParsing = line; knownType = 6; }
+                                    else if (nss::Command(command, L"button:")) { forArgumentsParsing = line; knownType = 7; }
+                                    else if (nss::Command(command, L"button") || nss::Command(command, L"sbutton")) { forArgumentsParsing = line; knownType = 8; }
+                                    else if (nss::Command(command, L"rbutton") || nss::Command(command, L"rectbutton")) { forArgumentsParsing = line; knownType = 9; }
                                     else if (nss::ContainsUsefulInformation(command))
                                     {
                                         knownType = 0;
-                                        if (scope.front())
+                                        if (scope.front().object.obj)
                                         {
-                                            if (nss::Command(command, L"left:") || nss::Command(command, L"left "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            ///------------------------------- CONSTRAINS -------------------------------
+                                            ///------------------------------- CONSTRAINS -------------------------------
+                                            ///------------------------------- CONSTRAINS -------------------------------
+                                            if (nss::Command(command, L"left:") || nss::Command(command, L"left ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.leftS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"right:") || nss::Command(command, L"right ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"top:") || nss::Command(command, L"top ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"bottom:") || nss::Command(command, L"bottom ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"width:") || nss::Command(command, L"width ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"height:") || nss::Command(command, L"height ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"posx:") || nss::Command(command, L"positionx:") ||
+                                                       nss::Command(command, L"posx ") || nss::Command(command, L"positionx ") ||
+                                                       nss::Command(command, L"x:") || nss::Command(command, L"x ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.posXS = nss::ParseAsMaybeQuoteStringFull(command);
+                                            } else if (nss::Command(command, L"posy:") || nss::Command(command, L"positiony:") ||
+                                                       nss::Command(command, L"posy ") || nss::Command(command, L"positiony ") ||
+                                                       nss::Command(command, L"y:") || nss::Command(command, L"y ")) {
+                                                nss::SkipSpaces(command); scope.front()->constrains.posYS = nss::ParseAsMaybeQuoteStringFull(command);
                                             }
-                                            else if (nss::Command(command, L"right:") || nss::Command(command, L"right "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.rightS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"top:") || nss::Command(command, L"top "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.topS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"bottom:") || nss::Command(command, L"bottom "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.bottomS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"width:") || nss::Command(command, L"width "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.widthS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"height:") || nss::Command(command, L"height "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.heightS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"posx:") || nss::Command(command, L"positionx:") ||
-                                                     nss::Command(command, L"posx ") || nss::Command(command, L"positionx "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.posXS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"posy:") || nss::Command(command, L"positiony:") ||
-                                                     nss::Command(command, L"posy ") || nss::Command(command, L"positiony "))
-                                            {
-                                                nss::SkipSpaces(command);
-                                                scope.front()->constrains.posYS = nss::ParseAsMaybeQuoteStringFull(command);
-                                            }
-                                            else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:")
-                                                     || nss::Command(command, L"alpha ") || nss::Command(command, L"maxalpha "))
+                                            else if (nss::Command(command, L"alpha:") || nss::Command(command, L"maxalpha:") ||
+                                                     nss::Command(command, L"alpha ") || nss::Command(command, L"maxalpha "))
                                             {
                                                 int possibleValue = nss::ParseAlpha(command);
-                                                if (possibleValue != -1)
-                                                    scope.front()->maxAlpha = possibleValue;
+                                                if (possibleValue != -1) scope.front()->maxAlpha = possibleValue;
                                             }
-                                            else if (nss::Command(command, L"fit:") || nss::Command(command, L"fitmode:")
-                                                     || nss::Command(command, L"fit ") || nss::Command(command, L"fitmode "))
-                                            {
-                                                int possibleValue = nss::ParseAlpha(command);
-                                                if (possibleValue != -1)
-                                                    scope.front()->maxAlpha = possibleValue;
-                                            }
-                                            else if (nss::Command(command, L"fill ") || nss::Command(command, L"fillcolor ") ||
+                                            else if (nss::Command(command, L"fillcolor ") ||
                                                      nss::Command(command, L"color ") || nss::Command(command, L"colour ") ||
-                                                     nss::Command(command, L"fill:") || nss::Command(command, L"fillcolor:") ||
-                                                     nss::Command(command, L"color:") || nss::Command(command, L"colour:"))
+                                                     nss::Command(command, L"fillcolor:") ||
+                                                     nss::Command(command, L"color:") || nss::Command(command, L"colour:") ||
+                                                     (scope.front().type != GUIScopeStruct::Image && (nss::Command(command, L"fill ") || nss::Command(command, L"fill:"))))
                                             {
                                                 sf::Color possibleColor = nss::ParseColor(command);
                                                 if (possibleColor.a != 255) scope.front()->SetColor(possibleColor);
                                             }
+                                            ///------------------------------- SPECIFIC -------------------------------
+                                            ///------------------------------- SPECIFIC -------------------------------
+                                            ///------------------------------- SPECIFIC -------------------------------
                                             else if (nss::Command(command, L"outline ") || nss::Command(command, L"outlinecolor ") ||
                                                      nss::Command(command, L"ocolor ") || nss::Command(command, L"ocolour ") ||
                                                      nss::Command(command, L"outline:") || nss::Command(command, L"outlinecolor:") ||
                                                      nss::Command(command, L"ocolor:") || nss::Command(command, L"ocolour:"))
                                             {
-                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr)
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255)
                                                 {
-                                                    sf::Color possibleColor = nss::ParseColor(command);
-                                                    if (possibleColor.a != 255) textPtr->text.setOutlineColor(possibleColor);
+                                                    if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->text.setOutlineColor(possibleColor);
+                                                    else if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->text.setOutlineColor(possibleColor);
+                                                        else if (button->type == GUIObjects::Button::Rect) button->rect->text.setOutlineColor(possibleColor);
+                                                    }
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"halign ") || nss::Command(command, L"halign:") ||
+                                                     nss::Command(command, L"h ") || nss::Command(command, L"h:"))
+                                            {
+                                                std::wstring align = nss::ArgumentAsString(command);
+                                                if (align.length() && align != L"")
+                                                {
+                                                    if (nss::Command(align, L"center") || nss::Command(align, L"c") ||
+                                                        nss::Command(align, L"middle") || nss::Command(align, L"m"))
+                                                    {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->halign = Halign::Center;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->halign = Halign::Center;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->halign = Halign::Center;
+                                                        }
+                                                    } else if (nss::Command(align, L"left") || nss::Command(align, L"l")) {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->halign = Halign::Left;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->halign = Halign::Left;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->halign = Halign::Left;
+                                                        }
+                                                    } else if (nss::Command(align, L"right") || nss::Command(align, L"r")) {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->halign = Halign::Right;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->halign = Halign::Right;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->halign = Halign::Right;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"valign ") || nss::Command(command, L"valign:") ||
+                                                     nss::Command(command, L"v ") || nss::Command(command, L"v:"))
+                                            {
+                                                std::wstring align = nss::ArgumentAsString(command);
+                                                if (align.length() && align != L"")
+                                                {
+                                                    if (nss::Command(align, L"center") || nss::Command(align, L"c") ||
+                                                        nss::Command(align, L"middle") || nss::Command(align, L"m"))
+                                                    {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->valign = Valign::Center;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->valign = Valign::Center;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->valign = Valign::Center;
+                                                        }
+                                                    } else if (nss::Command(align, L"top") || nss::Command(align, L"t")) {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->valign = Valign::Top;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->valign = Valign::Top;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->valign = Valign::Top;
+                                                        }
+                                                    } else if (nss::Command(align, L"bottom") || nss::Command(align, L"b")) {
+                                                        if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->valign = Valign::Bottom;
+                                                        else if (scope.front().type == GUIScopeStruct::Button) {
+                                                            GUIObjects::Button* button = scope.front().object.but;
+                                                            if (button->type == GUIObjects::Button::Text) button->text->valign = Valign::Bottom;
+                                                            else if (button->type == GUIObjects::Button::Rect) button->rect->valign = Valign::Bottom;
+                                                        }
+                                                    }
                                                 }
                                             }
                                             else if (nss::Command(command, L"thickness ") || nss::Command(command, L"thickness:"))
                                             {
-                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr)
+                                                float thickness = nss::ArgumentAsFloat(command);
+                                                if (thickness >= 0)
                                                 {
-                                                    float thickness = nss::ArgumentAsFloat(command);
-                                                    if (thickness >= 0) textPtr->SetOutlineThickness(thickness);
+                                                    if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->SetOutlineThickness(thickness);
+                                                    else if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->thickness = thickness;
+                                                        else if (button->type == GUIObjects::Button::Rect) button->rect->thickness = thickness;
+                                                    }
                                                 }
                                             }
                                             else if (nss::Command(command, L"size ") || nss::Command(command, L"size:") ||
                                                      nss::Command(command, L"charactersize ") || nss::Command(command, L"charactersize:"))
                                             {
-                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr)
+                                                unsigned int characterSize = nss::ArgumentAsInt(command);
+                                                if (characterSize > 0)
                                                 {
-                                                    unsigned int characterSize = nss::ArgumentAsInt(command);
-                                                    if (characterSize > 0) textPtr->SetCharacterSize(characterSize);
+                                                    if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->SetCharacterSize(characterSize);
+                                                    else if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->setCharacterSize(characterSize);
+                                                        else if (button->type == GUIObjects::Button::Rect) button->rect->setCharacterSize(characterSize);
+                                                    }
                                                 }
+                                            }
+                                            else if (nss::Command(command, L"wrap ") || nss::Command(command, L"wrap:") ||
+                                                     nss::Command(command, L"textwrap ") || nss::Command(command, L"textwrap:"))
+                                            {
+                                                nss::SkipSpaces(command); bool wrap = nss::ArgumentAsBool(command);
+                                                if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->allowWrap = wrap;
                                             }
                                             else if (nss::Command(command, L"font ") || nss::Command(command, L"font:") ||
                                                      nss::Command(command, L"fontname ") || nss::Command(command, L"fontname:"))
                                             {
-                                                GUIObjects::Text* textPtr = reinterpret_cast<GUIObjects::Text*>(scope.front());
-                                                if (textPtr != nullptr)
+                                                std::wstring fontName = nss::ParseAsMaybeQuoteStringFull(command);
+                                                if (fontName.length() != 0)
                                                 {
-                                                    std::wstring fontName = nss::ParseAsMaybeQuoteStringFull(command);
-                                                    if (fontName.length() != 0) textPtr->SetFont(fontName);
+                                                    if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->SetFont(fontName);
+                                                    else if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->setFont(fontName);
+                                                        else if (button->type == GUIObjects::Button::Rect) button->rect->setFont(fontName);
+                                                    }
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"action:") || nss::Command(command, L"action"))
+                                            {
+                                                if (scope.front().type == GUIScopeStruct::Button && scope.front().object.but)
+                                                {
+                                                    GUIObjects::Button* button = scope.front().object.but;
+                                                    std::wstring possibleCommand = nss::ParseUntil(command, 13);
+                                                    int brackets = 0; for (unsigned int i = 0; i < line.length(); ++i)
+                                                        if (line[i] == L'{') ++brackets; else if (line[i] == L'}') --brackets;
+                                                    if (brackets == 0 && !nss::ContainsUsefulInformation(possibleCommand))
+                                                    {
+                                                        std::getline(wif, possibleCommand); nss::RemoveSpaces(possibleCommand);
+                                                        command.Command(possibleCommand);
+                                                        for (unsigned int i = 0; i < command.line.length(); ++i)
+                                                            if (command.line[i] == L'{') ++brackets; else if (command.line[i] == L'}') --brackets;
+                                                    }
+                                                    if (brackets > 0)
+                                                    {
+                                                        command.Command(possibleCommand, true);
+                                                        std::wstring newPossibleCommand = L"";
+                                                        std::wstring maybeBeginOfBrackets = nss::ParseUntil(command, L'{');
+                                                        for (unsigned long i = maybeBeginOfBrackets.length() + 2; i < possibleCommand.length(); ++i)
+                                                            newPossibleCommand += possibleCommand[i];
+                                                        possibleCommand = newPossibleCommand;
+                                                        if (nss::ContainsUsefulInformation(possibleCommand)) button->actions.push_back(possibleCommand);
+                                                        while (brackets > 0 && !wif.eof())
+                                                        {
+                                                            std::getline(wif, line); nss::RemoveSpaces(line); command.Command(line, false);
+                                                            for (unsigned int i = 0; i < command.line.length(); ++i)
+                                                                if (command.line[i] == L'{') ++brackets; else if (command.line[i] == L'}') --brackets;
+                                                            if (brackets == 0)
+                                                            {
+                                                                std::wstring maybeItsInBrackets = nss::ParseUntilReverse(command.line, L'}', command.line.length() - 1);
+                                                                if (!nss::ContainsUsefulInformation(maybeItsInBrackets))
+                                                                {
+                                                                    std::wstring newPossibleCommand = L"";
+                                                                    for (unsigned int i = 0; i < line.length() - (maybeItsInBrackets.length() + 1); ++i) newPossibleCommand += line[i];
+                                                                    line = newPossibleCommand;
+                                                                }
+                                                            }
+                                                            if (nss::ContainsUsefulInformation(line)) button->actions.push_back(line);
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        command.Command(possibleCommand, true);
+                                                        std::wstring maybeItsInBrackets = nss::ParseUntilReverse(command.line, L'}', command.line.length() - 1);
+                                                        if (!nss::ContainsUsefulInformation(maybeItsInBrackets))
+                                                        {
+                                                            std::wstring newPossibleCommand = L"";
+                                                            std::wstring maybeBeginOfBrackets = nss::ParseUntil(command, L'{');
+                                                            for (unsigned int i = maybeBeginOfBrackets.length() + 2; i < possibleCommand.length() - (maybeItsInBrackets.length() + 1); ++i) newPossibleCommand += possibleCommand[i];
+                                                            possibleCommand = newPossibleCommand;
+                                                        }
+                                                        if (nss::ContainsUsefulInformation(possibleCommand)) button->actions.push_back(possibleCommand);
+                                                    }
+                                                    
+                                                    /*cout << "ACTIONS BEGIN" << endl;
+                                                    for (auto& w : buttonPtr->actions) cout << base::utf8(w) << endl;
+                                                    cout << "ACTIONS END" << endl;*/
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"sprite ") || nss::Command(command, L"sprite:") ||
+                                                     nss::Command(command, L"texture ") || nss::Command(command, L"texture:") ||
+                                                     nss::Command(command, L"spr ") || nss::Command(command, L"spr:"))
+                                            {
+                                                std::wstring imageName = nss::ParseAsMaybeQuoteStringFull(command);
+                                                if (imageName.length() != 0 && scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite) scope.front().object.but->sprite->setTexture(folderPath + imageName, this);
+                                            }
+                                            else if (nss::Command(command, L"scale ") || nss::Command(command, L"scale:"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                if (scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite) scope.front().object.but->sprite->setScale(nss::ParseAsFloat(command));
+                                            }
+                                            else if (nss::Command(command, L"fit ") || nss::Command(command, L"fit:") ||
+                                                     nss::Command(command, L"fill ") || nss::Command(command, L"fill:") ||
+                                                     nss::Command(command, L"mode ") || nss::Command(command, L"mode:") ||
+                                                     nss::Command(command, L"fitmode ") || nss::Command(command, L"fitmode:"))
+                                            {
+                                                nss::SkipSpaces(command); std::wstring fitMode = nss::ParseAsString(command);
+                                                if (fitMode.length() != 0 && scope.front().type == GUIScopeStruct::Image)
+                                                {
+                                                    GUIObjects::Image* img = scope.front().object.img;
+                                                    if (nss::Command(fitMode, L"fill") || nss::Command(fitMode, L"center")) img->fitMode = GUIObjects::Image::fillCentre;
+                                                    else if (nss::Command(fitMode, L"keep") || nss::Command(fitMode, L"keepaspect") || nss::Command(fitMode, L"aspect")) img->fitMode = GUIObjects::Image::keepAspect;
+                                                    else if (nss::Command(fitMode, L"stretch")) img->fitMode = GUIObjects::Image::stretch;
+                                                    else if (nss::Command(fitMode, L"default")) img->fitMode = GUIObjects::Image::defaultFit;
                                                 }
                                             }
                                         }
@@ -1155,7 +1264,7 @@ namespace ns
                             else
                             {
                                 parsingGUI = false;
-                                scope.push_back(nullptr);
+                                scope.emplace_back(nullptr);
                                 knownType = 0;
                             }
                         }
@@ -1167,6 +1276,9 @@ namespace ns
             
             return skinLoaded;
         }
+        GUIScopeStruct::GUIScopeStruct(GUIObject* obj, const typeEnum& type) : type(type) { object.obj = obj; }
+        GUIObject& GUIScopeStruct::operator*() { return *object.obj; }
+        GUIObject* GUIScopeStruct::operator->() { return object.obj; }
         void GUISystem::PrintIerarchy()
         {
             /*cout << "GUISystem {" << endl;
@@ -1201,13 +1313,28 @@ namespace ns
         
         
         void GUIObject::Init() { }
+        void GUIObject::PollEvent(sf::Event& event) { }
         void GUIObject::Update(const sf::Time& elapsedTime) { }
         void GUIObject::Draw(sf::RenderWindow* window) { }
-        void GUIObject::PreCalculate(unsigned int width, unsigned int height) { }
-        void GUIObject::Resize(unsigned int width, unsigned int height) { }
+        void GUIObject::PreCalculate(const unsigned int& width, const unsigned int& height) { }
+        void GUIObject::PreCalculatedSize(const unsigned int& width, const unsigned int& height) { }
+        void GUIObject::Resize(const unsigned int& width, const unsigned int& height) { }
         void GUIObject::Destroy() { }
-        void GUIObject::SetAlpha(sf::Int8 alpha) { }
+        void GUIObject::ReceiveMessage(MessageHolder& message) { }
+        void GUIObject::SetAlpha(sf::Uint8 alpha) { }
         void GUIObject::SetColor(const sf::Color& fillColour) { }
+        NovelSystem* GUIObject::FindNovelSystem()
+        {
+            GUISystem* sys = guiSystem;
+            while (sys && sys->parent) sys = sys->parent->guiSystem;
+            if (sys) return sys->novelSystem; else return nullptr;
+        }
+        NovelObject* GUIObject::FindNovelObject()
+        {
+            GUISystem* sys = guiSystem;
+            while (sys && sys->parent) sys = sys->parent->guiSystem;
+            if (sys) return sys; else return nullptr;
+        }
         
         
         
@@ -1219,14 +1346,14 @@ namespace ns
         {
             void Rectangle::Init() { shape.setFillColor(sf::Color::Black); }
             void Rectangle::Draw(sf::RenderWindow* window) { window->draw(shape); }
-            void Rectangle::Resize(unsigned int width, unsigned int height)
+            void Rectangle::Resize(const unsigned int& width, const unsigned int& height)
             {
-                shape.setSize({static_cast<float>(constrains.width), static_cast<float>(constrains.height)});
-                shape.setPosition(constrains.posX, constrains.posY);
+                shape.setSize({static_cast<float>(constrains.globalBounds.width), static_cast<float>(constrains.globalBounds.height)});
+                shape.setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
             }
-            void Rectangle::SetAlpha(sf::Int8 alpha)
+            void Rectangle::SetAlpha(sf::Uint8 alpha)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Int8(alpha * ((float)maxAlpha/255));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
             }
             void Rectangle::SetColor(const sf::Color& fillColour) { shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a)); }
@@ -1240,15 +1367,43 @@ namespace ns
                 text.setPosition(0, 0);
             }
             void Text::Draw(sf::RenderWindow* window) { if (fontLoaded) window->draw(text); }
-            void Text::PreCalculate(unsigned int width, unsigned int height)
+            void Text::PreCalculate(const unsigned int& width, const unsigned int& height)
             {
                 text.setCharacterSize((unsigned int)(characterSize * gs::scale));
                 if (thickness != 0) text.setOutlineThickness(thickness * gs::scale);
+                
+                if (guiSystem && guiSystem->parent)
+                {
+                    bounds.left = guiSystem->parent->constrains.globalBounds.left;
+                    bounds.width = guiSystem->parent->constrains.globalBounds.width;
+                    bounds.top = guiSystem->parent->constrains.globalBounds.top;
+                    bounds.height = guiSystem->parent->constrains.globalBounds.height;
+                }
+                else { bounds.left = 0; bounds.width = width; bounds.top = 0; bounds.height = height; }
+                
+                //cout << bounds.left << " " << bounds.width << " " << bounds.top << " " << bounds.height << endl;
             }
-            void Text::Resize(unsigned int width, unsigned int height) { text.setPosition(constrains.posX, constrains.posY); }
-            void Text::SetAlpha(sf::Int8 alpha)
+            void Text::PreCalculatedSize(const unsigned int& width, const unsigned int& height)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                
+                //constrains.width = text.getGlobalBounds().width;
+                //constrains.height = text.getGlobalBounds().height;
+            }
+            void Text::Resize(const unsigned int& width, const unsigned int& height) {
+                if (allowWrap) { text.setScale(1, 1);
+                    text.setString(nss::GetStringWithLineBreaks(text, textString, -constrains.localBounds.left + bounds.width, bounds.height)); }
+                
+                setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
+                constrains.globalBounds.width = text.getGlobalBounds().width;
+                constrains.globalBounds.height = text.getGlobalBounds().height;
+                constrains.globalBounds.left = text.getGlobalBounds().left;
+                constrains.globalBounds.top = text.getGlobalBounds().top;
+                
+                // Текст должен быть ограничен прямоугольником, находящимся над ним. Bounds текста - это исключительно границы текста.
+            }
+            void Text::SetAlpha(sf::Uint8 alpha)
+            {
+                sf::Uint8 realAlpha = sf::Int8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
             }
@@ -1274,45 +1429,257 @@ namespace ns
                 this->characterSize = characterSize;
                 text.setCharacterSize(characterSize * gs::scale);
             }
-            
-            
-            
-            void Image::Init() { }
-            void Image::Update(const sf::Time& elapsedTime) { }
-            void Image::Draw(sf::RenderWindow* window) { window->draw(sprite); }
-            void Image::Resize(unsigned int width, unsigned int height)
+            void Text::setPosition(const float& x, const float& y)
             {
-                sprite.setScale({static_cast<float>(constrains.width) / texture.getSize().x, static_cast<float>(constrains.height)  / texture.getSize().y});
-                sprite.setPosition(constrains.posX, constrains.posY);
-            }
-            void Image::SetAlpha(sf::Int8 alpha)
-            {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
-                sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
-            }
-            void Image::SetColor(const sf::Color& fillColour) { sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a)); }
-            void Image::LoadImage(const std::wstring& path)
-            {
-                spriteLoaded = false;
-                sf::Image* imagePtr = ic::LoadImage(path);
-                if (imagePtr)
+                switch (halign)
                 {
-                    imagePath = path;
-                    bool textureLoaded{ false };
-                    if (imagePtr->getSize().x > sf::Texture::getMaximumSize() || imagePtr->getSize().y > sf::Texture::getMaximumSize())
-                        textureLoaded = texture.loadFromImage(*imagePtr, sf::IntRect(0, 0, imagePtr->getSize().x > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().x, imagePtr->getSize().y > sf::Texture::getMaximumSize() ? sf::Texture::getMaximumSize() : imagePtr->getSize().y));
-                    else textureLoaded = texture.loadFromImage(*imagePtr);
-                    
-                    if (textureLoaded)
-                    {
-                        spriteLoaded = true;
-                        texture.setSmooth(true);
-                        sprite.setTexture(texture);
-                        
-                        Resize(gs::width, gs::height);
+                    case Halign::Left: text.setOrigin(0, text.getOrigin().y); break;
+                    case Halign::Center: text.setOrigin(text.getLocalBounds().width/2, text.getOrigin().y); break;
+                    case Halign::Right: text.setOrigin(text.getLocalBounds().width, text.getOrigin().y); break;
+                }
+                switch (valign)
+                {
+                    case Valign::Top: text.setOrigin(text.getOrigin().x, 0); break;
+                    case Valign::Center: text.setOrigin(text.getOrigin().x, text.getLocalBounds().height/2); break;
+                    case Valign::Bottom: text.setOrigin(text.getOrigin().x, text.getLocalBounds().height); break;
+                }
+                text.setPosition(x, y); CorrectBoundaries();
+            }
+            void Text::CorrectBoundaries()
+            {
+                text.setScale(1, 1);
+                if (text.getGlobalBounds().width > bounds.width && text.getGlobalBounds().left < bounds.left)
+                    text.setScale((float)bounds.width/text.getGlobalBounds().width, 1);
+                else if (text.getGlobalBounds().width - text.getOrigin().x > bounds.width - constrains.localBounds.left)
+                    text.setScale((float)(bounds.width - constrains.localBounds.left)/(text.getGlobalBounds().width - text.getOrigin().x), 1);
+                else if (text.getGlobalBounds().left < bounds.left && text.getOrigin().x > 0)
+                    text.setScale((float)((text.getOrigin().x + text.getGlobalBounds().left - bounds.left))/(text.getGlobalBounds().width), 1);
+                if (text.getGlobalBounds().left < bounds.left) text.setPosition(bounds.left + text.getOrigin().x*text.getScale().x, text.getPosition().y);
+                
+                /*if (text.getGlobalBounds().width > bounds.width - constrains.localBounds.left && text.getGlobalBounds().left < bounds.left)
+                    text.setScale((float)bounds.width/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().width > bounds.width - constrains.localBounds.left)
+                    text.setScale((float)(bounds.width - constrains.localBounds.left)/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().left < bounds.left && text.getOrigin().x > 0)
+                    text.setScale((float)((text.getOrigin().x + text.getGlobalBounds().left - bounds.left))/(text.getGlobalBounds().width), 1);
+                if (text.getGlobalBounds().left < bounds.left) text.setPosition(bounds.left + text.getOrigin().x, text.getPosition().y);*/
+                
+                /*cout << constrains.globalBounds.width << " " << text.getGlobalBounds().width << " " << screen.x << " " << text.getGlobalBounds().left << constrains.globalBounds.left << endl;
+                
+                if (text.getGlobalBounds().width > screen.x - constrains.localBounds.left && text.getGlobalBounds().left < constrains.globalBounds.left)
+                    text.setScale((float)(screen.x)/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().width > screen.x - constrains.localBounds.left)
+                    text.setScale((float)(screen.x - constrains.localBounds.left)/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().left < constrains.globalBounds.left && text.getOrigin().x > 0)
+                    text.setScale((float)((constrains.globalBounds.left - text.getGlobalBounds().left))/(text.getGlobalBounds().width), 1);
+                if (text.getGlobalBounds().left < constrains.globalBounds.left) text.setPosition(constrains.globalBounds.left - text.getOrigin().x, text.getPosition().y);*/
+                
+                /*if (text.getGlobalBounds().width > screen.x - text.getGlobalBounds().left && text.getGlobalBounds().left < 0)
+                    text.setScale((float)screen.x/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().width > screen.x - text.getGlobalBounds().left)
+                    text.setScale((float)(screen.x - text.getGlobalBounds().left)/(text.getGlobalBounds().width), 1);
+                else if (text.getGlobalBounds().left < 0 && text.getOrigin().x > 0) //TODO: Correct this
+                    text.setScale((float)(text.getOrigin().x + text.getGlobalBounds().left)/(text.getGlobalBounds().width), 1);
+                if (text.getGlobalBounds().left < 0) text.setPosition(text.getPosition().x - text.getGlobalBounds().left, text.getPosition().y);*/
+            }
+            
+            
+            
+            void Image::Destroy() { if (spriteLoaded && imagePath != L"" && imagePath.length() != 0) ic::DeleteImage(imagePath); }
+            void Image::Draw(sf::RenderWindow* window) { if (spriteLoaded) window->draw(sprite); }
+            void Image::PreCalculate(const unsigned int& width, const unsigned int& height) { sprite.setScale(1, 1); }
+            void Image::PreCalculatedSize(const unsigned int& width, const unsigned int& height)
+            {
+                CalculateScale(constrains.globalBounds.width, constrains.globalBounds.height);
+                if (fitMode != fillCentre) {
+                    constrains.globalBounds.width = sprite.getGlobalBounds().width;
+                    constrains.globalBounds.height = sprite.getGlobalBounds().height;
+                }
+            }
+            void Image::Resize(const unsigned int& width, const unsigned int& height)
+            {
+                if (spriteLoaded)
+                {
+                    //sprite.setScale({static_cast<float>(constrains.width) / sprite.getTexture()->getSize().x, static_cast<float>(constrains.height)  / sprite.getTexture()->getSize().y});
+                    sprite.setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
+                    CalculateScale(constrains.globalBounds.width, constrains.globalBounds.height);
+                    if (fitMode != fillCentre) {
+                        constrains.globalBounds.left = sprite.getGlobalBounds().left;
+                        constrains.globalBounds.top = sprite.getGlobalBounds().top;
+                        constrains.globalBounds.width = sprite.getGlobalBounds().width;
+                        constrains.globalBounds.height = sprite.getGlobalBounds().height;
                     }
                 }
             }
+            void Image::SetAlpha(sf::Uint8 alpha)
+            {
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
+                sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
+            }
+            void Image::SetColor(const sf::Color& fillColour) { sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a)); }
+            void Image::LoadImage(const std::wstring& path, MessageSender* sender)
+            {
+                spriteLoaded = false; sf::Texture* texture;
+                if (sender) texture = ic::RequestHigherTexture(path, sender); else texture = ic::LoadTexture(path);
+                if ((spriteLoaded = texture)) { imagePath = path; sprite.setTexture(*texture, true); Resize(gs::width, gs::height); }
+            }
+            void Image::ReceiveMessage(MessageHolder &message)
+            {
+                if (nss::Command(message.info, "Request") && message.additional == imagePath)
+                {
+                    sf::Texture* texture = ic::LoadTexture(imagePath);
+                    if (texture) { sprite.setTexture(*texture, true); Resize(gs::width, gs::height); }
+                }
+            }
+            void Image::CalculateParallax(int mouseX, int mouseY)
+            {
+                if (mouseX >= 0 && mouseY >= 0 && mouseX <= gs::width && mouseY <= gs::height)
+                {
+                    float posX = defaultPositionX + (int)(mouseX - gs::width/2) * parallaxPower;
+                    float posY = defaultPositionY + (int)(mouseY - gs::height/2) * parallaxPower;
+                    sprite.setPosition(posX, posY);
+                }
+            }
+            void Image::CalculateScale(unsigned int width, unsigned int height)
+            {
+                if (spriteLoaded)
+                {
+                    float scaleFactorX, scaleFactorY, scaleFactor;
+                    scaleFactorX = (float)width / (sprite.getTexture()->getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
+                    scaleFactorY = (float)height / (sprite.getTexture()->getSize().y) * (doParallax? 1 + parallaxPower : 1) * scaleY;
+                    switch (fitMode)
+                    {
+                        case defaultFill:
+                            scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
+                            sprite.setScale(scaleFactor, scaleFactor);
+                            break;
+                        case defaultFit:
+                            scaleFactor = (scaleFactorX < scaleFactorY) ? scaleFactorX : scaleFactorY;
+                            sprite.setScale(scaleFactor, scaleFactor);
+                            break;
+                        case fillCentre:
+                            scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
+                            sprite.setScale(scaleFactor, scaleFactor);
+                            defaultPositionX = (float)width/2 - (sprite.getLocalBounds().width/2 + sprite.getOrigin().x)*sprite.getScale().x;
+                            defaultPositionY = (float)height/2 - (sprite.getLocalBounds().height/2 + sprite.getOrigin().y)*sprite.getScale().y;
+                            sprite.setPosition(defaultPositionX, defaultPositionY);
+                            break;
+                        case stretch: sprite.setScale(scaleFactorX, scaleFactorY); break;
+                        case keepAspect: sprite.setScale(scaleX * gs::scale, scaleY * gs::scale); break;
+                        case keepAspectSc: sprite.setScale(scaleX * gs::scScale, scaleY * gs::scScale); break;
+                        default: break;
+                    }
+                }
+            }
+            
+            
+            
+            
+            Button::Button(const typeEnum& type)
+            {
+                this->type = type;
+                switch (type)
+                {
+                    case Text:
+                        text = new GUI::TextButton(); button = text;
+                        text->setFont(Skin::self->defaultFontName);
+                        text->setCharacterSize(48);
+                        text->setString(L"Button");
+                        break;
+                    case Rect:
+                        rect = new GUI::RectangleButton(); button = rect;
+                        rect->setFont(Skin::self->defaultFontName);
+                        rect->setCharacterSize(48);
+                        rect->setString(L"Button");
+                        break;
+                    case Sprite: sprite = new GUI::SpriteButton(); button = sprite; break;
+                    default: break;
+                }
+                if (button) button->regulateBounds = true;
+            }
+            void Button::Destroy() { delete button; button = nullptr; }
+            void Button::PollEvent(sf::Event& event)
+            {
+                if (maxAlpha == button->getAlpha() && button->PollEvent(event))
+                {
+                    nss::CommandSettings command;
+                    NovelSystem* system = FindNovelSystem();
+                    if (system)
+                    {
+                        std::list<std::wstring*> toTheRanch;
+                        for (auto it = actions.begin(); it != actions.end(); ++it)
+                        {
+                            command.Command(*it);
+                            if (nss::Command(command, L"page")) cout << "page" << endl;
+                            else if (nss::Command(command, L"switch interface") || nss::Command(command, L"interface switch") || nss::Command(command, L"switch")) system->SendMessage({"Show/Hide Interface"});
+                            else if (nss::Command(command, L"menu") || nss::Command(command, L"go to menu")) {
+                                gs::isPause = false; system->SendMessage({"GamePause :: Return to menu"}); }
+                            else if (nss::Command(command, L"pause off") || nss::Command(command, L"pause false")) {
+                                if (gs::isPause) { gs::isPause = false; system->SendMessage({"GamePause"}); } }
+                            else if (nss::Command(command, L"pause on") || nss::Command(command, L"game true")) {
+                                if (!gs::isPause) { gs::isPause = true; system->SendMessage({"GamePause"}); } }
+                            else if (nss::Command(command, L"pause") || nss::Command(command, L"game pause")) {
+                                gs::isPause = !gs::isPause; system->SendMessage({"GamePause"}); }
+                            else if (nss::Command(command, L"save")) system->SendMessage({"Save"});
+                            else if (nss::Command(command, L"load")) system->SendMessage({"Load"});
+                            else toTheRanch.push_back(&(*it));
+                        }
+                        if ((eventPolling = toTheRanch.size()))
+                        {
+                            system->SendMessage({"ExecuteInsert"});
+                            for (auto it = toTheRanch.rbegin(); it != toTheRanch.rend(); ++it) system->SendMessage({"Execute", *(*it)});
+                            button->active = false;
+                        }
+                    }
+                }
+            }
+            void Button::Update(const sf::Time& elapsedTime) { }
+            void Button::PreCalculate(const unsigned int& width, const unsigned int& height)
+            {
+                if (guiSystem && guiSystem->parent)
+                {
+                    button->bounds.left = guiSystem->parent->constrains.globalBounds.left;
+                    button->bounds.width = guiSystem->parent->constrains.globalBounds.width;
+                    button->bounds.top = guiSystem->parent->constrains.globalBounds.top;
+                    button->bounds.height = guiSystem->parent->constrains.globalBounds.height;
+                    button->leftBound = constrains.localBounds.left;
+                }
+                else { button->bounds.left = 0; button->bounds.width = width; button->bounds.top = 0; button->bounds.height = height; }
+            }
+            void Button::PreCalculatedSize(const unsigned int& width, const unsigned int& height)
+            {
+            }
+            void Button::Resize(const unsigned int& width, const unsigned int& height) {
+                button->Resize(width, height);
+                button->setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
+                if (type == Text) { constrains.globalBounds.left = text->text.getGlobalBounds().left;
+                                    constrains.globalBounds.top = text->text.getGlobalBounds().top; }
+                else if (type == Rect) { constrains.globalBounds.left = rect->text.getGlobalBounds().left;
+                                         constrains.globalBounds.top = rect->text.getGlobalBounds().top; }
+                else if (type == Sprite) { constrains.globalBounds.left = sprite->sprite.getGlobalBounds().left;
+                                           constrains.globalBounds.top = sprite->sprite.getGlobalBounds().top; }
+                if (type == Text) {
+                    constrains.globalBounds.width = text->text.getGlobalBounds().width;
+                    constrains.globalBounds.height = text->text.getGlobalBounds().height; }
+                else if (type == Rect) {
+                    constrains.globalBounds.width = rect->text.getGlobalBounds().width;
+                    constrains.globalBounds.height = rect->text.getGlobalBounds().height; }
+                else if (type == Sprite) {
+                    constrains.globalBounds.width = sprite->sprite.getGlobalBounds().width;
+                    constrains.globalBounds.height = sprite->sprite.getGlobalBounds().height; }
+            }
+            void Button::Draw(sf::RenderWindow* window) { button->Draw(window); }
+            void Button::ReceiveMessage(MessageHolder& message)
+            {
+                if (message.info == "FinishedExecute" && eventPolling) { eventPolling = false; button->active = true; }
+                else if (nss::Command(message.info, "Request")) button->ReceiveMessage(message);
+            }
+            void Button::SetAlpha(sf::Uint8 alpha)
+            {
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
+                button->setAlpha(realAlpha);
+            }
+            void Button::SetColor(const sf::Color& fillColour) { button->setColor(fillColour); }
         }
     }
 }

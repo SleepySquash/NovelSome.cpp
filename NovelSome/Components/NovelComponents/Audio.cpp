@@ -87,6 +87,7 @@ namespace ns
         
         
         
+        MusicPlayer::MusicPlayer() : Savable(L"Music") { }
         void MusicPlayer::Update(const sf::Time& elapsedTime)
         {
             if (!audioLoaded) return;
@@ -134,7 +135,8 @@ namespace ns
                 music.setPlayingOffset(playingOffset);
                 music.play();
                 
-                timeToStartDisappearing = music.getDuration().asSeconds() - disappearTime;
+                if (!loop) timeToStartDisappearing = music.getDuration().asSeconds() - disappearTime;
+                else timeToStartDisappearing = 0;
                 currentTime = 0.f;
             }
             else
@@ -149,6 +151,26 @@ namespace ns
             {
                 currentTime = 0.f; mode = newMode;
                 if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+            }
+        }
+        void MusicPlayer::Save(std::wofstream& wof)
+        {
+            if (audioLoaded)
+            {
+                wof << L"audioPath: " << nss::GetPathWOResourcePath(audioPath) << endl;
+                wof << L"offset: " << music.getPlayingOffset().asSeconds() << endl;
+                if (timeToStartDisappearing) wof << L"timeToStartDisappearing: " << timeToStartDisappearing << endl;
+                if (!loop) wof << L"loop: " << loop << endl;
+                if (maxVolume != 100) wof << L"maxVolume: " << maxVolume << endl;
+                
+                if (mode != playing)
+                {
+                    wof << L"mode: " << mode << endl;
+                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                    if (mode == appearing && appearTime != 1.f) wof << L"appearTime: " << appearTime << endl;
+                }
+                if (disappearTime != 1.f) wof << L"disappearTime: " << disappearTime << endl;
+                    
             }
         }
     }

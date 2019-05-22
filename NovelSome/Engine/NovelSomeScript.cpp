@@ -10,11 +10,11 @@
 
 namespace nss
 {
-    void CommandSettings::Command(std::wstring line)
+    void CommandSettings::Command(const std::wstring& command, bool skipSpaces)
     {
         //this->line = ns::base::LowercaseTheString(line);
-        this->line = line;
-        lastPos = 0;
+        line = command; lastPos = 0;
+        if (skipSpaces) RemoveSpaces(*this);
     }
     bool CommandSettings::ExplicitNoMessage()
     {
@@ -36,9 +36,7 @@ namespace nss
     ///----------------------------------------------------------
     bool Command(CommandSettings& results, const std::wstring& command)
     {
-        bool ReallyFound{ false };
-        
-        SkipSpaces(results);
+        bool ReallyFound{ false }; SkipSpaces(results);
         std::wstring commandLine = results.lowercaseCommand ? ns::base::LowercaseTheString(results.line) : results.line;
         if (command.length() <= commandLine.length())
         {
@@ -46,22 +44,19 @@ namespace nss
             int i = results.keepTheLastPos ? results.lastPos : 0;
             for (int j = 0; Found && j < command.length(); i++, j++)
                 Found = (commandLine[i] == command[j]);
-            
-            if (Found)
-                results.lastPos = i;
-            
+            if (Found) results.lastPos = i;
             ReallyFound = Found;
         }
         
         return ReallyFound;
     }
-    bool Command(const std::wstring& line, const std::wstring& command)
+    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase)
     {
         bool ReallyFound{ false };
         
         int lastPos{ 0 };
         while (lastPos < line.length() && (line[lastPos] == L' ' || line[lastPos] == L'\t')) ++lastPos;
-        std::wstring commandLine = ns::base::LowercaseTheString(line);
+        std::wstring commandLine = lowercase ? ns::base::LowercaseTheString(line) : line;
         if (command.length() <= commandLine.length())
         {
             bool Found{ true };
@@ -95,6 +90,11 @@ namespace nss
         while (results.lastPos < results.line.length() && (results.line[results.lastPos] == L' ' || results.line[results.lastPos] == L'\t'))
             results.lastPos++;
     }
+    void RemoveSpaces(CommandSettings& results)
+    {
+        while (results.line.length() > 0 && (results.line[0] == L' ' || results.line[0] == L'\t')) results.line.erase(results.line.begin());
+    }
+    void RemoveSpaces(std::wstring& line) { while (line.length() > 0 && (line[0] == L' ' || line[0] == L'\t')) line.erase(line.begin()); }
     bool ContainsUsefulInformation(CommandSettings& results)
     {
         for (int i = results.lastPos; i < results.line.length(); i++)
@@ -110,44 +110,46 @@ namespace nss
         return false;
     }
     
+    
+    
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until)
     {
         unsigned int pos{ results.lastPos };
-        std::wstring text = L"";
-        bool Found{ false };
-        
+        std::wstring text = L""; bool Found{ false };
         while (!Found && pos < results.line.length())
-        {
             if (!(Found = (results.line[pos] == until)))
             {
-                if (results.line[pos] != 13)
-                    text += results.line[pos];
-                pos++;
+                if (results.line[pos] != 13) text += results.line[pos];
+                ++pos;
             }
-        }
         results.lastPos = pos + 1;
-        
         return text;
     }
     std::string ParseUntil(std::string line, const char until, unsigned int from)
     {
-        unsigned int pos{ from };
         std::string text = "";
         bool Found{ false };
-        
-        while (!Found && pos < line.length())
-        {
-            if (!(Found = (line[pos] == until)))
+        while (!Found && from < line.length())
+            if (!(Found = (line[from] == until)))
             {
-                if (line[pos] != 13)
-                    text += line[pos];
-                pos++;
+                if (line[from] != 13) text += line[from];
+                ++from;
             }
-        }
-        
         return text;
     }
+    std::wstring ParseUntilReverse(std::wstring line, const wchar_t until, unsigned int from)
+    {
+        std::wstring text = L""; bool Found{ false };
+        while (!Found && from >= 0)
+        {
+            if (!(Found = (line[from] == until))) { if (line[from] != 13) text += line[from]; --from; }
+            if (from == 0) break;
+        }
+        return text;
+    }
+    
+    
     
     //TODO: Documentation
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until)
@@ -171,71 +173,40 @@ namespace nss
         
         while (!Found && pos < results.line.length())
         {
-            Found = (results.line[pos] == '"');
-            
-            if (!Found)
-                text += results.line[pos];
-            
-            if (!QuotesInline && Found)
-            {
-                QuotesInline = true;
-                Found = false;
-            }
-            
-            pos++;
+            if (!(Found = (results.line[pos] == '"'))) text += results.line[pos];
+            if (!QuotesInline && Found) { QuotesInline = true; Found = false; }
+            ++pos;
         }
-        if (Found)
-        {
-            results.lastPos = pos;
-            return text;
-        }
-        else
-            return L"";
+        if (Found) { results.lastPos = pos; return text; }
+        else return L"";
     }
     std::wstring ParseAsMaybeQuoteString(CommandSettings& results)
     {
-        if (results.line[results.lastPos] == L'"')
-            return nss::ParseAsQuoteString(results);
-        else
-            return nss::ParseUntil(results, L' ');
+        nss::SkipSpaces(results);
+        if (results.line[results.lastPos] == L'"') return nss::ParseAsQuoteString(results);
+        else return nss::ParseUntil(results, L' ');
     }
     std::wstring ParseAsMaybeQuoteStringFull(CommandSettings& results)
     {
         nss::SkipSpaces(results);
-        if (results.line[results.lastPos] == L'"')
-            return nss::ParseAsQuoteString(results);
-        else
-            return nss::ParseUntil(results, L'\0');
+        if (results.line[results.lastPos] == L'"') return nss::ParseAsQuoteString(results);
+        else return nss::ParseUntil(results, L'\0');
     }
     
-    int ParseAsInt(CommandSettings& results)
-    {
-        //std::wstring stringValue = nss::ParseUntil(results, ' ');
-        return ns::base::atoi(nss::ParseUntil(results, ' '));
-    }
-    float ParseAsFloat(CommandSettings& results)
-    {
-        //std::wstring stringValue = nss::ParseUntil(results, ' ');
-        return ns::base::atof(nss::ParseUntil(results, ' '));
-    }
+    int ParseAsInt(CommandSettings& results) { return ns::base::atoi(nss::ParseUntil(results, ' ')); }
+    float ParseAsFloat(CommandSettings& results) { return ns::base::atof(nss::ParseUntil(results, ' ')); }
     std::wstring ParseAsString(CommandSettings& results)
     {
         std::wstring parsedUntil = nss::ParseUntil(results, '\0');
         std::wstring stringValue = ns::base::LowercaseTheString(parsedUntil);
         return stringValue;
     }
-    std::wstring ParseAsStringWOLowercase(CommandSettings& results)
-    {
-        std::wstring parsedUntil = nss::ParseUntil(results, '\0');
-        return parsedUntil;
-    }
+    std::wstring ParseAsStringWOLowercase(CommandSettings& results) { std::wstring parsedUntil = nss::ParseUntil(results, '\0'); return parsedUntil; }
     bool ParseAsBool(CommandSettings& results)
     {
         std::wstring stringValue = nss::ParseAsString(results);
-        if (stringValue == L"true" || stringValue == L"1")
-            return true;
-        else
-            return false;
+        if (stringValue == L"true" || stringValue == L"1") return true;
+        else return false;
     }
     
     
@@ -440,7 +411,7 @@ namespace nss
                 if (text.getLocalBounds().width >= width)
                 {
                     bool spaceFound{ false };
-                    for (int j = currentLine.length() - 1; j >= 0 && !spaceFound; j--)
+                    for (long j = currentLine.length() - 1; j >= 0 && !spaceFound; --j)
                     {
                         if ((spaceFound = (currentLine[j] == L' ')))
                         {
@@ -494,7 +465,119 @@ namespace nss
             text.setString(finalLine);
         }
     }
-    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, int shift)
+    std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, unsigned int height, int shift)
+    {
+        sf::Text tempText = text;
+        
+        std::wstring currentLine = L"";
+        bool shiftShifted{ false };
+        if (shift < 0)
+        {
+            tempText.setString(L""); width -= shift;
+            while (tempText.getLocalBounds().width < abs(shift))
+                currentLine += L' ', tempText.setString(currentLine);
+            shiftShifted = true;
+        }
+        
+        tempText.setString(line);
+        if (tempText.getLocalBounds().width >= width)
+        {
+            std::wstring finalLine = L"";
+            for (int i = 0; i < line.length(); i++)
+            {
+                currentLine += line[i];
+                tempText.setString(currentLine);
+                if (tempText.getLocalBounds().width >= width)
+                {
+                    bool spaceFound{ false }, wrapFound{ false }; int charactersThere{ 0 };
+                    for (int j = currentLine.length() - 1; j >= 0 && !spaceFound && !wrapFound; --j)
+                    {
+                        if (( (spaceFound = (currentLine[j] == L' ')) || (wrapFound = (++charactersThere >= 3)) ))
+                        {
+                            if (spaceFound)
+                            {
+                                spaceFound = false;
+                                for (int k = j - 1; k >= 0 && !spaceFound; --k)
+                                    if (currentLine[k] != L' ') spaceFound = true;
+                                
+                                if (spaceFound)
+                                {
+                                    std::wstring toFinalLine;
+                                    for (int k = 0; k <= j; k++)
+                                        toFinalLine += currentLine[k];
+                                    toFinalLine += L'\n';
+                                    finalLine += toFinalLine;
+                                    
+                                    if (shift != 0 && !shiftShifted) { width -= shift; shiftShifted = true; }
+                                    std::wstring newCurrentLine = L"";
+                                    if (shift != 0 && shift < width/4)
+                                    {
+                                        tempText.setString(L"");
+                                        while (tempText.getLocalBounds().width < abs(shift))
+                                            newCurrentLine += L' ', tempText.setString(newCurrentLine);
+                                    }
+                                    for (int k = j + 1; k < currentLine.length(); k++)
+                                        newCurrentLine += currentLine[k];
+                                    
+                                    currentLine = newCurrentLine;
+                                }
+                            }
+                            else
+                            {
+                                charactersThere = 0;
+                                for (int k = j - 1; k >= 0 && wrapFound; --k)
+                                {
+                                    if (currentLine[k] == L' ') wrapFound = false;
+                                    else if (++charactersThere >= 3) break;
+                                }
+                                
+                                if (wrapFound)
+                                {
+                                    std::wstring toFinalLine;
+                                    for (int k = 0; k < j; k++) toFinalLine += currentLine[k];
+                                    toFinalLine += L'-'; toFinalLine += L'\n';
+                                    finalLine += toFinalLine;
+                                    
+                                    if (shift != 0 && !shiftShifted) { width -= shift; shiftShifted = true; }
+                                    std::wstring newCurrentLine = L"";
+                                    if (shift != 0 && shift < width/4)
+                                    {
+                                        tempText.setString(L"");
+                                        while (tempText.getLocalBounds().width < abs(shift))
+                                            newCurrentLine += L' ', tempText.setString(newCurrentLine);
+                                    }
+                                    for (int k = j; k < currentLine.length(); k++)
+                                        newCurrentLine += currentLine[k];
+                                    
+                                    currentLine = newCurrentLine;
+                                }
+                            }
+                        }
+                    }
+                    if (!spaceFound && !wrapFound)
+                    {
+                        currentLine[currentLine.length() - 1] = L'\n';
+                        finalLine += currentLine;
+                        
+                        if (shift != 0 && !shiftShifted) { width -= shift; shiftShifted = true; }
+                        if (shift != 0 && shift < width/10)
+                        {
+                            tempText.setString(L"");
+                            while (tempText.getLocalBounds().width < abs(shift))
+                                currentLine += L' ', tempText.setString(currentLine);
+                        }
+                        currentLine = L"";
+                        
+                        currentLine += line[i];
+                    }
+                }
+            }
+            finalLine += currentLine;
+            return finalLine;
+        }
+        if (shift < 0) return currentLine + line; else return line;
+    }
+    /*std::wstring GetStringWithLineBreaks(sf::Text& text, const std::wstring& line, unsigned int width, unsigned int height, int shift)
     {
         sf::Text tempText = text;
         
@@ -573,7 +656,7 @@ namespace nss
             return finalLine;
         }
         if (shift < 0) return currentLine + line; else return line;
-    }
+    }*/
     std::wstring GetStringWithLineBreaksWOSpaceFinding(sf::Text& text, const std::wstring& line, const unsigned int width)
     {
         sf::Text tempText = text;
@@ -599,6 +682,26 @@ namespace nss
         }
         return std::wstring(line);
     }
+    
+    
+    
+    
+    
+    
+    std::wstring GetPathWOResourcePath(const std::wstring& path)
+    {
+        /// TODO: if Android, then %external%, %internal%, %builtin% shortcuts.
+        
+        std::wstring respath = utf16(resourcePath());
+        if (respath.length() == 0 || respath == L"" || !Command(path, respath, false)) return path;
+        
+        std::wstring result{ L"" };
+        for (unsigned long i = respath.length(); i < path.length(); ++i) result += path[i];
+        return result;
+    }
+    
+    
+    
     
     
     

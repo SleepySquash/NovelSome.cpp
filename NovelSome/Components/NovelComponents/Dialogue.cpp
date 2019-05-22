@@ -12,7 +12,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Dialogue::Dialogue(GUISystem* guiSystem) : guiSystem(guiSystem) { }
+        Dialogue::Dialogue(GUISystem* guiSystem) : guiSystem(guiSystem), Savable(L"Dialogue") { }
         void Dialogue::Init()
         {
             if (Skin::self)
@@ -40,8 +40,8 @@ namespace ns
         }
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
-            if (guiSystem != nullptr) guiSystem->Update(elapsedTime);
-            if (mode != deprecated && textAppearMode == textAppearModeEnum::printing && textAppearPos < textAppearMax)
+            if (guiSystem) guiSystem->Update(elapsedTime);
+            if (mode != deprecated && visible && textAppearMode == textAppearModeEnum::printing && textAppearPos < textAppearMax)
             {
                 elapsedCharacterSum += elapsedTime.asSeconds();
                 while (elapsedCharacterSum > characterInSecond && textAppearPos < textAppearMax)
@@ -114,11 +114,16 @@ namespace ns
         }
         void Dialogue::PollEvent(sf::Event& event)
         {
+            if (mode == waitingForChoose || mode == waitingForInput)
+            {
+                if (guiSystem && visible) guiSystem->PollEvent(event);
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) visible = !visible;
+            }
             if (mode == waitingForInput)
             {
-                if (visible && (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchEnded))
+                if (visible && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded))
                 {
-                    bool pressed{ ((event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Left && workingArea.contains(event.mouseButton.x, event.mouseButton.y)) || (event.type == sf::Event::TouchEnded && workingArea.contains(event.touch.x, event.touch.y))) };
+                    bool pressed{ ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left && workingArea.contains(event.mouseButton.x, event.mouseButton.y)) || (event.type == sf::Event::TouchEnded && workingArea.contains(event.touch.x, event.touch.y))) };
                     
                     if (pressed)
                     {
@@ -137,9 +142,9 @@ namespace ns
             }
             else if (mode == waitingForChoose)
             {
-                if (visible && (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchEnded) && textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
+                if (visible && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded) && textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
                 {
-                    bool pressed{ ((event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Left && workingArea.contains(event.mouseButton.x, event.mouseButton.y)) || (event.type == sf::Event::TouchEnded && workingArea.contains(event.touch.x, event.touch.y))) };
+                    bool pressed{ ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left && workingArea.contains(event.mouseButton.x, event.mouseButton.y)) || (event.type == sf::Event::TouchEnded && workingArea.contains(event.touch.x, event.touch.y))) };
                     if (pressed)
                     {
                         currentString = printingString; text.setString(currentString);
@@ -147,8 +152,6 @@ namespace ns
                     }
                 }
             }
-            if ((mode == waitingForChoose || mode == waitingForInput) && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-                visible = !visible;
         }
         void Dialogue::Draw(sf::RenderWindow* window)
         {
@@ -165,7 +168,7 @@ namespace ns
             if (TemporarySettings::dialogue == &text) TemporarySettings::dialogue = nullptr;
             if (TemporarySettings::name == &charText) TemporarySettings::name = nullptr;
         }
-        void Dialogue::Resize(unsigned int width, unsigned int height)
+        void Dialogue::Resize(const unsigned int& width, const unsigned int& height)
         {
             charText.setCharacterSize((unsigned int)(characterSize * gs::scale));
             text.setCharacterSize((unsigned int)(characterSize * gs::scale));
@@ -191,18 +194,18 @@ namespace ns
                     
                     if (textConstrains)
                     {
-                        textWidth = textConstrains->constrains.width;
-                        textXOffset = textConstrains->constrains.posX;
+                        textWidth = textConstrains->constrains.globalBounds.width;
+                        textXOffset = textConstrains->constrains.globalBounds.left;
                         if (textString != L"" && afterRedLineShift < 0) textXOffset += afterRedLineShift*gs::scale;
-                        textYOffset = textConstrains->constrains.posY;
+                        textYOffset = textConstrains->constrains.globalBounds.top;
                     }
                     
                     if (Skin::self->dialogue.dialogueRect)
                     {
-                        workingArea.left = Skin::self->dialogue.dialogueRect->constrains.posX;
-                        workingArea.width = Skin::self->dialogue.dialogueRect->constrains.width;
-                        workingArea.top = Skin::self->dialogue.dialogueRect->constrains.posY;
-                        workingArea.height = Skin::self->dialogue.dialogueRect->constrains.height;
+                        workingArea.left = Skin::self->dialogue.dialogueRect->constrains.globalBounds.left;
+                        workingArea.width = Skin::self->dialogue.dialogueRect->constrains.globalBounds.width;
+                        workingArea.top = Skin::self->dialogue.dialogueRect->constrains.globalBounds.top;
+                        workingArea.height = Skin::self->dialogue.dialogueRect->constrains.globalBounds.height;
                     }
                     else { workingArea.left = 0; workingArea.width = width; workingArea.top = 0; workingArea.height = height; }
                     
@@ -212,22 +215,22 @@ namespace ns
                         if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameRect;
                         if (nameConstrains)
                         {
-                            nameTextWidth = nameConstrains->constrains.width;
-                            nameTextXOffset = nameConstrains->constrains.posX;
+                            nameTextWidth = nameConstrains->constrains.globalBounds.width;
+                            nameTextXOffset = nameConstrains->constrains.globalBounds.left;
                             if (charString != L"" && afterRedLineShift < 0) nameTextXOffset += afterRedLineShift*gs::scale;
-                            nameTextYOffset = nameConstrains->constrains.posY;
+                            nameTextYOffset = nameConstrains->constrains.globalBounds.top;
                         }
                     }
                 }
                 
                 if (charString != L"")
-                    charText.setString(nss::GetStringWithLineBreaks(charText, charString, nameTextWidth, afterRedLineShift*gs::scale));
+                    charText.setString(nss::GetStringWithLineBreaks(charText, charString, nameTextWidth, 0, afterRedLineShift*gs::scale));
                 if (textString != L"")
                 {
                     if (textAppearMode ==  textAppearModeEnum::printing)
                     {
                         currentString = L""; textAppearI = 0;
-                        printingString = nss::GetStringWithLineBreaks(text, textString, textWidth, afterRedLineShift*gs::scale);
+                        printingString = nss::GetStringWithLineBreaks(text, textString, textWidth, 0, afterRedLineShift*gs::scale);
                         for (size_t i = 0; i < textAppearPos; ++i)
                         {
                             while (printingString[textAppearI] == L'\n' || printingString[textAppearI] == L' ')
@@ -236,7 +239,7 @@ namespace ns
                         }
                         text.setString(currentString);
                     }
-                    else text.setString(nss::GetStringWithLineBreaks(text, textString, textWidth, afterRedLineShift*gs::scale));
+                    else text.setString(nss::GetStringWithLineBreaks(text, textString, textWidth, 0, afterRedLineShift*gs::scale));
                 }
             
                 text.setPosition(textXOffset, textYOffset);
@@ -305,6 +308,23 @@ namespace ns
             gs::requestWindowRefresh = true;
             if (mode != newMode) { currentTime = 0.f; mode = newMode; }
         }
+        void Dialogue::ReceiveMessage(MessageHolder &message) { if (message.info == "Show/Hide Interface") visible = !visible;
+            else if (message.info == "FinishedExecute") guiSystem->ReceiveMessage(message); }
+        void Dialogue::Save(std::wofstream& wof)
+        {
+            wof << L"textString: " << textString << endl;
+            if (drawCharacterName)
+            {
+                if (character) wof << L"character->name: " << character->name << endl;
+                else wof << L"charString: " << charString << endl;
+            }
+            
+            if (mode != waitingForInput)
+            {
+                wof << L"mode: " << mode << endl;
+                if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+            }
+        }
         
         
         
@@ -356,6 +376,8 @@ namespace ns
         {
             if (mode == waitingForInput)
             {
+                if (guiSystem && visible) guiSystem->PollEvent(event);
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) visible = !visible;
                 if (visible)
                 {
                     if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchBegan)
@@ -372,7 +394,7 @@ namespace ns
                             {
                                 int until = i+1 < choices.size() ? choiceStart[i+1] : actions.size();
                                 for (int j = until - 1; j >= choiceStart[i]; --j)
-                                    novelSystem->SendMessage({"ChooseAction", actions[j]});
+                                    novelSystem->SendMessage({"Push", actions[j]});
                                 mode = disappearing;
                                 if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"ChooseUnHold", this});
                             }
@@ -381,9 +403,6 @@ namespace ns
                         }
                     }
                 }
-                
-                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
-                    visible = !visible;
             }
         }
         void Choose::Draw(sf::RenderWindow* window)
@@ -402,7 +421,7 @@ namespace ns
             }
         }
         void Choose::Destroy() { novelSystem->SendMessage({"Destroy", this}); }
-        void Choose::Resize(unsigned int width, unsigned int height)
+        void Choose::Resize(const unsigned int& width, const unsigned int& height)
         {
             if (guiSystem) guiSystem->Resize(width, height);
             button.Resize(width, height);
@@ -442,5 +461,7 @@ namespace ns
                 Resize(gs::width, gs::height);
             }
         }
+        void Choose::ReceiveMessage(MessageHolder &message) { if (message.info == "Show/Hide Interface") visible = !visible;
+            else if (message.info == "FinishedExecute") guiSystem->ReceiveMessage(message); }
     }
 }

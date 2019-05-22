@@ -17,10 +17,10 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/GUIInterface.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
+#include "../../../Essentials/Base.hpp"
+#include "../../../Engine/Settings.hpp"
+#include "../../../Engine/GUIInterface.hpp"
+#include "../../../Engine/NovelSomeScript.hpp"
 
 using std::cin;
 using std::cout;
@@ -86,7 +86,8 @@ namespace ns
         {
             static Skin* self;
             
-            std::wstring defaultFontName{ L"NotoSansCJK-Regular.ttc" };
+            //std::wstring defaultFontName{ L"NotoSansCJK-Regular.ttc" };
+            std::wstring defaultFontName{ L"Arial.ttf" };
             Skins::Dialogue dialogue;
             Skins::Choose choose;
             Skins::Background background;

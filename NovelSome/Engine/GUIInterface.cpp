@@ -15,9 +15,13 @@ namespace ns
         void Button::Draw(sf::RenderTarget* window) { }
         void Button::Resize(unsigned int width, unsigned int height) { }
         bool Button::PollEvent(sf::Event& event) { return false; }
-        void Button::setAlpha(const sf::Int8& alpha) { }
+        void Button::ReceiveMessage(MessageHolder& message) { }
+        void Button::resetScale() { }
+        void Button::setAlpha(const sf::Uint8& alpha) { }
+        sf::Uint8 Button::getAlpha() { return 0; }
         void Button::setPosition(float x, float y) { }
         void Button::setVisible(bool vis) { visible = vis; active = vis; }
+        void Button::setColor(const sf::Color &fillColour) { }
         
         
         
@@ -29,19 +33,32 @@ namespace ns
         void TextButton::Draw(sf::RenderTarget* window) { if (fontLoaded && visible) window->draw(text); }
         void TextButton::Resize(unsigned int width, unsigned int height)
         {
-            if (characterScale)
-            {
+            if (!regulateBounds) { bounds.width = width; bounds.height = height; }
+            if (characterScale) {
                 text.setCharacterSize(characterSize * gs::scScale);
                 text.setOutlineThickness(thickness * gs::scScale);
-            }
-            else
-            {
+            } else {
                 text.setCharacterSize(characterSize * gs::scale);
-                text.setOutlineThickness(thickness * gs::scale);
-            }
+                text.setOutlineThickness(thickness * gs::scale); }
+            //CorrectBoundaries();
+        }
+        void TextButton::CorrectBoundaries()
+        {
             text.setScale(1, 1);
-            if (gs::width < text.getGlobalBounds().width)
-                text.setScale((float)gs::width/(text.getGlobalBounds().width), 1);
+            if (text.getGlobalBounds().width > bounds.width && text.getGlobalBounds().left < bounds.left)
+                text.setScale((float)bounds.width/text.getGlobalBounds().width, 1);
+            else if (text.getGlobalBounds().width - text.getOrigin().x > bounds.width - leftBound)
+                text.setScale((float)(bounds.width - leftBound)/(text.getGlobalBounds().width - text.getOrigin().x), 1);
+            else if (text.getGlobalBounds().left < bounds.left && text.getOrigin().x > 0)
+                text.setScale((float)((text.getOrigin().x + text.getGlobalBounds().left - bounds.left))/(text.getGlobalBounds().width), 1);
+            if (text.getGlobalBounds().left < bounds.left) text.setPosition(bounds.left + text.getOrigin().x*text.getScale().x, text.getPosition().y);
+            /*if (text.getGlobalBounds().width > screen.x - text.getGlobalBounds().left && text.getGlobalBounds().left < 0)
+                text.setScale((float)screen.x/(text.getGlobalBounds().width), 1);
+            else if (text.getGlobalBounds().width > screen.x - text.getGlobalBounds().left)
+                text.setScale((float)(screen.x - text.getGlobalBounds().left)/(text.getGlobalBounds().width), 1);
+            else if (text.getGlobalBounds().left < 0 && text.getOrigin().x > 0)
+                text.setScale((float)(text.getOrigin().x + text.getGlobalBounds().left)/(text.getGlobalBounds().width), 1);
+            if (text.getGlobalBounds().left < 0) text.setPosition(text.getPosition().x - text.getGlobalBounds().left, text.getPosition().y);*/
         }
         bool TextButton::PollEvent(sf::Event& event)
         {
@@ -72,15 +89,17 @@ namespace ns
             }
             return false;
         }
-        void TextButton::setAlpha(const sf::Int8& alpha)
+        void TextButton::resetScale() { text.setScale(1, 1); }
+        void TextButton::setAlpha(const sf::Uint8& alpha)
         {
             if (fontLoaded)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
             }
         }
+        sf::Uint8 TextButton::getAlpha() { return text.getOutlineColor().a; }
         void TextButton::setPosition(float x, float y)
         {
             switch (halign)
@@ -95,7 +114,7 @@ namespace ns
                 case Valign::Center: text.setOrigin(text.getOrigin().x, text.getLocalBounds().height/2); break;
                 case Valign::Bottom: text.setOrigin(text.getOrigin().x, text.getLocalBounds().height); break;
             }
-            text.setPosition(x, y);
+            text.setPosition(x, y); CorrectBoundaries();
         }
         void TextButton::setFont(const std::wstring& fontname)
         {
@@ -108,6 +127,7 @@ namespace ns
             characterSize = size;
             text.setCharacterSize(size * gs::scale);
         }
+        void TextButton::setColor(const sf::Color& fillColour) { text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
         
         
         
@@ -147,14 +167,24 @@ namespace ns
             }
             return false;
         }
-        void SpriteButton::setAlpha(const sf::Int8& alpha)
+        void SpriteButton::ReceiveMessage(MessageHolder &message)
+        {
+            if (nss::Command(message.info, "Request") && message.additional == textureName)
+            {
+                sf::Texture* texture = ic::LoadTexture(textureName);
+                if ((spriteLoaded = texture)) sprite.setTexture(*texture, true);
+            }
+        }
+        void SpriteButton::resetScale() { sprite.setScale(1, 1); }
+        void SpriteButton::setAlpha(const sf::Uint8& alpha)
         {
             if (spriteLoaded)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
             }
         }
+        sf::Uint8 SpriteButton::getAlpha() { return sprite.getColor().a; }
         void SpriteButton::setPosition(float x, float y)
         {
             switch (halign)
@@ -171,9 +201,16 @@ namespace ns
             }
             sprite.setPosition(x, y);
         }
-        void SpriteButton::setTexture(const std::wstring& texture) { textureName = texture; setTexture(ic::LoadTexture(texture)); }
-        void SpriteButton::setTexture(sf::Texture* texture) { if ((spriteLoaded = (texture != nullptr))) sprite.setTexture(*texture, true); }
+        void SpriteButton::setTexture(const std::wstring& imagePath, MessageSender* sender)
+        {
+            if (textureName.length() != 0 && textureName != L"") ic::DeleteImage(textureName);
+            textureName = imagePath; spriteLoaded = false; sf::Texture* texture;
+            if (sender) texture = ic::RequestHigherTexture(imagePath, sender); else texture = ic::LoadTexture(imagePath);
+            if ((spriteLoaded = texture)) sprite.setTexture(*texture, true);
+        }
+        void SpriteButton::setTexture(sf::Texture* texture) { if ((spriteLoaded = texture)) sprite.setTexture(*texture, true); }
         void SpriteButton::setScale(const float& scl) { scale = scl; Resize(gs::width, gs::height); }
+        void SpriteButton::setColor(const sf::Color& fillColour) { sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a)); }
         
         
         
@@ -222,15 +259,25 @@ namespace ns
             }
             return false;
         }
+        void SpriteButtons::ReceiveMessage(MessageHolder &message)
+        {
+            if (nss::Command(message.info, "Request") && message.additional == textureName)
+            {
+                sf::Texture* texture = ic::LoadTexture(textureName);
+                if ((spriteLoaded = texture)) sprite.setTexture(*texture, true);
+            }
+        }
         void SpriteButtons::eventPolled(sf::Event& event) { if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded) anyButtonPressed = false; }
-        void SpriteButtons::setAlpha(const sf::Int8& alpha)
+        void SpriteButtons::resetScale() { sprite.setScale(1, 1); }
+        void SpriteButtons::setAlpha(const sf::Uint8& alpha)
         {
             if (spriteLoaded)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, realAlpha));
             }
         }
+        sf::Uint8 SpriteButtons::getAlpha() { return sprite.getColor().a; }
         void SpriteButtons::setPosition(float x, float y)
         {
             switch (halign)
@@ -247,9 +294,16 @@ namespace ns
             }
             sprite.setPosition(x, y);
         }
-        void SpriteButtons::setTexture(const std::wstring& texture) { textureName = texture; setTexture(ic::LoadTexture(texture)); }
+        void SpriteButtons::setTexture(const std::wstring& imagePath, MessageSender* sender)
+        {
+            if (textureName.length() != 0 && textureName != L"") ic::DeleteImage(textureName);
+            textureName = imagePath; spriteLoaded = false; sf::Texture* texture;
+            if (sender) texture = ic::RequestHigherTexture(imagePath, sender); else texture = ic::LoadTexture(imagePath);
+            if ((spriteLoaded = texture)) sprite.setTexture(*texture, true);
+        }
         void SpriteButtons::setTexture(sf::Texture* texture) { if ((spriteLoaded = (texture != nullptr))) sprite.setTexture(*texture, true); }
         void SpriteButtons::setScale(const float& scl) { scale = scl; Resize(gs::width, gs::height); }
+        void SpriteButtons::setColor(const sf::Color& fillColour) { sprite.setColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, sprite.getColor().a)); }
         
         
         
@@ -307,17 +361,19 @@ namespace ns
             }
             return false;
         }
-        void RectangleButton::setAlpha(const sf::Int8& alpha)
+        void RectangleButton::resetScale() { text.setScale(1, 1); }
+        void RectangleButton::setAlpha(const sf::Uint8& alpha)
         {
             if (fontLoaded)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
                 shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, realAlpha));
             }
         }
+        sf::Uint8 RectangleButton::getAlpha() { return text.getOutlineColor().a; }
         void RectangleButton::setPosition(float x, float y)
         {
             shape.setPosition(x, y);
@@ -354,6 +410,7 @@ namespace ns
             characterSize = size;
             text.setCharacterSize(size * gs::scale);
         }
+        void RectangleButton::setColor(const sf::Color& fillColour) { text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
         
         
         
@@ -421,17 +478,19 @@ namespace ns
             return false;
         }
         void RectangleButtons::eventPolled(sf::Event& event) { if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded) anyButtonPressed = false; }
-        void RectangleButtons::setAlpha(const sf::Int8& alpha)
+        void RectangleButtons::resetScale() { text.setScale(1, 1); }
+        void RectangleButtons::setAlpha(const sf::Uint8& alpha)
         {
             if (fontLoaded)
             {
-                unsigned char realAlpha = sf::Int8((unsigned char)alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
                 shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, realAlpha));
             }
         }
+        sf::Uint8 RectangleButtons::getAlpha() { return text.getOutlineColor().a; }
         void RectangleButtons::setPosition(float x, float y)
         {
             shape.setPosition(x, y);
@@ -468,5 +527,6 @@ namespace ns
             characterSize = size;
             text.setCharacterSize(size * gs::scale);
         }
+        void RectangleButtons::setColor(const sf::Color& fillColour) { text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
     }
 }

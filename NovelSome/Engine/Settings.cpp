@@ -130,6 +130,12 @@ namespace ns
     bool gs::isPauseEnabled = true;
     bool gs::isPause = false;
     bool gs::requestWindowRefresh = true;
+    bool gs::ignoreEvent = false, gs::ignoreDraw = false;
+    
+    std::vector<void*> gs::activeInterfaces;
+    void gs::PushInterface(void* address) { activeInterfaces.push_back(address); ignoreEvent = true; }
+    void gs::RemoveInterface(void* address) { activeInterfaces.erase(std::remove(activeInterfaces.begin(), activeInterfaces.end(), address), activeInterfaces.end()); ignoreEvent = !activeInterfaces.empty(); }
+    bool gs::isActiveInterface(void* address) { if (!address) return activeInterfaces.empty(); else return (activeInterfaces.back() == address); }
     
     bool gs::isParallaxEnabled = true;
     float gs::defaultParallaxBackground = 0.018;
@@ -138,7 +144,7 @@ namespace ns
     float gs::defaultParallaxClose = 0.105;
     float gs::defaultParallaxFrontground = 0.13;
     
-    bool gs::forcePressInsideDialogue = true;
+    bool gs::forcePressInsideDialogue = true, gs::drawGUIBoundaries = false;
     
     float gs::maxVolumeGlobal = 1.f;
     float gs::maxVolumeMusic = 1.f;

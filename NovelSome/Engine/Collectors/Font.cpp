@@ -50,7 +50,8 @@ namespace ns
                     return font;
                 }
             }
-            return nullptr;
+            if (fontName != L"Data/Fonts/Arial.ttf" && fontName != L"Arial.ttf") return nullptr;
+            else return GetFont(L"Arial.ttf");
         }
     }
     void FontCollector::FreeFonts()

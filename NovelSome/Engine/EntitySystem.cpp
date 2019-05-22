@@ -14,7 +14,7 @@ namespace ns
     void Component::Init() { }
     void Component::Update(const sf::Time&) { }
     void Component::Draw(sf::RenderWindow*) { }
-    void Component::Resize(unsigned int, unsigned int) { }
+    void Component::Resize(const unsigned int&, const unsigned int&) { }
     void Component::PollEvent(sf::Event&) { }
     void Component::ReceiveMessage(MessageHolder&) { }
     void Component::Destroy() { }
@@ -37,7 +37,7 @@ namespace ns
             for (auto c : components)
                 if (!c->offline) c->Draw(window);
     }
-    void Entity::Resize(unsigned int width, unsigned int height)
+    void Entity::Resize(const unsigned int& width, const unsigned int& height)
     {
         if (components.size())
             for (auto c : components)
@@ -59,7 +59,7 @@ namespace ns
         list<Component*>::iterator it = components.begin();
         while (it != components.end()) { (*it)->Destroy(); delete (*it); components.erase(it++); }
     }
-    void Entity::SendMessage(MessageHolder message) { Entity::ReceiveMessage(message); }
+    void Entity::SendMessage(MessageHolder message) { ReceiveMessage(message); }
     void Entity::ReceiveMessage(MessageHolder& message)
     {
         if (components.size())
@@ -85,7 +85,7 @@ namespace ns
             for (auto e : entities)
                 if (!e->offline) e->Draw(window);
     }
-    void EntitySystem::Resize(unsigned int width, unsigned int height)
+    void EntitySystem::Resize(const unsigned int& width, const unsigned int& height)
     {
         if (entities.size())
             for (auto e : entities)

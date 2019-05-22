@@ -103,7 +103,7 @@ namespace ns
                     }
                 }
             } else fullPath = base::utf16(resourcePath()) + fullPath;
-        }
+        } else if (mode == 0 && !base::DoesFileExistWithResolutionClass(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
         
         return fullPath;
     }

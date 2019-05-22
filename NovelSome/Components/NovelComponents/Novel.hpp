@@ -34,10 +34,13 @@
 #include "../../Engine/NovelSomeScript.hpp"
 #include "../NSMenuComponents/NovelsLibrary.hpp"
 
-#include "VariableSystem.hpp"
-#include "CharacterLibrary.hpp"
-#include "Skin.hpp"
-#include "Interface.hpp"
+#include "Abstract/VariableSystem.hpp"
+#include "Abstract/CharacterLibrary.hpp"
+#include "Abstract/Skin.hpp"
+#include "Abstract/Interface.hpp"
+#include "Abstract/GamePause.hpp"
+#include "Abstract/Savable.hpp"
+#include "Abstract/SavingMechanism.hpp"
 #include "Audio.hpp"
 #include "Background.hpp"
 #include "Character.hpp"
@@ -53,27 +56,31 @@ using base::utf16;
 using std::list;
 using std::vector;
 
+#undef interface
 namespace ns
 {
     namespace NovelComponents
     {
         struct Novel;
-        struct EventListener : NovelObject
+        struct EventListener : NovelObject, Savable
         {
             Novel* novel;
+            
             EventListener(Novel* novel);
             void ReceiveMessage(MessageHolder& message) override;
+            void Save(std::wofstream& wof) override;
         };
         struct Novel : Component
         {
             std::wstring nsdataPath{ L"" }, folderPath{ L"" }, scenarioPath{ L"" }, line;
             std::wifstream wif;
             nss::CommandSettings command;
-            list<std::wstring> lines;
-            int preloadLinesAmount{ 12 };
+            list<std::wstring> lines, execute;
+            int preloadLinesAmount{ 12 }, executeOnHold{ 0 }, executeHoldSize{ 0 };
+            list<std::wstring>::iterator executePosInsert;
             
             bool eof{ false }, fileOpened{ false };
-            list<NovelObject*> onHold;
+            list<NovelObject*> onHold, onExecute;
             
             NovelInfo* nvl{ nullptr };
             GamePause* gamePause{ nullptr };
@@ -97,8 +104,9 @@ namespace ns
             void Update(const sf::Time& elapsedTime) override;
             void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
             void Draw(sf::RenderWindow* window) override;
-            void Resize(unsigned int width, unsigned int height) override;
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void PollEvent(sf::Event& event) override;
+            void Save(std::wofstream& wof);
             void ForwardMessage(MessageHolder& message);
             void ReceiveMessage(MessageHolder& message) override;
             void OnHold(NovelObject* component);

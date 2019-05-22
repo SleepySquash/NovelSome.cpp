@@ -42,7 +42,7 @@ namespace NekoNinja
             sf::Texture* texture = ic::LoadTexture(L"Data/Images/park.jpg");
             if (texture != nullptr) { sprite.setTexture(*texture); spriteLoaded = true; }
         }
-        void Resize(unsigned int width, unsigned int height) override
+        void Resize(const unsigned int& width, const unsigned int& height) override
         {
             if (spriteLoaded)
             {
@@ -173,7 +173,7 @@ namespace NekoNinja
                 else (*it).Update(elapsedTime);
             }
         }
-        void Resize(unsigned int width, unsigned int height) override
+        void Resize(const unsigned int& width, const unsigned int& height) override
         {
             for (auto& n : nekos) n.Resize();
         }
@@ -218,7 +218,7 @@ namespace NekoNinja
             if (fontLoaded) window->draw(scoreText);
             window->draw(pauseSprite);
         }
-        void Resize(unsigned int width, unsigned int height) override
+        void Resize(const unsigned int& width, const unsigned int& height) override
         {
             scoreText.setOutlineThickness(gs::scale);
             scoreText.setCharacterSize((unsigned int)(96 * gs::scale));

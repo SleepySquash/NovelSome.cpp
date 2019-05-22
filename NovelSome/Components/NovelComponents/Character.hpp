@@ -26,7 +26,8 @@
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
-#include "CharacterLibrary.hpp"
+#include "Abstract/CharacterLibrary.hpp"
+#include "Abstract/Savable.hpp"
 
 using std::cin;
 using std::cout;
@@ -39,7 +40,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        struct Character : NovelObject
+        struct Character : NovelObject, Savable
         {
             sf::Sprite sprite;
             std::wstring imagePath{ L"" };
@@ -69,8 +70,9 @@ namespace ns
             float parallaxPower { gs::defaultParallaxNormal };
             bool visible{ true };
             
-            void LoadState(const std::wstring& state);
-            void Resize(unsigned int width, unsigned int height) override;
+            Character();
+            void LoadState(const std::wstring& stateName);
+            void Resize(const unsigned int& width, const unsigned int& height) override;
             void Update(const sf::Time& elapsedTime) override;
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
@@ -80,6 +82,7 @@ namespace ns
             void SetStateMode(modeEnum newMode);
             void SetCharacterData(CharacterData* characterData);
             void SetPosition(positionEnum pos, float x, float y);
+            void Save(std::wofstream& wof) override;
         };
     }
 }

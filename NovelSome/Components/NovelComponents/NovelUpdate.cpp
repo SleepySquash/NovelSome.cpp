@@ -14,25 +14,26 @@ namespace ns
     {
         void Novel::Update(const sf::Time& elapsedTime)
         {
-            while (fileOpened && !eof && onHold.empty() && !(gs::isPause && gs::isPauseEnabled))
+            while (fileOpened && !eof && (onHold.empty() || (executeOnHold > 0 && onExecute.empty())) && !(gs::isPause && gs::isPauseEnabled))
             {
                 if ((wif.fail() || wif.bad()) && lines.empty())
                     cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << base::utf8(nsdataPath) << endl;
                 
                 if (!wif.eof() || !lines.empty())
                 {
-                    if (lines.empty())
-                    {
-                        ResourcesPreloading(lines, line);
-                        if (!lines.empty()) { line = lines.back(); lines.pop_back(); } else line = L"";
-                    }
-                    else
-                    {
-                        if (!nss::Command(lines.front(), L"choose"))
+                    if (!execute.empty()) line = execute.back();
+                    else {
+                        if (lines.empty())
+                        {
                             ResourcesPreloading(lines, line);
-                        line = lines.back(); lines.pop_back();
-                    }
-                    command.Command(line);
+                            if (!lines.empty()) { line = lines.back(); lines.pop_back(); } else line = L"";
+                        }
+                        else
+                        {
+                            if (!nss::Command(lines.front(), L"choose")) ResourcesPreloading(lines, line);
+                            line = lines.back(); lines.pop_back();
+                        }
+                    } command.Command(line);
                     
                     bool backgroundAddingMode{ false };
                     if (nss::Command(command, L"//")) { /* oh, that's a comment... */ }
@@ -87,6 +88,8 @@ namespace ns
                             }
                             else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
                                 component->waitingTime = nss::ArgumentAsFloat(argument);
+                            else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                         }
                         
                         if (component->sendMessageBack != component->noMessage) OnHold(component);
@@ -159,6 +162,8 @@ namespace ns
                             }
                             else if (nss::Command(argument, L"still") || nss::Command(argument, L"dialogue"))
                                 dialogueShouldBeStill = true;
+                            else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                             else question = nss::ParseAsMaybeQuoteString(argument);
                         }
                         
@@ -306,6 +311,10 @@ namespace ns
                     ///----------------------------------------MISC----------------------------------------
                     ///----------------------------------------MISC----------------------------------------
                     ///----------------------------------------MISC----------------------------------------
+                    else if (nss::Command(command, L"event block")) gs::ignoreEvent = true;
+                    else if (nss::Command(command, L"event unblock")) gs::ignoreEvent = false;
+                    else if (nss::Command(command, L"draw block")) gs::ignoreDraw = true;
+                    else if (nss::Command(command, L"draw unblock")) gs::ignoreDraw = false;
                     else if (nss::Command(command, L"wait"))
                     {
                         nss::SkipSpaces(command);
@@ -570,6 +579,8 @@ namespace ns
                                 else
                                     component->parallaxPower = base::atof(possibleParallax);
                             }
+                            else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                         }
                         
                         if (component->sendMessageBack != component->noMessage) OnHold(component);
@@ -631,6 +642,8 @@ namespace ns
                                         else if (stringValue == L"nomessage" || stringValue == L"no")
                                             component->sendMessageBack = component->noMessage;
                                     }
+                                    else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                        layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                                     else
                                     {
                                         std::wstring possibleStateOrPos;
@@ -748,9 +761,9 @@ namespace ns
                                 }
                         }
                     }
-                    ///---------------------------------------CHARACTER--------------------------------------
-                    ///---------------------------------------CHARACTER--------------------------------------
-                    ///---------------------------------------CHARACTER--------------------------------------
+                    ///---------------------------------------G U I--------------------------------------
+                    ///---------------------------------------G U I--------------------------------------
+                    ///---------------------------------------G U I--------------------------------------
                     else if (nss::Command(command, L"gui hide all"))
                     {
                         if (GUIGroup.size())
@@ -796,6 +809,53 @@ namespace ns
                             }
                         }
                     }
+                    else if (nss::Command(command, L"gui hide "))
+                    {
+                        if (GUIGroup.size())
+                        {
+                            std::wstring possibleScope = nss::ParseAsMaybeQuoteString(command);
+                            float disappearTime{ -1.f };
+                            enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
+                            sendMessageBackEnum sendMessageBack{ atDeprecated };
+                            if (command.ExplicitNoMessage()) sendMessageBack = noMessage;
+                            
+                            vector<std::wstring> arguments;
+                            nss::ParseArguments(command, arguments);
+                            for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                            {
+                                nss::CommandSettings argument; argument.Command(*it);
+                                if (nss::Command(argument, L"fade:")||
+                                    nss::Command(argument, L"fadeout:") ||
+                                    nss::Command(argument, L"disappear:"))
+                                    disappearTime = nss::ArgumentAsFloat(argument);
+                                else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                {
+                                    std::wstring stringValue = nss::ArgumentAsString(argument);
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                        sendMessageBack = atDisappearing;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                        sendMessageBack = atDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no")
+                                        sendMessageBack = noMessage;
+                                }
+                            }
+                            
+                            for (auto c : GUIGroup)
+                                if (c->scope == possibleScope)
+                                {
+                                    if (sendMessageBack != noMessage) OnHold(c);
+                                    switch (sendMessageBack)
+                                    {
+                                        case atDeprecated: c->sendMessageBack = c->atDeprecated; break;
+                                        case atDisappearing: c->sendMessageBack = c->atDisappearing; break;
+                                        case noMessage: c->sendMessageBack = c->noMessage; break;
+                                        default: c->sendMessageBack = c->atDeprecated; break;
+                                    }
+                                    c->mode = c->disappearing;
+                                    if (disappearTime >= 0) c->disappearTime = disappearTime;
+                                }
+                        }
+                    }
                     else if (nss::Command(command, L"gui "))
                     {
                         bool noMessage{ false }; if (command.ExplicitNoMessage()) noMessage = true;
@@ -806,7 +866,7 @@ namespace ns
                             std::wstring possibleStr2 = nss::ParseAsMaybeQuoteString(command);
                             if (possibleStr2.length() != 0)
                             {
-                                auto* component = layers.PrioritizeComponent<ns::NovelComponents::GUISystem>(10000);
+                                auto* component = layers.PrioritizeComponent<ns::NovelComponents::GUISystem>(16000);
                                 component->isNovel = true;
                                 if (Skin::self) {
                                     component->appearTime = Skin::self->character.appearTime;
@@ -843,6 +903,8 @@ namespace ns
                                         else if (stringValue == L"nomessage" || stringValue == L"no")
                                             component->sendMessageBack = component->noMessage;
                                     }
+                                    else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                        layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                                 }
                                 
                                 if (component->sendMessageBack != component->noMessage) OnHold(component);
@@ -971,7 +1033,7 @@ namespace ns
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
-                        component->folderPath = folderPath;
+                        component->folderPath = folderPath; component->tag = L"Ambient";
                         if (Skin::self) {
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
@@ -1280,7 +1342,7 @@ namespace ns
                                                 else if (stringValue == L"nomessage" || stringValue == L"no")
                                                     component->sendMessageBack = component->noMessage;
                                             }
-                                            else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
+                                            else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchto:"))
                                             {
                                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                                 if (stringValue == L"waitingforinput" || stringValue == L"input")
@@ -1290,6 +1352,8 @@ namespace ns
                                             }
                                             else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
                                                 component->waitingTime = nss::ArgumentAsFloat(argument);
+                                            else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"d:"))
+                                                layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                                         }
                                         
                                         if (component->sendMessageBack != component->noMessage) OnHold(component);
@@ -1323,6 +1387,8 @@ namespace ns
                             else cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
                         }
                     }
+                    if (executeOnHold) { --executeOnHold; if (!execute.empty()) execute.pop_back();
+                        if (executeOnHold <= 0 && onExecute.empty()) layers.SendMessage({"FinishedExecute"}); }
                 }
                 else eof = true;
             }

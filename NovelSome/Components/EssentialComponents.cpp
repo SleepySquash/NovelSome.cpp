@@ -65,7 +65,7 @@ namespace ns
                 window->draw(performanceText);
             }
         }
-        void DebugComponent::Resize(unsigned int width, unsigned int height)
+        void DebugComponent::Resize(const unsigned int& width, const unsigned int& height)
         {
             buildText.setCharacterSize((unsigned int)(15 * gs::scale));
             projectText.setCharacterSize((unsigned int)(23 * gs::scale));
