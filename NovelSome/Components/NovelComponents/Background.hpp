@@ -25,6 +25,8 @@
 #include "../../Engine/Collectors/Image.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+
+#include "Abstract/Skin.hpp"
 #include "Abstract/Savable.hpp"
 
 using std::cin;
@@ -74,7 +76,7 @@ namespace ns
             void SetStateMode(modeEnum newMode);
             
             void Save(std::wofstream& wof) override;
-            void Load(std::wifstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
     }
 }

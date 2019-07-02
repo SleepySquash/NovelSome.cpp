@@ -29,7 +29,7 @@ namespace ns
         {
             std::wstring tag;
             virtual void Save(std::wofstream& wof) = 0;
-            virtual void Load(std::wifstream& wif);
+            virtual std::pair<std::wstring, bool> Load(std::wifstream& wif);
             
             Savable(const std::wstring& tag = L"");
         };

@@ -38,20 +38,15 @@ namespace ns
                 cout << "Error :: Skin :: File couldn't be opened, path: " << base::utf8(fileName) << endl;
             else
             {
-                bool eof{ false };
-                std::wstring line;
+                bool eof{ false }; std::wstring line;
                 nss::CommandSettings command;
-                
-                std::wstring guiScope = L"";
-                std::wstring settingScope = L"";
+                std::wstring guiScope = L"", settingScope = L"";
                 
                 while (!eof)
                 {
                     if (!wif.eof())
                     {
-                        std::getline(wif, line);
-                        command.Command(line);
-                        
+                        std::getline(wif, line); command.Command(line);
                         if (nss::Command(command, L"//")) { /* that's a comment */ }
                         else if (nss::Command(command, L"gui "))
                         {

@@ -92,4 +92,8 @@ namespace ns
     list<NovelObject*>::iterator NovelSystem::end() { return objects.end(); }
     list<NovelObject*>::const_iterator NovelSystem::cbegin() const { return objects.cbegin(); }
     list<NovelObject*>::const_iterator NovelSystem::cend() const { return objects.cend(); }
+    list<NovelObject*>::const_reverse_iterator NovelSystem::crbegin() const { return objects.crbegin(); }
+    list<NovelObject*>::const_reverse_iterator NovelSystem::crend() const { return objects.crend(); }
+    list<NovelObject*>::reverse_iterator NovelSystem::rbegin() { return objects.rbegin(); }
+    list<NovelObject*>::reverse_iterator NovelSystem::rend() { return objects.rend(); }
 }

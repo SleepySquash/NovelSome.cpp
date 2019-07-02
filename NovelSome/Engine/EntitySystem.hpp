@@ -29,9 +29,9 @@ namespace ns
     
     struct Component
     {
-        Entity* entity{ nullptr };
-        bool offline{ false };
+        bool offline{ false }, sleep{ false };
         int priority{ 0 };
+        Entity* entity{ nullptr };
         
         virtual ~Component();
         virtual void Init();
@@ -43,11 +43,13 @@ namespace ns
         virtual void Destroy();
     };
     
-    struct Entity : MessageSender
+    class Entity : public MessageSender
     {
+        list<Component*> components;
+        
+    public:
         EntitySystem* system{ nullptr };
         bool offline{ false };
-        list<Component*> components;
         
         Entity();
         Entity(EntitySystem* system);
@@ -59,6 +61,7 @@ namespace ns
         void SendMessage(MessageHolder message) override;
         void ReceiveMessage(MessageHolder& message);
         void Destroy();
+        void SortAbove(Component* component);
         template<typename T, typename ...Args> T* AddComponent(Args... args)
         {
             T* component = new T(args...);
@@ -93,10 +96,11 @@ namespace ns
         }
     };
     
-    struct EntitySystem : MessageSender
+    class EntitySystem : public MessageSender
     {
         list<Entity*> entities;
         
+    public:
         EntitySystem();
         void Update(const sf::Time& elapsedTime);
         void Draw(sf::RenderWindow* window);

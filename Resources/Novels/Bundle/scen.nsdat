@@ -7,6 +7,8 @@ var booleanyeah = true
 
 Background "Неко.jpg"
 gui menu "skin.nskin"
+music "Pixie Paris - Es rappelt im Karton (Картон).ogg"
+sound "Sounds/no.ogg"
 "gui showcase"
 
 gui somegui "skin.nskin"!

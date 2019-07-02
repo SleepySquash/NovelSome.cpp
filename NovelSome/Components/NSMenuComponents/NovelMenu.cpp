@@ -30,7 +30,7 @@ namespace ns
         }
         void NovelMenu::ReceiveMessage(MessageHolder& message)
         {
-            if (message.info == "NovelComponents :: Novel :: Destroying")
+            if (message.info == "Novel :: Destroying")
             {
                 active = true;
                 /*if (novelMusic.getStatus() == sf::Music::Status::Paused) {

@@ -54,7 +54,7 @@ namespace ns
             CharacterData* character{ nullptr };
             
             bool visible{ true };
-            bool drawCharacterName{ false }, fontLoaded{ false };
+            bool drawCharacterName{ false }, fontLoaded{ false }, noguiSystem{ false };
             sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, waitingTime{ 2.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             
@@ -90,25 +90,25 @@ namespace ns
             void SetDialogue(const sf::String& dialogue);
             void SetStateMode(modeEnum newMode);
             void ReceiveMessage(MessageHolder &message) override;
+            void UpdateAlpha(bool mode = false);
             
             void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
         
         
         
         
         
-        struct Choose : NovelObject
+        struct Choose : NovelObject, Savable
         {
             sf::Text text;
-            sf::String textString{ "" };
             
             GUISystem* guiSystem{ nullptr };
             Skins::Dialogue* skin{ nullptr };
             list<Choose*>::iterator groupPointer;
             
-            GUI::TextButton button;
-            int startingYY{ 0 };
+            GUI::TextButton button; int startingYY{ 0 };
             
             vector<std::wstring> actions, choices;
             vector<int> choiceStart;
@@ -116,7 +116,6 @@ namespace ns
             bool fontLoaded{ false };
             sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
-            
             bool visible{ true };
             
             enum modeEnum {appearing, waitingForInput, disappearing, deprecated};
@@ -139,6 +138,9 @@ namespace ns
             void AddAction(const std::wstring& line);
             void InitChoose();
             void ReceiveMessage(MessageHolder &message) override;
+            
+            void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
     }
 }

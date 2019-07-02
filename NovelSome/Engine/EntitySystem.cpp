@@ -27,7 +27,8 @@ namespace ns
         list<Component*>::iterator it = components.begin();
         while (it != components.end())
         {
-            if ((*it)->offline) { delete (*it); components.erase(it++); }
+            //if ((*it)->offline) { delete (*it); components.erase(it++); }
+            if ((*it)->offline) { if ((*it)->sleep) (*it)->sleep = (*it)->offline = false; else { delete (*it); components.erase(it++); } }
             else { (*it)->Update(elapsedTime); ++it; }
         }
     }
@@ -63,8 +64,26 @@ namespace ns
     void Entity::ReceiveMessage(MessageHolder& message)
     {
         if (components.size())
+        {
+            list<Component*>::iterator next;
+            for (auto e = components.begin(); e != components.end(); e = next)
+            {
+                next = e; std::advance(next, 1);
+                if (!(*e)->offline) (*e)->ReceiveMessage(message);
+            }
+        }
+        /*if (components.size())
             for (auto e : components)
-                if (!e->offline) e->ReceiveMessage(message);
+                if (!e->offline) e->ReceiveMessage(message);*/
+    }
+    void Entity::SortAbove(Component* component)
+    {
+        if (components.back() != component)
+        {
+            component->sleep = component->offline = true;
+            components.erase(std::find(components.begin(), components.end(), component));
+            components.push_back(component);
+        }
     }
     
     

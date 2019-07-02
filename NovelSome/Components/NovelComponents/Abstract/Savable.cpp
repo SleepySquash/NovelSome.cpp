@@ -12,7 +12,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        void Savable::Load(std::wifstream& wif) { }
+        std::pair<std::wstring, bool> Savable::Load(std::wifstream& wif) { return { L"", false }; }
         Savable::Savable(const std::wstring& tag) : tag(tag) { }
     }
 }

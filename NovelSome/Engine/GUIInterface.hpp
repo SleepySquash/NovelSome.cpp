@@ -152,7 +152,7 @@ namespace ns
             
             bool anyButtonPressed{ false };
             unsigned long index{ 0 }, pressedIndex{ 0 };
-            bool onPress{ false };
+            bool onPress{ false }, drawShape{ true };
             bool ignoreWasPressed{ false };
             bool characterScale{ false };
             
@@ -178,6 +178,33 @@ namespace ns
             void setString(const std::wstring& string);
             void setCharacterSize(const unsigned int size);
             void setColor(const sf::Color& fillColour) override;
+        };
+        
+        
+        struct TextField
+        {
+            sf::Text text;
+            bool active{ false }, wasActive{ false }, fontLoaded{ false }, drawWhenEmpty{ false }, enteredSomething{ false };
+            sf::RectangleShape shape; sf::String string;
+            std::wstring textWhenEmpty;
+            unsigned int characterSize{ 20 };
+            bool crypto{ false };
+            
+            bool drawBlink{ true };
+            float elapsedBlink{ 0.f };
+            
+            void Init();
+            bool PollEvent(sf::Event& event);
+            void Resize(const unsigned int& width, const unsigned int& height);
+            void Draw(sf::RenderWindow* window);
+            void setFont(const std::wstring& fontname);
+            void setPosition(float x, float y);
+            void setActive(const bool& act);
+        };
+        
+        struct Tick
+        {
+            
         };
     }
 }

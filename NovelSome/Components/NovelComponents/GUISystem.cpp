@@ -13,7 +13,7 @@ namespace ns
     namespace NovelComponents
     {
         GUISystem::~GUISystem() {  }
-        GUISystem::GUISystem() {  }
+        GUISystem::GUISystem() : Savable(L"GUISystem") {  }
         void GUISystem::Destroy() { if (isNovel) novelSystem->SendMessage({"Destroy", this}); clear(); }
         void GUISystem::PollEvent(sf::Event& event)
         {
@@ -545,7 +545,7 @@ namespace ns
                 } globalBounds.top = localBounds.top;
             }
             
-            cout << this << " " << globalBounds.left << " (" << localBounds.left << ") to " << globalBounds.width << " (" << localBounds.width << "); " << globalBounds.top << " (" << localBounds.top << ") to " << globalBounds.height << " (" << localBounds.height << ")" << endl;
+            //cout << this << " " << globalBounds.left << " (" << localBounds.left << ") to " << globalBounds.width << " (" << localBounds.width << "); " << globalBounds.top << " (" << localBounds.top << ") to " << globalBounds.height << " (" << localBounds.height << ")" << endl;
             guiObject.Resize(width, height);
         }
         
@@ -791,7 +791,7 @@ namespace ns
         bool GUISystem::LoadFromFile(const std::wstring& fileName, std::wstring guiScope)
         {
             bool skinLoaded{ false };
-            std::wstring fullPath = fileName;
+            std::wstring fullPath = fileName; trueFileName = fileName;
             if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
             
             std::wifstream wif;
@@ -953,8 +953,8 @@ namespace ns
                                                 {
                                                     --argument.lastPos; std::wstring str = nss::ParseAsQuoteString(argument);
                                                     if (knownType == 3 && text) text->SetString(str);
-                                                    else if ((knownType == 4 || knownType == 10) && img) img->LoadImage(folderPath + str, this);
-                                                    else if (knownType == 8 && button) button->sprite->setTexture(folderPath + str, this);
+                                                    else if ((knownType == 4 || knownType == 10) && img) img->LoadImage(folderPath + str, /*this*/ic::globalRequestSender);
+                                                    else if (knownType == 8 && button) button->sprite->setTexture(folderPath + str, /*this*/ic::globalRequestSender);
                                                 }
                                                 else if (nss::Command(argument, L"}")) { /* ignoring */ }
                                                 else if (nss::Command(argument, L"{")) { /* ignoring */ }
@@ -972,9 +972,9 @@ namespace ns
                                                     std::wstring str = nss::ParseAsMaybeQuoteString(argument);
                                                     if (knownType == 3 && text && text->textString == L"") text->SetString(str);
                                                     else if ((knownType == 4 || knownType == 10) && img && !img->spriteLoaded)
-                                                        img->LoadImage(folderPath + str, this);
+                                                        img->LoadImage(folderPath + str, /*this*/ic::globalRequestSender);
                                                     else if (knownType == 8 && button && !button->sprite->spriteLoaded)
-                                                        button->sprite->setTexture(folderPath + str, this);
+                                                        button->sprite->setTexture(folderPath + str, /*this*/ic::globalRequestSender);
                                                 }
                                             }
                                         }
@@ -1305,6 +1305,69 @@ namespace ns
                 cout << "---}" << endl;
             }
             cout << "}" << endl;*/
+        }
+        void GUISystem::Save(std::wofstream& wof)
+        {
+            wof << L"path: " << trueFileName << endl;
+            wof << L"scope: " << scope << endl;
+            //if ((Skin::self && maxAlpha != Skin::self->dialogue.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
+            
+            if (mode != existing)
+            {
+                wof << L"mode: " << mode << endl;
+                if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                if (mode == appearing && appearTime != 0.6f) wof << L"appearTime: " << appearTime << endl;
+                if (disappearTime != 0.6f) wof << L"disappearTime: " << disappearTime << endl;
+                // TODO: Добавить в Skin настройки GUI систем.
+                /*if (mode == appearing && ((Skin::self && appearTime != Skin::self->character.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;*/
+            }
+            /*if ((Skin::self && disappearTime != Skin::self->character.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;*/
+            if (sendMessageBack != atAppearance) wof << L"send: " << sendMessageBack << endl;
+        }
+        std::pair<std::wstring, bool> GUISystem::Load(std::wifstream& wif)
+        {
+            mode = existing; std::wstring line; nss::CommandSettings command; bool done{ false };
+            while (!done)
+            {
+                std::getline(wif, line); command.Command(line);
+                if (nss::Command(command, L"tag(")) done = true;
+                else if (nss::Command(command, L"path: ")) { trueFileName = nss::ParseUntil(command, L'\n'); fileName = folderPath + trueFileName; }
+                else if (nss::Command(command, L"scope: ")) LoadFromFile(fileName, nss::ParseUntil(command, L'\n'));
+                else if (nss::Command(command, L"mode: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: mode = modeEnum::appearing; break;
+                        case 2: mode = modeEnum::disappearing; break;
+                        case 3: mode = modeEnum::deprecated; break;
+                        default: mode = modeEnum::existing; break;
+                    }
+                }
+                else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"appeartime: ")) appearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"disappeartime: ")) disappearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"maxalpha: ")) maxAlpha = nss::ParseAsInt(command);
+                else if (nss::Command(command, L"send: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
+                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
+                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
+                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                    }
+                }
+                if (wif.eof()) done = true;
+            }
+            
+            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            else alpha = maxAlpha; SetAlpha(alpha);
+            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            
+            return { line, onHold };
         }
         
         
@@ -1649,7 +1712,8 @@ namespace ns
             void Button::PreCalculatedSize(const unsigned int& width, const unsigned int& height)
             {
             }
-            void Button::Resize(const unsigned int& width, const unsigned int& height) {
+            void Button::Resize(const unsigned int& width, const unsigned int& height)
+            {
                 button->Resize(width, height);
                 button->setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
                 if (type == Text) { constrains.globalBounds.left = text->text.getGlobalBounds().left;

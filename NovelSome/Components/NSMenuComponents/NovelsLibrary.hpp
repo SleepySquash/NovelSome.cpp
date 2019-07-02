@@ -22,6 +22,7 @@
 #include "../../Essentials/ResourcePath.hpp"
 #include "../../Essentials/Base.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+#include "../../Engine/Language.hpp"
 
 using std::cin;
 using std::cout;
@@ -40,11 +41,8 @@ namespace ns
 
     struct NovelInfo
     {
-        std::wstring name, path, preview;
-        NovelDetailedInfo* details;
-        
+        std::wstring name, path;            // TODO: NovelHolder, содержащий нужную инфу о новелле для сохранения/загрузки.
         NovelInfo(const std::wstring& path);
-        ~NovelInfo() { delete details; }
     };
 
     struct Novels

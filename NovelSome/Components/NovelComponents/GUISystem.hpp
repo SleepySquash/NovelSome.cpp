@@ -26,6 +26,7 @@
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
+#include "Abstract/Savable.hpp"
 #include "Abstract/VariableSystem.hpp"
 #include "Abstract/Skin.hpp"
 
@@ -41,7 +42,7 @@ namespace ns
     namespace NovelComponents
     {
         struct GUIObject;
-        struct GUISystem : NovelObject
+        struct GUISystem : NovelObject, Savable
         {
         private:
             int lastWidth{ 0 }, lastHeight{ 0 };
@@ -52,7 +53,7 @@ namespace ns
             list<GUIObject*> guiObjects;
             bool isNovel{ false };
             
-            std::wstring scope{ L"" }, fileName{ L"" };
+            std::wstring scope{ L"" }, fileName{ L"" }, trueFileName{ L"" }, folderPath;
             sf::RectangleShape constrainsShape; bool drawConstrains{ gs::drawGUIBoundaries };
             
             sf::Uint8 lastAlpha{ 0 }, alpha{ 0 };
@@ -91,6 +92,9 @@ namespace ns
             bool LoadFromFile(const std::wstring& fileName, std::wstring guiScope = L"");
             void PrintIerarchy();
             void ResetResize();
+            
+            void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
         
         

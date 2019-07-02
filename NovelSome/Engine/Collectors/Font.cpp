@@ -56,9 +56,7 @@ namespace ns
     }
     void FontCollector::FreeFonts()
     {
-        for (const auto& key : fonts)
-            if (key.second != nullptr)
-                delete key.second;
+        for (const auto& key : fonts) if (key.second) delete key.second;
         fonts.clear();
     }
     std::unordered_map<std::wstring, sf::Font*> FontCollector::fonts = { {L"", nullptr} };

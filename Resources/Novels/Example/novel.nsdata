@@ -1,4 +1,4 @@
-name "Пример"
-name:ru "Бандл"
+name "Example"
+name:ru "Пример"
 
 scenario "scenario.nscen"

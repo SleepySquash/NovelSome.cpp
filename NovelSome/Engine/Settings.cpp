@@ -18,7 +18,7 @@ namespace ns
 #else
         wif.open(documentsPath() + base::utf8(path));
 #endif
-        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
+        wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
         
         if (wif.is_open())
         {
@@ -60,10 +60,10 @@ namespace ns
                     float integer = nss::ParseAsFloat(command);
                     if (integer >= 0) gs::maxVolumeMusic = integer;
                 }
-                else if (nss::Command(command, L"maxVolumeAmbeint:"))
+                else if (nss::Command(command, L"maxVolumeAmbient:"))
                 {
                     float integer = nss::ParseAsFloat(command);
-                    if (integer >= 0) gs::maxVolumeAmbeint = integer;
+                    if (integer >= 0) gs::maxVolumeAmbient = integer;
                 }
                 else if (nss::Command(command, L"maxVolumeSound:"))
                 {
@@ -130,7 +130,11 @@ namespace ns
     bool gs::isPauseEnabled = true;
     bool gs::isPause = false;
     bool gs::requestWindowRefresh = true;
+    float gs::autosaveDeltaTime = 240.f;
     bool gs::ignoreEvent = false, gs::ignoreDraw = false;
+    
+    bool gs::listenForTextInput{ false }, gs::rememberUsername{ true }, gs::rememberPassword{ false };
+    std::wstring gs::username; std::string gs::password;
     
     std::vector<void*> gs::activeInterfaces;
     void gs::PushInterface(void* address) { activeInterfaces.push_back(address); ignoreEvent = true; }
@@ -148,6 +152,6 @@ namespace ns
     
     float gs::maxVolumeGlobal = 1.f;
     float gs::maxVolumeMusic = 1.f;
-    float gs::maxVolumeAmbeint = 1.f;
+    float gs::maxVolumeAmbient = 1.f;
     float gs::maxVolumeSound = 1.f;
 }

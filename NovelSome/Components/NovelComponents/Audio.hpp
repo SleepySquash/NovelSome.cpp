@@ -25,6 +25,8 @@
 #include "../../Engine/Collectors/Sound.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+
+#include "Abstract/Skin.hpp"
 #include "Abstract/Savable.hpp"
 
 using std::cin;
@@ -37,7 +39,7 @@ namespace ns
 {
     namespace NovelComponents
     {
-        struct SoundPlayer : NovelObject
+        struct SoundPlayer : NovelObject, Savable
         {
         private:
             std::unique_ptr<char[]> fileInMemory;
@@ -55,13 +57,18 @@ namespace ns
             
             std::wstring folderPath{ L"" };
             bool loop{ false };
-            float maxVolume{ 100 }, appearTime{ 0.f }, disappearTime{ 0.f };
+            float maxVolume{ 100 }, rmaxVolume{ 100 }, appearTime{ 0.f }, disappearTime{ 0.f };
             sf::Time playingOffset;
             
+            SoundPlayer();
             void Update(const sf::Time& elapsedTime) override;
             void Destroy() override;
             void LoadFromFile(const std::wstring& fileName);
             void SetStateMode(modeEnum newMode);
+            void ReceiveMessage(MessageHolder& message) override;
+            
+            void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
         
         
@@ -73,7 +80,7 @@ namespace ns
             
             sf::Music music;
             bool audioLoaded{ false };
-            std::wstring audioPath{ L"" }, audioName{ L"" };
+            std::wstring audioPath{ L"" };
             float volume{ 0.f }, currentTime{ 0.f }, timeToStartDisappearing{ 0.f };
             
         public:
@@ -83,8 +90,8 @@ namespace ns
             sendMessageBackEnum sendMessageBack{ noMessage };
             
             std::wstring folderPath{ L"" };
-            bool loop{ true };
-            float maxVolume{ 100 }, appearTime{ 1.f }, disappearTime{ 1.f };
+            bool loop{ true }, ambient{ false };
+            float maxVolume{ 100 }, rmaxVolume{ 100 }, appearTime{ 1.f }, disappearTime{ 1.f };
             sf::Time playingOffset;
             
             MusicPlayer();
@@ -92,7 +99,9 @@ namespace ns
             void Destroy() override;
             void LoadFromFile(const std::wstring& fileName);
             void SetStateMode(modeEnum newMode);
+            
             void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
     }
 }

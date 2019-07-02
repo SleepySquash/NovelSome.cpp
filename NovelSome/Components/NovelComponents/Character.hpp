@@ -27,6 +27,7 @@
 #include "../../Engine/NovelSomeScript.hpp"
 
 #include "Abstract/CharacterLibrary.hpp"
+#include "Abstract/Skin.hpp"
 #include "Abstract/Savable.hpp"
 
 using std::cin;
@@ -82,7 +83,10 @@ namespace ns
             void SetStateMode(modeEnum newMode);
             void SetCharacterData(CharacterData* characterData);
             void SetPosition(positionEnum pos, float x, float y);
+            
+            
             void Save(std::wofstream& wof) override;
+            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
     }
 }

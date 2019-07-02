@@ -68,6 +68,10 @@ namespace ns
         list<NovelObject*>::const_iterator cend() const;
         list<NovelObject*>::iterator begin();
         list<NovelObject*>::iterator end();
+        list<NovelObject*>::const_reverse_iterator crbegin() const;
+        list<NovelObject*>::const_reverse_iterator crend() const;
+        list<NovelObject*>::reverse_iterator rbegin();
+        list<NovelObject*>::reverse_iterator rend();
         
         template<typename T, typename ...Args> T* AddComponent(Args... args)
         {

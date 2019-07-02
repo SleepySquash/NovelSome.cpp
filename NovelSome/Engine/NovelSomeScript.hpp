@@ -62,6 +62,7 @@ namespace nss
     void SkipSpaces(CommandSettings& results);
     void RemoveSpaces(CommandSettings& results);
     void RemoveSpaces(std::wstring& line);
+    void Trim(std::wstring& line);
     bool ContainsUsefulInformation(CommandSettings& results);
     bool ContainsUsefulInformation(const std::wstring& wstr);
     
@@ -77,6 +78,7 @@ namespace nss
     std::wstring ParseAsMaybeQuoteString(CommandSettings& results);
     std::wstring ParseAsMaybeQuoteStringFull(CommandSettings& results);
     int ParseAsInt(CommandSettings& results);
+    long ParseAsLong(CommandSettings& results);
     float ParseAsFloat(CommandSettings& results);
     std::wstring ParseAsString(CommandSettings& results);
     std::wstring ParseAsStringWOLowercase(CommandSettings& results);

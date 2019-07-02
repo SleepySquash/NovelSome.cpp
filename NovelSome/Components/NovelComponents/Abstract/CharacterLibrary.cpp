@@ -65,8 +65,8 @@ namespace ns
 #endif
                         if (entryName != L"." && entryName != L"..")
                         {
-                            std::wstring extention = ns::base::GetExtentionFromString(entryName);
-                            if (extention == L"") folders.push_back(*currentFolder + entryName + L"/");
+                            std::wstring extention = base::GetExtentionFromString(entryName);
+                            if (ent->d_type == DT_DIR) folders.push_back(*currentFolder + entryName + L"/");
                             else if (extention == L".nschar")
                             {
                                 std::wifstream wif;

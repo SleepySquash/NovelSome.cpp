@@ -64,13 +64,13 @@ namespace ns
         void GamePause::PollEvent(sf::Event& event)
         {
             //if (gs::isPause && menuBackButton.PollEvent(event)) { gs::isPause = false; entity->SendMessage({"GamePause :: Return to menu"}); }
+            if (gs::ignoreEvent) return;
             if (guiSystem) guiSystem->PollEvent(event);
             if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
                 || (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Right))
             {
                 gs::isPause = !gs::isPause;
-                mode = gs::isPause? appearing : disappearing;
-                currentTime = 0.f;
+                entity->SendMessage({"GamePause"});
             }
             else if (event.type == sf::Event::TouchBegan)
             {
@@ -86,14 +86,13 @@ namespace ns
                         lastTouchedMoment = 0.f;
                         countdownLastTouchedMoment = false;
                         gs::isPause = !gs::isPause;
-                        mode = ns::GlobalSettings::isPause? appearing : disappearing;
-                        currentTime = 0.f;
+                        entity->SendMessage({"GamePause"});
                     }
                 }
             }
             else if (event.type == sf::Event::LostFocus) { if (!gs::isPause) {gs::isPause = true; mode = appearing; currentTime = 0.f; }}
         }
-        void GamePause::Draw(sf::RenderWindow *window) { if (mode != waiting && guiSystem) guiSystem->Draw(window); }
+        void GamePause::Draw(sf::RenderWindow *window) { if (mode != waiting && guiSystem && !gs::ignoreDraw) guiSystem->Draw(window); }
         void GamePause::Resize(const unsigned int& width, const unsigned int& height) { if (mode != waiting && guiSystem) guiSystem->Resize(width, height); }
         void GamePause::ReceiveMessage(MessageHolder &message)
         {

@@ -17,7 +17,7 @@ namespace ns
             while (fileOpened && !eof && (onHold.empty() || (executeOnHold > 0 && onExecute.empty())) && !(gs::isPause && gs::isPauseEnabled))
             {
                 if ((wif.fail() || wif.bad()) && lines.empty())
-                    cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << base::utf8(nsdataPath) << endl;
+                    cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << base::utf8(scenarioPath) << endl;
                 
                 if (!wif.eof() || !lines.empty())
                 {
@@ -175,7 +175,7 @@ namespace ns
                             {
                                 std::wstring parsed{ L"" };
                                 if (lines.empty()) {
-                                    std::getline(wif, parsed);
+                                    std::getline(wif, parsed); ++position;
                                     if (line.length() && line[line.length() - 1] == 13) line.erase(line.begin() + (line.size() - 1));
                                 } else { parsed = lines.back(); lines.pop_back(); }
                                 
@@ -429,26 +429,23 @@ namespace ns
                     else if (nss::Command(command, L"scenario ") || nss::Command(command, L"jump "))
                     {
                         nss::SkipSpaces(command);
-                        std::wstring fileName = nss::ParseAsQuoteString(command), filePath = folderPath + fileName;
+                        std::wstring fileName = nss::ParseAsMaybeQuoteString(command), filePath = folderPath + fileName;
                         if (!base::FileExists(filePath)) filePath = utf16(resourcePath()) + filePath;
                         if (!base::FileExists(filePath)) filePath = base::GetFolderPath(scenarioPath) + fileName;
                         if (base::FileExists(filePath))
                         {
-                            wif.close();
+                            wif.close(); scenario = fileName; scenarioPath = filePath;
 #ifdef _WIN32
                             wif.open(filePath);
 #else
-                            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-                            std::string u8str = converter.to_bytes(filePath);
-                            wif.open(u8str);
+                            wif.open(utf8(filePath));
 #endif
-                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>));
-                            lines.clear();
+                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
+                            lines.clear(); position = 0;
                             if (!(fileOpened = wif.is_open()))
                                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << utf8(filePath) << endl;
                         }
-                        else
-                            cout << "Error :: NovelComponent :: Couldn't find scenario with path: \"" << utf8(filePath) << "\"." << endl;
+                        else cout << "Error :: NovelComponent :: Couldn't find scenario with path: \"" << utf8(filePath) << "\"." << endl;
                     }
                     ///--------------------------------------BACKGROUND--------------------------------------
                     ///--------------------------------------BACKGROUND--------------------------------------
@@ -856,6 +853,7 @@ namespace ns
                                 }
                         }
                     }
+                    // TODO: gui switch "dialogue"
                     else if (nss::Command(command, L"gui "))
                     {
                         bool noMessage{ false }; if (command.ExplicitNoMessage()) noMessage = true;
@@ -868,6 +866,7 @@ namespace ns
                             {
                                 auto* component = layers.PrioritizeComponent<ns::NovelComponents::GUISystem>(16000);
                                 component->isNovel = true;
+                                // TODO: Сделать свои Skin для GUI.
                                 if (Skin::self) {
                                     component->appearTime = Skin::self->character.appearTime;
                                     component->disappearTime = Skin::self->character.disappearTime;
@@ -909,10 +908,10 @@ namespace ns
                                 
                                 if (component->sendMessageBack != component->noMessage) OnHold(component);
                                 GUIGroup.insert(GUIGroup.begin(), component);
-                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2))
-                                    component->LoadFromFile(folderPath + possibleStr2, possibleStr1);
-                                else component->LoadFromFile(folderPath + possibleStr1, possibleStr2);
-                                component->SetAlpha(127); component->ResetResize(); component->Resize(gs::width, gs::height);
+                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) {
+                                    component->LoadFromFile(folderPath + possibleStr2, possibleStr1); component->trueFileName = possibleStr2; }
+                                else {component->LoadFromFile(folderPath + possibleStr1, possibleStr2); component->trueFileName = possibleStr1;}
+                                component->SetAlpha(255); component->ResetResize(); component->Resize(gs::width, gs::height);
                             }
                         }
                     }
@@ -979,7 +978,7 @@ namespace ns
                         if (Skin::self) {
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
-                            component->maxVolume = Skin::self->music.maxVolume * gs::maxVolumeGlobal * gs::maxVolumeMusic; }
+                            component->maxVolume = Skin::self->music.maxVolume; }
                         if (noMessage) component->sendMessageBack = component->noMessage;
                         
                         vector<std::wstring> arguments;
@@ -1033,11 +1032,11 @@ namespace ns
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
-                        component->folderPath = folderPath; component->tag = L"Ambient";
+                        component->folderPath = folderPath; component->tag = L"Ambient"; component->ambient = true;
                         if (Skin::self) {
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
-                            component->maxVolume = Skin::self->music.maxVolume * gs::maxVolumeGlobal * gs::maxVolumeMusic; }
+                            component->maxVolume = Skin::self->music.maxVolume; }
                         if (noMessage) component->sendMessageBack = component->noMessage;
                         
                         vector<std::wstring> arguments;
@@ -1125,6 +1124,10 @@ namespace ns
                     {
                         std::wstring filePath = nss::ParseAsQuoteString(command);
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::SoundPlayer>(0);
+                        if (Skin::self) {
+                            component->appearTime = Skin::self->sound.appearTime;
+                            component->disappearTime = Skin::self->sound.disappearTime;
+                            component->maxVolume = Skin::self->sound.maxVolume; }
                         component->folderPath = folderPath;
                         if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
                         
@@ -1393,7 +1396,16 @@ namespace ns
                 else eof = true;
             }
             
-            if (fileOpened && !(gs::isPause && gs::isPauseEnabled)) layers.Update(elapsedTime);
+            if (fileOpened && !(gs::isPause && gs::isPauseEnabled))
+            {
+                layers.Update(elapsedTime); timeReading += elapsedTime;
+                if (nextAutosave && timeReading.asSeconds() > nextAutosave)
+                {
+                    nextAutosave += gs::autosaveDeltaTime;
+                    cout << "Autosaving ..." << endl;
+                    // Also save timeReading as a backup.
+                }
+            }
             if (eof && onHold.empty() && lines.empty()) entity->PopComponent(this);
         }
     }

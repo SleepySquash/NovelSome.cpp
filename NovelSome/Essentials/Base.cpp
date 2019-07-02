@@ -15,16 +15,20 @@ namespace ns
     {
         std::string utf8(const std::wstring& str)
         {
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.to_bytes(str);
+            try {
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                return converter.to_bytes(str);
+            } catch(...) { throw; }
         }
         std::wstring utf16(const std::string& str)
         {
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            return converter.from_bytes(str);
+            try {
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                return converter.from_bytes(str);
+            } catch(...) { throw; }
         }
-        std::string utf8(const wchar_t& wchar) { std::wstring str = L""; str[0] = wchar; return utf8(str); }
-        std::wstring utf16(const char& wchar) { std::string str = ""; str[0] = wchar; return utf16(str); }
+        std::string utf8(const wchar_t& wchar) { std::wstring str = L""; str[0] = wchar; try { return utf8(str); } catch(...) { throw; } }
+        std::wstring utf16(const char& wchar) { std::string str = ""; str[0] = wchar; try { return utf16(str); } catch(...) { throw; } }
         
         
 #ifdef _WIN32
@@ -51,77 +55,82 @@ namespace ns
 #endif
         bool FileExists(const std::wstring& path)
         {
-#ifdef __ANDROID__
-            if (path.length() != 0)
+            try
             {
-                if (path[0] != L'/')
+#ifdef __ANDROID__
+                if (path.length() != 0)
                 {
-                    ANativeActivity* activity = sf::getNativeActivity();
-                    JNIEnv* lJNIEnv = NULL;
-                    (activity->vm)->AttachCurrentThread(&lJNIEnv, 0);
-                    
-                    // Retrieve the NativeActivity
-                    jobject ObjectNativeActivity = activity->clazz;
-                    jclass ClassNativeActivity = lJNIEnv->GetObjectClass(ObjectNativeActivity);
-                    
-                    // Retrieve the ActivityInfo
-                    jmethodID MethodGetAssetManager = lJNIEnv->GetMethodID(ClassNativeActivity, "getAssets", "()Landroid/content/res/AssetManager;");
-                    jobject ObjectAssetManager = lJNIEnv->CallObjectMethod(ObjectNativeActivity, MethodGetAssetManager);
-                    
-                    AAssetManager* mgr = AAssetManager_fromJava(lJNIEnv, ObjectAssetManager);
-                    AAsset* asset = AAssetManager_open(mgr, (utf8(path)).c_str(), AASSET_MODE_UNKNOWN);
-                    
-                    (activity->vm)->DetachCurrentThread();
-                    return (asset != nullptr);
+                    if (path[0] != L'/')
+                    {
+                        ANativeActivity* activity = sf::getNativeActivity();
+                        JNIEnv* lJNIEnv = NULL;
+                        (activity->vm)->AttachCurrentThread(&lJNIEnv, 0);
+                        
+                        // Retrieve the NativeActivity
+                        jobject ObjectNativeActivity = activity->clazz;
+                        jclass ClassNativeActivity = lJNIEnv->GetObjectClass(ObjectNativeActivity);
+                        
+                        // Retrieve the ActivityInfo
+                        jmethodID MethodGetAssetManager = lJNIEnv->GetMethodID(ClassNativeActivity, "getAssets", "()Landroid/content/res/AssetManager;");
+                        jobject ObjectAssetManager = lJNIEnv->CallObjectMethod(ObjectNativeActivity, MethodGetAssetManager);
+                        
+                        AAssetManager* mgr = AAssetManager_fromJava(lJNIEnv, ObjectAssetManager);
+                        AAsset* asset = AAssetManager_open(mgr, (utf8(path)).c_str(), AASSET_MODE_UNKNOWN);
+                        
+                        (activity->vm)->DetachCurrentThread();
+                        return (asset != nullptr);
+                    }
                 }
-            }
+    #endif
+                
+    #ifdef _WIN32
+                return _waccess_s(path.c_str(), 0) == 0;
+    #else
+                struct stat buffer;
+                std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+                std::string u8str = converter.to_bytes(path);
+                return (stat(u8str.c_str(), &buffer) == 0);
 #endif
-            
-#ifdef _WIN32
-            return _waccess_s(path.c_str(), 0) == 0;
-#else
-            struct stat buffer;
-            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-            std::string u8str = converter.to_bytes(path);
-            return (stat(u8str.c_str(), &buffer) == 0);
-#endif
+            } catch(std::exception& e) { cout << "Error :: FileExists :: " << e.what() << endl; return false; }
         }
         /// Thanks to Maxim Suslov ( https://stackoverflow.com/users/3364871/maxim-suslov ) ///
         bool CreateDirectory(const std::wstring& path)
         {
-#ifdef _WIN32
-            int ret = _wmkdir(path.c_str());
-#else
-            std::string upath = utf8(path);
-            mode_t mode = 0755;
-            int ret = mkdir(upath.c_str(), mode);
-#endif
-            if (ret == 0) return true;
-            switch (errno)
+            try
             {
-                case ENOENT:
-                    // parent didn't exist, try to create it
-                {
-                    int pos = path.find_last_of('/');
-                    if (pos == std::string::npos)
 #ifdef _WIN32
-                        pos = path.find_last_of('\\');
-                    if (pos == std::string::npos)
-#endif
-                        return false;
-                    if (!CreateDirectory( path.substr(0, pos) ))
-                        return false;
-                }
-                    // now, try to create again
-#ifdef _WIN32
-                    return (0 == _wmkdir(path.c_str()));
+                int ret = _wmkdir(path.c_str());
 #else
-                    return (0 == mkdir(upath.c_str(), mode));
+                std::string upath = utf8(path);
+                mode_t mode = 0755;
+                int ret = mkdir(upath.c_str(), mode);
+#endif
+                if (ret == 0) return true;
+                switch (errno)
+                {
+                    case ENOENT: // parent didn't exist, try to create it
+                    {
+                        int pos = path.find_last_of('/');
+                        if (pos == std::string::npos)
+#ifdef _WIN32
+                            pos = path.find_last_of('\\');
+                        if (pos == std::string::npos)
+#endif
+                            return false;
+                        if (!CreateDirectory( path.substr(0, pos) ))
+                            return false;
+                    }
+                        // now, try to create again
+#ifdef _WIN32
+                        return (0 == _wmkdir(path.c_str()));
+#else
+                        return (0 == mkdir(upath.c_str(), mode));
 #endif
                     
-                case EEXIST: return FileExists(path); // done!
-                default: return false;
-            }
+                    case EEXIST: return FileExists(path); // done!
+                    default: return false;
+                }
+            } catch(...) { throw; }
         }
         
         
@@ -155,7 +164,8 @@ namespace ns
                 if (p.length() && p[p.length() - 1] != L'/') p += L"/";
                 return p;
             }
-            else {
+            else
+            {
                 pos = path.find_last_of(L'\\');
                 if (pos != std::wstring::npos)
                 {
@@ -181,6 +191,14 @@ namespace ns
             unsigned long pos = filename.find_last_of(L'.');
             if (pos != std::wstring::npos) return filename.substr(0, pos);
             else return filename;
+        }
+        std::wstring GetFilenameWOProhibited(const std::wstring& filename)
+        {
+            std::wstring wstr = filename; std::size_t pos;
+            pos = wstr.find('\0'); if (pos != std::string::npos) wstr = wstr.replace(pos, 1, L"_");
+            pos = wstr.find('/'); if (pos != std::string::npos)  wstr = wstr.replace(pos, 1, L"_");
+            pos = wstr.find('\\'); if (pos != std::string::npos) wstr = wstr.replace(pos, 1, L"_");
+            return wstr;
         }
         
         
@@ -280,7 +298,16 @@ namespace ns
                 if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
                     parsingString += (char)stringValue[i];
             
-            return std::atoi(parsingString.c_str());
+            try { return std::atoi(parsingString.c_str()); } catch(...) { throw; }
+        }
+        long atol(const std::wstring& stringValue)
+        {
+            std::string parsingString = "";
+            for (int i = 0; stringValue[i] != '\0'; i++)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
+                    parsingString += (char)stringValue[i];
+            
+            try { return std::atol(parsingString.c_str()); } catch(...) { throw; }
         }
         int ConvertToInt(const std::string& stringValue)
         {
@@ -289,7 +316,7 @@ namespace ns
                 if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
                     parsingString += (char)stringValue[i];
             
-            return std::atoi(parsingString.c_str());
+            try { return std::atoi(parsingString.c_str()); } catch(...) { throw; }
         }
         float atof(const std::wstring& stringValue)
         {
@@ -298,7 +325,7 @@ namespace ns
                 if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 44 || stringValue[i] == 46 || stringValue[i] == '-')
                     parsingString += (char)stringValue[i];
             
-            return std::atof(parsingString.c_str());
+            try { return std::atof(parsingString.c_str()); } catch(...) { throw; }
         }
         bool atob(const std::wstring& stringValue)
         {
@@ -306,19 +333,6 @@ namespace ns
                 return true;
             else
                 return false;
-        }
-        
-        
-        
-        int64_t power(int num, int by)
-        {
-            if (by == 0)
-                return 1;
-            
-            int64_t res = num;
-            for (int i = 1; i < by; i++)
-                res *= num;
-            return res;
         }
     }
 }

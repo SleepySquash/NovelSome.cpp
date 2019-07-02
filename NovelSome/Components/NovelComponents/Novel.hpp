@@ -62,6 +62,10 @@ namespace ns
     namespace NovelComponents
     {
         struct Novel;
+        struct NovelLoader : Component {
+            std::wstring fileName; NovelInfo* nvl; NovelSystem* system;
+            NovelLoader(const std::wstring& fileName, NovelSystem* system, NovelInfo* nvl);
+            void Update(const sf::Time& elapsedTime) override; };
         struct EventListener : NovelObject, Savable
         {
             Novel* novel;
@@ -72,14 +76,17 @@ namespace ns
         };
         struct Novel : Component
         {
-            std::wstring nsdataPath{ L"" }, folderPath{ L"" }, scenarioPath{ L"" }, line;
+            std::wstring nsdataPath{ L"" }, folderPath{ L"" }, scenarioPath{ L"" }, scenario{ L"" }, line;
             std::wifstream wif;
+            unsigned long position{ 0 };
             nss::CommandSettings command;
             list<std::wstring> lines, execute;
             int preloadLinesAmount{ 12 }, executeOnHold{ 0 }, executeHoldSize{ 0 };
             list<std::wstring>::iterator executePosInsert;
             
-            bool eof{ false }, fileOpened{ false };
+            sf::Time timeReading; float nextAutosave{ gs::autosaveDeltaTime };
+            
+            bool eof{ false }, fileOpened{ false }, noDestroyMessage{ false };
             list<NovelObject*> onHold, onExecute;
             
             NovelInfo* nvl{ nullptr };
@@ -98,8 +105,7 @@ namespace ns
             list<GUISystem*> GUIGroup;
             
             Novel(const std::wstring& path, NovelInfo* nvl = nullptr);
-            Novel(NovelInfo* nvl);
-            ~Novel();
+            Novel(NovelInfo* nvl); ~Novel();
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);

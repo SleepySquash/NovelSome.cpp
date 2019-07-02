@@ -38,6 +38,9 @@
 // __linux__
 // __unix__
 
+using std::cout;
+using std::endl;
+
 #undef CreateDirectory
 namespace ns
 {
@@ -57,16 +60,16 @@ namespace ns
         std::wstring GetFolderPath(const std::wstring& path);
         std::wstring GetExtentionFromString(const std::wstring& filename);
         std::wstring GetStringWithNoExtention(const std::wstring& filename);
+        std::wstring GetFilenameWOProhibited(const std::wstring& filename);
         
         size_t GetLengthWONewLinesAndSpaces(const std::wstring& string);
         
         std::wstring LowercaseTheString(const std::wstring& str);
         int atoi(const std::wstring& stringValue);
+        long atol(const std::wstring& stringValue);
         int ConvertToInt(const std::string& stringValue);
         float atof(const std::wstring& stringValue);
         bool atob(const std::wstring& stringValue);
-        
-        int64_t power(int num, int by);
     }
 }
 

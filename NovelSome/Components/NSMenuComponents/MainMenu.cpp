@@ -16,38 +16,44 @@ namespace ns
         MainMenu::~MainMenu() { ic::DeleteImage(L"Data/Images/background.jpg"); }
         void MainMenu::Init()
         {
-            sf::Texture* texture = ic::RequestHigherTexture(L"Data/Images/background.jpg", entity);//ic::LoadTexture(L"Data/Images/background.jpg");
+            sf::Texture* texture = ic::RequestHigherTexture(L"Data/Images/background.jpg", entity);
             if ((spriteLoaded = texture))
             {
                 background.setTexture(*texture);
                 background.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
             }
+            texture = ic::RequestHigherTexture(L"Data/Images/blur.jpg", entity);
+            if ((spriteLoaded = texture))
+            {
+                blur.setTexture(*texture);
+                blur.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+            }
             
             
-            tempButton.setString(L"Привет! Я кнопка справа.");
+            /*tempButton.setString(L"Привет! Я кнопка справа.");
             tempButton.setCharacterSize(60); tempButton.thickness = 2;
-            tempButton.setFont(L"Pacifica.ttf"); tempButton.halign = Halign::Right;
+            tempButton.setFont(L"Pacifica.ttf"); tempButton.halign = Halign::Right;*/
             
             novelSelected = Novels::info.end();
             if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf")))) welcomeToNovelSome.setFont(*fc::GetFont(L"Pacifica.ttf"));
             welcomeToNovelSome.setFillColor(sf::Color::White);
             welcomeToNovelSome.setOutlineColor(sf::Color::Black);
-            welcomeToNovelSome.setString("Welcome to the NovelSome");
+            //welcomeToNovelSome.setString(lang::get("Welcome to the") + L" NovelSome");
             
-            novelsButton.setString(L"Novel selection >");
+            novelsButton.setString(lang::get("Novel selection") + L" >");
             novelsButton.setFont(L"Pacifica.ttf");
             novelsButton.setCharacterSize(67);
             
-            editorButton.setString(L"Editor >");
+            editorButton.setString(lang::get("Editor") + L" >");
             editorButton.setFont(L"Pacifica.ttf");
             editorButton.setCharacterSize(67);
             
-            settingsButton.setString(L"Settings >");
+            settingsButton.setString(lang::get("Settings") + L" >");
             settingsButton.setFont(L"Pacifica.ttf");
             settingsButton.setCharacterSize(67);
             
 #if !defined(SFML_SYSTEM_IOS) && !defined(SFML_SYSTEM_ANDROID)
-            exitButton.setString(L"Exit");
+            exitButton.setString(lang::get("Exit"));
             exitButton.setFont(L"Pacifica.ttf");
             exitButton.setCharacterSize(67);
 #endif
@@ -65,7 +71,7 @@ namespace ns
             novelsButton.characterScale = editorButton.characterScale = settingsButton.characterScale = exitButton.characterScale = accountButton.characterScale = backButton.characterScale = languageButton.characterScale = true;
             novelsButton.thickness = editorButton.thickness = settingsButton.thickness = exitButton.thickness = accountButton.thickness = languageButton.thickness = backButton.thickness = 2;
             
-            backButton.setString(L"< BACK");
+            backButton.setString(L"< " + lang::get("BACK"));
             backButton.setFont(L"Pacifica.ttf");
             backButton.setCharacterSize(81);
             backButton.halign = Halign::Left;
@@ -77,18 +83,61 @@ namespace ns
             
             novelBackShape.setFillColor(sf::Color(0,0,0, 170));
             novelBackShape.setOutlineColor(sf::Color(255,255,255,190));
-            novelStartButton.setString(L"Read");
+            novelStartButton.setString(lang::get("Read"));
             novelStartButton.setFont(L"Pacifica.ttf");
             novelStartButton.setCharacterSize(72);
             novelStartButton.thickness = 2;
             novelStartButton.valign = Valign::Bottom;
             
-            if ((fontLoaded = (fc::GetFont(L"Pacifica.ttf") != nullptr))) novelText.setFont(*fc::GetFont(L"Pacifica.ttf"));
+            if ((fontLoaded = fc::GetFont(L"Pacifica.ttf"))) novelText.setFont(*fc::GetFont(L"Pacifica.ttf"));
             novelText.setFillColor(sf::Color::White);
             novelText.setOutlineColor(sf::Color::Black);
             
+            
+            fieldTextUsername.setFont(*fc::GetFont(L"Pacifica.ttf"));
+            fieldTextUsername.setOutlineColor(sf::Color::Black);
+            fieldTextUsername.setString(lang::get("Account"));
+            fieldTextPassword.setFont(*fc::GetFont(L"Pacifica.ttf"));
+            fieldTextPassword.setOutlineColor(sf::Color::Black);
+            fieldTextPassword.setString(lang::get("Password"));
+            usernameField.characterSize = 32; usernameField.setFont(L"Pacifica.ttf");
+            passwordField.characterSize = 32; passwordField.setFont(L"Pacifica.ttf");
+            usernameField.Init(); passwordField.Init();
+            
+            loginButton.setFont(L"Pacifica.ttf");
+            loginButton.setCharacterSize(72);
+            loginButton.setString(lang::get("Login"));
+            registerButton.setFont(L"Pacifica.ttf");
+            registerButton.setCharacterSize(42);
+            registerButton.setString(lang::get("Registration"));
+            loginButton.thickness = registerButton.thickness = 2.f;
+            loginButton.characterScale = registerButton.characterScale = true;
+            
+            
+            languageButtons.drawShape = false;
+            languageButtons.setFont(L"Pacifica.ttf");
+            languageButtons.setCharacterSize(72);
+            languageButtons.thickness = 2.f;
+            
             //guiSystem.LoadFromFile(L"Novels/Bundle/skin.nskin", L"test2");
             //guiSystem.SetAlpha(255);
+        }
+        void MainMenu::Update(const sf::Time &elapsedTime)
+        {
+            if (updateBlur)
+            {
+                gs::requestWindowRefresh = true;
+                if (elapsedBlur < 0.14) elapsedBlur += elapsedTime.asSeconds();
+                if (elapsedBlur >= 0.14) { updateBlur = false; elapsedBlur = 0.14; }
+                if (blurState == Blur::appearing) blurAlpha = (elapsedBlur/0.14f) * 255;
+                else blurAlpha = 255 - (elapsedBlur/0.14f) * 255;
+                blur.setColor(sf::Color(blur.getColor().r, blur.getColor().g, blur.getColor().b, blurAlpha));
+                if (!updateBlur)
+                {
+                    drawBlur = (blurState == Blur::appearing);
+                    elapsedBlur = 0; blurState = Blur::existing;
+                }
+            }
         }
         void MainMenu::ChangePageTo(const Page& to)
         {
@@ -99,12 +148,13 @@ namespace ns
         }
         void MainMenu::PollEvent(sf::Event& event)
         {
-            if (!active) return;
+            if (!active /*|| gs::ignoreEvent*/) return;
             
             if (doParallax && event.type == sf::Event::MouseMoved)
             {
                 if (novelShowBackground && page == Page::Novels) CalculateParallax(novelBackground, event.mouseMove.x, event.mouseMove.y);
-                else CalculateParallax(background, event.mouseMove.x, event.mouseMove.y);
+                else { if (drawBlur) CalculateParallax(blur, event.mouseMove.x, event.mouseMove.y);
+                    CalculateParallax(background, event.mouseMove.x, event.mouseMove.y); }
             }
             
             float yy;
@@ -114,7 +164,8 @@ namespace ns
                     if (novelsButton.PollEvent(event))
                     {
                         if (doParallax && novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
-                        page = Page::Novels; if (novelMusic.getStatus() == sf::Music::Status::Paused) novelMusic.play();
+                        page = Page::Novels; BlurAppear();
+                        if (novelMusic.getStatus() == sf::Music::Status::Paused) novelMusic.play();
                         if (!novelsLoaded) {
                             novelsLoaded = Novels::LoadNovels(); CalculateScrollBounds();
                             if (yyNovels_to == yyNovels_from) yyNovels = yyNovels_to;
@@ -126,20 +177,21 @@ namespace ns
                             }
                         }
                     }
-                    else if (editorButton.PollEvent(event)) page = Page::Editor;
-                    else if (settingsButton.PollEvent(event)) page = Page::Settings;
+                    else if (editorButton.PollEvent(event)) { page = Page::Editor; BlurAppear(); }
+                    else if (settingsButton.PollEvent(event)) { page = Page::Settings; entity->SendMessage({"SettingsUI"}); BlurAppear(); }
 #if !defined(SFML_SYSTEM_IOS) && !defined(SFML_SYSTEM_ANDROID)
                     else if (exitButton.PollEvent(event)) exit(0);
 #endif
-                    else if (accountButton.PollEvent(event)) { /* ... */ }
-                    else if (languageButton.PollEvent(event)) page = Page::Language;
+                    else if (accountButton.PollEvent(event)) { page = Page::Account; BlurAppear(); gs::listenForTextInput = true; }
+                    else if (languageButton.PollEvent(event)) { if (!Languages::languagesLoaded) Languages::LoadLanguages(); BlurAppear(); page = Page::Language; }
                     break;
                 case Page::Novels:
                     if (backButton.PollEvent(event))
                     {
                         novelButtons.anyButtonPressed = false;
                         if (isNovelSelected && gs::verticalOrientation) UnselectNovel();
-                        else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
+                        else { page = Page::Main; BlurDisappear(); novelMusic.pause();
+                            if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
                     }
                     else
                     {
@@ -155,7 +207,8 @@ namespace ns
                         else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right))
                         {
                             if (isNovelSelected && gs::verticalOrientation) UnselectNovel();
-                            else { page = Page::Main; novelMusic.pause(); if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
+                            else { page = Page::Main; BlurDisappear(); novelMusic.pause();
+                                if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
                         }
                         else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Down && isNovelSelected) {
                             ++novelSelected; if (novelSelected == Novels::info.end()) novelSelected = Novels::info.begin();
@@ -210,29 +263,28 @@ namespace ns
                                 
                                 if (wif.is_open())
                                 {
-                                    std::wstring line;
-                                    nss::CommandSettings command;
+                                    std::wstring line; nss::CommandSettings command; bool countLines{ false }; int linesRead{ 0 };
                                     while (!wif.eof() && !done)
                                     {
-                                        std::getline(wif, line);
-                                        command.Command(line);
-                                        
-                                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                                        std::getline(wif, line); command.Command(line);
+                                        if (nss::Command(command, L"scenario ")) { scenario = nss::ParseAsMaybeQuoteString(command); countLines = true; }
+                                        else if (nss::Command(command, L"scenario:" + utf16(lang::currentLanguage))) { scenario = nss::ParseAsMaybeQuoteString(command); done = true; }
+                                        else if (nss::Command(command, L"scenario:")) linesRead = 0;
+                                        else if (countLines) { ++linesRead; if (linesRead > 5) done = true; }
                                     }
-                                    
                                     wif.close();
                                 }
                                 
                                 active = !(scenario != L"");
-                                if (!active) {
-                                    novelMusic.pause();
-                                    entity->AddComponent<NovelComponents::Novel>(base::GetFolderPath((*novelSelected).path) + scenario, &(*novelSelected)); }
+                                if (!active) { novelMusic.pause();
+                                    entity->AddComponent<NovelComponents::Novel>(scenario, &(*novelSelected)); }
                                 else cout << "MainMenu :: PollEvent :: Novel start failed with no scenario found." << endl;
                             }
                             
                             if (unselectNovelSelected)
                             {
-                                if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                                if (doParallax) { if (drawBlur) CalculateParallax(blur, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                                    CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
                                 sf::Vector2i dot; if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y }; else dot = { event.touch.x, event.touch.y };
                                 unselectNovelSelected = !novelBackShape.getGlobalBounds().contains(dot.x, dot.y);
                                 if (unselectNovelSelected)
@@ -246,17 +298,49 @@ namespace ns
                         }
                     }
                     break;
-                case Page::Editor: if (backButton.PollEvent(event)) page = Page::Main;
-                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
+                case Page::Editor: if (backButton.PollEvent(event)) { page = Page::Main; BlurDisappear(); }
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) { page = Page::Main; BlurDisappear(); }
                     break;
-                case Page::Settings: if (backButton.PollEvent(event)) page = Page::Main;
-                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
-                    else if (tempButton.PollEvent(event)) { gs::drawGUIBoundaries = !gs::drawGUIBoundaries;
-                        if (gs::drawGUIBoundaries) tempButton.setString(L"Да, рисуем границы!!!");
-                        else tempButton.setString(L"О нет! Границы не рисуем!"); }
+                case Page::Settings: /*if (backButton.PollEvent(event)) page = Page::Main;
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;*/
                     break;
-                case Page::Language: if (backButton.PollEvent(event)) page = Page::Main;
-                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) page = Page::Main;
+                case Page::Language:
+                    if (gs::ignoreEvent) return;
+                    if (backButton.PollEvent(event)) { page = Page::Main; BlurDisappear(); }
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) { page = Page::Main; BlurDisappear(); }
+                    else
+                    {
+                        yy = 100*gs::scale; int i = 0;
+                        for (auto& l : Languages::list)
+                        {
+                            languageButtons.setString(l.name);
+                            languageButtons.shape.setSize({(float)gs::width, 50.f});
+                            languageButtons.setPosition(0, yy);
+                            languageButtons.index = i++;
+                            if (languageButtons.PollEvent(event))
+                            {
+                                if (l.initials == "en" && lang::currentLanguage != "en") {
+                                    lang::Default(); lang::SaveData();
+                                    entity->AddComponent<NekoNinja::Popup>(L"You've changed the language!", L"For the changes to take effect you must restart the NovelSome.");
+                                }
+                                else if (lang::currentLanguage != l.initials) {
+                                    lang::Load(l.path); lang::SaveData();
+                                    entity->AddComponent<NekoNinja::Popup>(L"You've changed the language!", L"For the changes to take effect you must restart the NovelSome.");
+                                }
+                                break;
+                            }
+                            yy += languageButtons.text.getGlobalBounds().height;
+                        }
+                        languageButtons.eventPolled(event);
+                    }
+                    break;
+                case Page::Account:
+                    if (usernameField.PollEvent(event)) { gs::username = usernameField.string; cout << utf8(gs::username) << endl; }
+                    if (passwordField.PollEvent(event)) { gs::password = passwordField.string; cout << gs::password << endl; }
+                    else if (loginButton.PollEvent(event)) { HeavensGate::Client::Send("Login request: " + utf8(gs::username) + " : " + gs::password); }
+                    else if (registerButton.PollEvent(event)) { HeavensGate::Client::Send("Register request: " + utf8(gs::username) + " : " + gs::password); }
+                    else if (backButton.PollEvent(event)) { page = Page::Main; BlurDisappear(); gs::listenForTextInput = false; }
+                    else if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape) || (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Right)) { page = Page::Main; BlurDisappear(); usernameField.setActive(false); passwordField.setActive(false); gs::listenForTextInput = false; }
                     break;
                 default: break;
             }
@@ -272,10 +356,13 @@ namespace ns
                 float scaleFactor = factorX > factorY ? factorX : factorY;
                 background.setScale(scaleFactor, scaleFactor);
                 background.setPosition(width/2, height/2);
+                
+                blur.setScale(scaleFactor, scaleFactor);
+                blur.setPosition(width/2, height/2);
             }
             
-            tempButton.Resize(width, height);
-            tempButton.setPosition(width/3, 3*height/4);
+            /*tempButton.Resize(width, height);
+            tempButton.setPosition(width/3, 3*height/4);*/
             
             welcomeToNovelSome.setCharacterSize(108 * gs::scScale);
             welcomeToNovelSome.setOutlineThickness(2 * gs::scScale);
@@ -298,9 +385,10 @@ namespace ns
             languageButton.Resize(width, height);
             languageButton.setPosition(10*gs::scale, gs::height - 20*gs::scale);
             accountButton.Resize(width, height);
+            if (!HeavensGate::Client::connected) accountButton.setString(L"Heaven's Gate disabled");
             accountButton.setPosition(gs::width/2, 30*gs::scale);
             backButton.Resize(width, height);
-            backButton.setPosition(40*gs::scalex, gs::height - 50*gs::scaley);
+            backButton.setPosition(40*gs::scalex, gs::height - 40*gs::scaley);
             
             float yy = gs::height/2.4 - welcomeToNovelSome.getGlobalBounds().height/2;
             welcomeToNovelSome.setPosition(gs::width/2, yy); yy += welcomeToNovelSome.getGlobalBounds().height + 25*gs::scale;
@@ -349,8 +437,38 @@ namespace ns
             if (doParallax)
             {
                 if (novelShowBackground) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
-                else CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                else { if (drawBlur) CalculateParallax(blur, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                    CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
             }
+            
+            
+            fieldTextUsername.setCharacterSize(29 * gs::scScale);
+            fieldTextUsername.setOutlineThickness(2 * gs::scale);
+            fieldTextUsername.setOrigin(0, fieldTextUsername.getLocalBounds().height);
+            fieldTextPassword.setCharacterSize(29 * gs::scScale);
+            fieldTextPassword.setOutlineThickness(2 * gs::scale);
+            fieldTextPassword.setOrigin(0, fieldTextPassword.getLocalBounds().height);
+            usernameField.Resize(width, height);
+            passwordField.Resize(width, height);
+            if (gs::verticalOrientation) {
+                usernameField.shape.setSize({gs::width/1.2f, 60*gs::scaley});
+                passwordField.shape.setSize({gs::width/1.2f, 60*gs::scaley});
+            } else {
+                usernameField.shape.setSize({480*gs::scalex, 60*gs::scaley});
+                passwordField.shape.setSize({480*gs::scalex, 60*gs::scaley}); }
+            
+            usernameField.setPosition(gs::width/2 - usernameField.shape.getSize().x/2, gs::height/2 - 75*gs::scaley);
+            passwordField.setPosition(gs::width/2 - passwordField.shape.getSize().x/2, gs::height/2 + 15*gs::scaley);
+            fieldTextUsername.setPosition(usernameField.text.getPosition().x, usernameField.shape.getPosition().y - 5*gs::scaley);
+            fieldTextPassword.setPosition(passwordField.text.getPosition().x, passwordField.shape.getPosition().y - 5*gs::scaley);
+            
+            loginButton.Resize(width, height);
+            loginButton.setPosition(gs::width/2, passwordField.shape.getPosition().y + passwordField.shape.getGlobalBounds().height + 30*gs::scaley);
+            registerButton.Resize(width, height);
+            registerButton.setPosition(gs::width/2, loginButton.text.getGlobalBounds().top + loginButton.text.getGlobalBounds().height + 22*gs::scaley);
+            
+            
+            languageButtons.Resize(width, height);
         }
         void MainMenu::CalculateScrollBounds()
         {
@@ -372,9 +490,9 @@ namespace ns
         }
         void MainMenu::Draw(sf::RenderWindow* window)
         {
-            if (!active) return;
+            if (!active || gs::ignoreDraw) return;
             if (novelShowBackground && page == Page::Novels) window->draw(novelBackground);
-            else window->draw(background);
+            else { if (!drawBlur || blurAlpha != 255) window->draw(background); if (drawBlur) window->draw(blur); }
             
             float yy; int i = 0; bool sizeChanged{ false };
             switch (page)
@@ -429,16 +547,37 @@ namespace ns
                     backButton.Draw(window);
                     break;
                 case Page::Editor: backButton.Draw(window); break;
-                case Page::Settings: backButton.Draw(window); tempButton.Draw(window); break;
-                case Page::Language: backButton.Draw(window); break;
+                case Page::Settings: /*backButton.Draw(window); tempButton.Draw(window);*/ break;
+                case Page::Language:
+                    yy = 100*gs::scale; i = 0;
+                    for (auto& l : Languages::list)
+                    {
+                        if (lang::currentLanguage == l.initials) languageButtons.setString(L"> " + l.name + L" <");
+                        else languageButtons.setString(l.name);
+                        languageButtons.shape.setSize({(float)gs::width, 50.f});
+                        languageButtons.setPosition(0, yy);
+                        languageButtons.index = i++;
+                        languageButtons.Draw(window);
+                        yy += languageButtons.text.getGlobalBounds().height;
+                    }
+                    backButton.Draw(window); break;
+                case Page::Account:
+                    usernameField.Draw(window);
+                    passwordField.Draw(window);
+                    window->draw(fieldTextUsername);
+                    window->draw(fieldTextPassword);
+                    loginButton.Draw(window);
+                    registerButton.Draw(window);
+                    backButton.Draw(window); break;
                 default: break;
             }
             
             //guiSystem.Draw(window);
         }
+        
         void MainMenu::ReceiveMessage(MessageHolder& message)
         {
-            if (message.info == "NovelComponents :: Novel :: Destroying")
+            if (message.info == "Novel :: Destroying")
             {
                 active = true;
                 if (novelMusic.getStatus() == sf::Music::Status::Paused) {
@@ -448,27 +587,7 @@ namespace ns
             }
             else if (nss::Command(message.info, "Request"))
             {
-                if (message.additional == L"Data/Images/background.jpg")
-                {
-                    spriteLoaded = false;
-                    sf::Texture* texture = ic::LoadTexture(L"Data/Images/background.jpg");
-                    if (texture)
-                    {
-                        background.setTexture(*texture, true);
-                        background.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
-                        
-                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
-                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
-                        float scaleFactor = factorX > factorY ? factorX : factorY;
-                        background.setScale(scaleFactor, scaleFactor);
-                        background.setPosition(gs::width/2, gs::height/2);
-                        
-                        if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
-                        
-                        spriteLoaded = true;
-                    }
-                }
-                else if (message.additional == novelBackTexture && novelShowBackground)
+                if (message.additional == novelBackTexture && novelShowBackground)
                 {
                     sf::Texture* texture = ic::LoadTexture(novelBackTexture);
                     if (texture)
@@ -483,7 +602,42 @@ namespace ns
                         if (doParallax) CalculateParallax(novelBackground, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                     }
                 }
+                else if (message.additional == L"Data/Images/background.jpg")
+                {
+                    spriteLoaded = false;
+                    sf::Texture* texture = ic::LoadTexture(L"Data/Images/background.jpg");
+                    if (texture)
+                    {
+                        background.setTexture(*texture, true);
+                        background.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                        
+                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                        float scaleFactor = factorX > factorY ? factorX : factorY;
+                        background.setScale(scaleFactor, scaleFactor);
+                        background.setPosition(gs::width/2, gs::height/2);
+                        if (doParallax) CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                        spriteLoaded = true;
+                    }
+                }
+                else if (message.additional == L"Data/Images/blur.jpg")
+                {
+                    sf::Texture* texture = ic::LoadTexture(L"Data/Images/blur.jpg");
+                    if (texture)
+                    {
+                        blur.setTexture(*texture, true);
+                        blur.setOrigin(texture->getSize().x/2, texture->getSize().y/2);
+                        
+                        float factorX = (float)gs::width / texture->getSize().x * (doParallax? 1 + parallaxPower : 1);
+                        float factorY = (float)gs::height / texture->getSize().y * (doParallax? 1 + parallaxPower : 1);
+                        float scaleFactor = factorX > factorY ? factorX : factorY;
+                        blur.setScale(scaleFactor, scaleFactor);
+                        blur.setPosition(gs::width/2, gs::height/2);
+                        if (doParallax) CalculateParallax(blur, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+                    }
+                }
             }
+            else if (message.info == "SettingsUI :: Close") { page = Page::Main; BlurDisappear(); }
         }
         void MainMenu::CalculateParallax(sf::Sprite& sprite, int dotX, int dotY)
         {
@@ -527,6 +681,8 @@ namespace ns
                             back = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
                         else if (nss::Command(command, L"description ")) {
                             novelRawDescription = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
+                        else if (nss::Command(command, L"description:" + utf16(lang::currentLanguage) + L" "))
+                            novelRawDescription = nss::ParseAsMaybeQuoteString(command);
                         else if (nss::Command(command, L"author ")) {
                             novelAuthor = nss::ParseAsMaybeQuoteString(command); ++infoRead; }
                         else if (nss::Command(command, L"music "))
@@ -563,10 +719,10 @@ namespace ns
                         novelShowBackground = true;
                     }
                 }
-                if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = L"Описание: ..."; }
+                if (novelRawDescription == L"") { novelRawDescription = novelTextDescription = lang::get("Description") + L": ..."; }
                 else
                 {
-                    novelRawDescription = L"Описание: " + novelRawDescription;
+                    novelRawDescription = lang::get("Description") + L": " + novelRawDescription;
                     novelText.setCharacterSize(35 * gs::scScale);
                     novelText.setPosition(novelBackShape.getPosition().x + 5*gs::scalex, 0);
                     novelTextDescription = nss::GetStringWithLineBreaks(novelText, novelRawDescription, novelBackShape.getSize().x - 10*gs::scalex, 0, 10*gs::scale);
@@ -593,6 +749,17 @@ namespace ns
         {
             if (novelShowBackground) { novelShowBackground = false; ic::DeleteImage(novelBackTexture); }
             isNovelSelected = false; novelMusic.stop();
+        }
+        void MainMenu::BlurAppear()
+        {
+            if (blurState == Blur::disappearing) elapsedBlur = 0.14 - elapsedBlur;
+            else if (doParallax) CalculateParallax(blur, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
+            blurState = Blur::appearing; drawBlur = updateBlur = true;
+        }
+        void MainMenu::BlurDisappear()
+        {
+            if (blurState == Blur::appearing) elapsedBlur = 0.14 - elapsedBlur;
+            blurState = Blur::disappearing; drawBlur = updateBlur = true;
         }
     }
 }

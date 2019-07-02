@@ -125,7 +125,7 @@ namespace ns
                 
                 if (spritePath.length() != 0)
                 {
-                    sf::Texture* texturePtr = ic::RequestHigherTexture(lookForSpritePath + spritePath, novelSystem, 2);
+                    sf::Texture* texturePtr = ic::RequestHigherTexture(lookForSpritePath + spritePath, /*novelSystem*/ic::globalRequestSender, 2);
                     if ((spriteLoaded = texturePtr))
                     {
                         imagePath = lookForSpritePath + spritePath;
@@ -146,7 +146,7 @@ namespace ns
                     novelSystem->PopComponent(this);
                 }
             }
-            else cout << "Error :: BackgroundComponent :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
+            else cout << "Error :: Character :: LoadImage :: No novel was loaded, pointer is NULL" << endl;
         }
         void Character::Resize(const unsigned int& width, const unsigned int& height)
         {
@@ -250,16 +250,86 @@ namespace ns
         {
             if (spriteLoaded)
             {
-                if (characterData) wof << L"character->name: " << characterData->name << endl;
-                if (state.length() != 0) wof << L"state: " << state << endl;
+                if (characterData) wof << L"name: " << characterData->name << endl;
                 if (position != center) wof << L"position: " << position << endl;
+                if (state.length() != 0) wof << L"state: " << state << endl;
                 
                 if (mode != existing)
                 {
                     wof << L"mode: " << mode << endl;
                     if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                    if (mode == appearing && ((Skin::self && appearTime != Skin::self->character.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
                 }
+                if ((Skin::self && disappearTime != Skin::self->character.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
+                if ((Skin::self && maxAlpha != Skin::self->character.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
+                if (sendMessageBack != atAppearance) wof << L"send: " << sendMessageBack << endl;
             }
+        }
+        std::pair<std::wstring, bool> Character::Load(std::wifstream& wif)
+        {
+            mode = existing; std::wstring line; nss::CommandSettings command; bool done{ false };
+            while (!done)
+            {
+                std::getline(wif, line); command.Command(line);
+                if (nss::Command(command, L"tag(")) done = true;
+                else if (nss::Command(command, L"name: "))
+                {
+                    std::wstring name = nss::ParseUntil(command, L'\n');
+                    auto it = CharacterLibrary::find(name);
+                    if (it != CharacterLibrary::library.end()) characterData = (*it).second;
+                }
+                else if (nss::Command(command, L"position: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: position = positionEnum::custom; break;
+                        case 1: position = positionEnum::left; break;
+                        case 2: position = positionEnum::cleft; break;
+                        case 4: position = positionEnum::cright; break;
+                        case 5: position = positionEnum::right; break;
+                        default: position = positionEnum::center; break;
+                    }
+                }
+                else if (nss::Command(command, L"state: ")) LoadState(nss::ParseUntil(command, L'\n'));
+                else if (nss::Command(command, L"mode: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: mode = modeEnum::appearing; break;
+                        case 2: mode = modeEnum::disappearing; break;
+                        case 3: mode = modeEnum::deprecated; break;
+                        default: mode = modeEnum::existing; break;
+                    }
+                }
+                else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"appeartime: ")) appearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"disappeartime: ")) disappearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"parallaxpower: ")) parallaxPower = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"visible: ")) visible = nss::ParseAsBool(command);
+                else if (nss::Command(command, L"maxalpha: ")) maxAlpha = nss::ParseAsInt(command);
+                else if (nss::Command(command, L"send: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
+                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
+                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
+                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                    }
+                }
+                if (wif.eof()) done = true;
+            }
+            
+            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            else alpha = maxAlpha;
+            if (spriteLoaded) sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
+            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            
+            return { line, onHold };
         }
     }
 }

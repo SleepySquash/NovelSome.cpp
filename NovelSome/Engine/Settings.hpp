@@ -65,6 +65,11 @@ namespace ns
         static bool isPauseEnabled, isPause, inGame;
         static bool ignoreEvent, ignoreDraw;
         static bool requestWindowRefresh;
+        static float autosaveDeltaTime;
+        
+        static bool listenForTextInput, rememberUsername, rememberPassword;
+        static std::wstring username;
+        static std::string password;
         
         static std::vector<void*> activeInterfaces;
         static void PushInterface(void*);
@@ -73,7 +78,7 @@ namespace ns
         
         static bool isParallaxEnabled;
         static float defaultParallaxBackground, defaultParallaxFar, defaultParallaxNormal, defaultParallaxClose, defaultParallaxFrontground;
-        static float maxVolumeGlobal, maxVolumeMusic, maxVolumeAmbeint, maxVolumeSound;
+        static float maxVolumeGlobal, maxVolumeMusic, maxVolumeAmbient, maxVolumeSound;
         
         static bool forcePressInsideDialogue, drawGUIBoundaries;
     };

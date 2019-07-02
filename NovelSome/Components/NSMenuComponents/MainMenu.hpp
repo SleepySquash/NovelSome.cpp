@@ -30,10 +30,14 @@
 #include "../../Engine/Settings.hpp"
 #include "../../Engine/GUIInterface.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
+#include "../../Engine/Client.hpp"
+#include "../../Engine/Language.hpp"
 
 #include "NovelsLibrary.hpp"
+#include "LanguageLibrary.hpp"
 #include "../NovelComponents/Novel.hpp"
 #include "../NovelComponents/GUISystem.hpp"
+#include "../Interfaces/Popup.hpp"
 
 using std::cin;
 using std::cout;
@@ -45,15 +49,19 @@ namespace ns
 {
     namespace NSMenuComponents
     {
-        struct MainMenu : public Component
+        struct MainMenu : Component
         {
             NovelComponents::GUISystem guiSystem;
             
             bool active{ true };
             sf::Sprite background;
             bool spriteLoaded{ false };
-            enum class Page { Main, Novels, Editor, Settings, Language };
+            enum class Page { Main, Novels, Editor, Settings, Language, Account };
             Page page{ Page::Main };
+            
+            sf::Sprite blur; sf::Uint8 blurAlpha{ 0 };
+            bool drawBlur{ false }, updateBlur{ false }; float elapsedBlur{ 0 };
+            enum class Blur { appearing, disappearing, existing } blurState{ Blur::existing };
             
             bool doParallax{ gs::isParallaxEnabled };
             float parallaxPower{ gs::defaultParallaxBackground };
@@ -67,7 +75,6 @@ namespace ns
             GUI::TextButton accountButton;
             GUI::TextButton languageButton;
             GUI::TextButton backButton;
-            GUI::TextButton tempButton;
             
             long yyNovels{ 0 }, yyNovels_from{ 0 }, yyNovels_to{ 0 };
             bool isNovelSelected{ false };
@@ -89,9 +96,16 @@ namespace ns
             int scrollThershold{ 30 }, scrolldx{ 0 };
             sf::Vector2i scrollDot{ 0, 0 }, dot{ 0, 0 };
             
+            sf::Text fieldTextUsername, fieldTextPassword;
+            GUI::TextField usernameField, passwordField;
+            GUI::TextButton loginButton, registerButton;
+            
+            GUI::RectangleButtons languageButtons;
+            
             MainMenu();
             ~MainMenu();
             void Init() override;
+            void Update(const sf::Time& elapsedTime) override;
             void PollEvent(sf::Event& event) override;
             void Resize(const unsigned int& width, const unsigned int& height) override;
             void Draw(sf::RenderWindow* window) override;
@@ -101,6 +115,8 @@ namespace ns
             void SelectNovel(list<NovelInfo>::iterator& it, bool focus = true, bool force = false);
             void UnselectNovel();
             void ChangePageTo(const Page& to);
+            void BlurAppear();
+            void BlurDisappear();
         };
     }
 }

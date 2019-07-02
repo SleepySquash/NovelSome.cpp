@@ -1,0 +1,24 @@
+%version 1
+%name ru
+%display Русский
+
+Welcome to the = Добро пожаловать в
+Novel selection = Выбор новеллы
+Editor = Редактор
+Settings = Настройки
+Exit = Выйти
+BACK = НАЗАД
+Read = Читать
+Account = Аккаунт
+Password = Пароль
+Login = Логин
+Registration = Регистрация
+Description = Описание
+Loading = Загрузка
+Saving = Сохранение
+Load = Загрузить
+Save = Сохранить
+Customization = Кастомизация
+Graphics = Графика
+Sound = Звук
+Network = Сеть

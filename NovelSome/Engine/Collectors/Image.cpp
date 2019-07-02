@@ -236,7 +236,15 @@ namespace ns
                 std::wstring imageExtention = base::GetExtentionFromString(imageName);
                 std::wstring imageWoExtention = base::GetStringWithNoExtention(imageName);
                 if (images.find(imageWoExtention + prefix + imageExtention) != images.end())
+                {
+                    if (threads.find(imageName) == threads.end())
+                    {
+                        std::string message = "Requestp"; if (prefix == L"@0x") message = "Request0";
+                        threads.emplace(imageName, new std::thread(&ThreadImage, imageName, mode, true, true, message, sender));
+                    }
+                    else --images[imageWoExtention + prefix + imageExtention].usage;
                     return LoadTexture(imageWoExtention + prefix + imageExtention, mode);
+                }
                 sf::Texture* texture = LoadTexture(imageWoExtention + prefix + imageExtention, mode);
                 if (texture)
                 {
@@ -327,4 +335,5 @@ namespace ns
     std::unordered_map<std::wstring, ImageCollectorObject> ic::images;
     std::unordered_map<std::wstring, std::thread*> ic::threads;
     icThreadsJoiner ic::threadsJoiner;
+    MessageSender* ic::globalRequestSender{ nullptr };
 }

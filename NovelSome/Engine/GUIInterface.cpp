@@ -421,16 +421,18 @@ namespace ns
         {
             text.setFillColor(sf::Color::White);
             text.setOutlineColor(sf::Color::Black);
-            shape.setFillColor(shapeFillColor);
-            shape.setOutlineColor(sf::Color::White);
+            if (drawShape) {
+                shape.setFillColor(shapeFillColor);
+                shape.setOutlineColor(sf::Color::White); }
         }
-        void RectangleButtons::Draw(sf::RenderTarget* window) {
+        void RectangleButtons::Draw(sf::RenderTarget* window)
+        {
             if (fontLoaded && visible)
             {
                 if (shape.getSize().x < text.getGlobalBounds().width) { text.setScale(shape.getSize().x/(text.getGlobalBounds().width), 1); }
                 if (anyButtonPressed && index == pressedIndex) {
-                    shape.setFillColor(sf::Color::Yellow); text.setFillColor(sf::Color::Yellow); }
-                window->draw(shape); window->draw(text);
+                    shape.setFillColor(sf::Color::White); text.setFillColor(sf::Color::Yellow); }
+                if (drawShape) window->draw(shape); window->draw(text);
                 if (anyButtonPressed && index == pressedIndex) {
                     shape.setFillColor(shapeFillColor); text.setFillColor(sf::Color::White); }
                 text.setScale(1, 1);
@@ -442,11 +444,11 @@ namespace ns
             {
                 text.setCharacterSize(characterSize * gs::scScale);
                 text.setOutlineThickness(thickness * gs::scScale);
-                shape.setOutlineThickness(thickness * gs::scScale);
+                if (drawShape) shape.setOutlineThickness(thickness * gs::scScale);
             } else {
                 text.setCharacterSize(characterSize * gs::scale);
                 text.setOutlineThickness(thickness * gs::scale);
-                shape.setOutlineThickness(thickness * gs::scale);
+                if (drawShape) shape.setOutlineThickness(thickness * gs::scale);
             }
             text.setScale(1, 1);
         }
@@ -461,7 +463,7 @@ namespace ns
                 if (pressedIndex == index && (anyButtonPressed || ignoreWasPressed))
                 {
                     text.setFillColor(sf::Color::White); shape.setFillColor(shapeFillColor);
-                    bool constains = shape.getGlobalBounds().contains(dot.x, dot.y);
+                    bool constains = (drawShape ? shape.getGlobalBounds().contains(dot.x, dot.y) : text.getGlobalBounds().contains(dot.x, dot.y));
                     if (constains) { pressedIndex = -1; anyButtonPressed = false; event = sf::Event(); }
 
                     return constains;
@@ -472,7 +474,7 @@ namespace ns
                 if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y };
                 else dot = { event.touch.x, event.touch.y };
                 
-                bool wasPressed = shape.getGlobalBounds().contains(dot.x, dot.y);
+                bool wasPressed = (drawShape ? shape.getGlobalBounds().contains(dot.x, dot.y) : text.getGlobalBounds().contains(dot.x, dot.y));
                 if (wasPressed) { pressedIndex = index; anyButtonPressed = true; }
             }
             return false;
@@ -486,14 +488,17 @@ namespace ns
                 sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
-                shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
-                shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, realAlpha));
+                if (drawShape)
+                {
+                    shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
+                    shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, realAlpha));
+                }
             }
         }
         sf::Uint8 RectangleButtons::getAlpha() { return text.getOutlineColor().a; }
         void RectangleButtons::setPosition(float x, float y)
         {
-            shape.setPosition(x, y);
+            if (drawShape) shape.setPosition(x, y);
             switch (halign)
             {
                 case Halign::Left: text.setOrigin(0, text.getOrigin().y); text.setPosition(x, text.getPosition().y); break;
@@ -518,8 +523,8 @@ namespace ns
         void RectangleButtons::setSize(const sf::Vector2f& vec) { shape.setSize(vec); }
         void RectangleButtons::setFont(const std::wstring& fontname)
         {
-            if ((fontLoaded = (fc::GetFont(fontname) != nullptr)))
-                text.setFont(*fc::GetFont(fontname));
+            sf::Font* font = fc::GetFont(fontname);
+            if ((fontLoaded = font)) text.setFont(*font);
         }
         void RectangleButtons::setString(const std::wstring& string) { text.setString(string); }
         void RectangleButtons::setCharacterSize(const unsigned int size)
@@ -528,5 +533,87 @@ namespace ns
             text.setCharacterSize(size * gs::scale);
         }
         void RectangleButtons::setColor(const sf::Color& fillColour) { text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
+        
+        
+        
+        
+        void TextField::Init()
+        {
+            shape.setFillColor(sf::Color(0, 0, 0, 130));
+            shape.setOutlineColor(sf::Color(255,255,255, 100));
+        }
+        bool TextField::PollEvent(sf::Event& event)
+        {
+            if (active && event.type == sf::Event::TextEntered)
+            {
+                elapsedBlink = 0.5f; drawBlink = true;
+                if (event.text.unicode == 8) { if (string.getSize() > 0) string.erase(string.getSize() - 1); }
+                else if (event.text.unicode == 13) active = false;
+                else if (event.text.unicode != 9) string += event.text.unicode; text.setString(string);
+            }
+            else if (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded || (active && event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Enter))
+            {
+                if (event.type == sf::Event::KeyPressed) active = false;
+                else if (event.type == sf::Event::MouseButtonReleased) active = shape.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y);
+                else active = shape.getGlobalBounds().contains(event.touch.x, event.touch.y);
+            }
+            
+            setActive(active);
+            
+            return false;
+        }
+        void TextField::setActive(const bool& act)
+        {
+            if (wasActive != active)
+            {
+                // TODO: При включённой клавиатуре, если окошко не попадает в экран, то вытягивать его наверх.
+                wasActive = active;
+                if (active)
+                {
+                    sf::Keyboard::setVirtualKeyboardVisible(true);
+                    shape.setOutlineThickness(2 * gs::scale);
+                    shape.setOutlineColor(sf::Color(255,255,255, 255));
+                    shape.setFillColor(sf::Color(0, 0, 0, 210));
+                    elapsedBlink = 0.5f; drawBlink = true;
+                }
+                else
+                {
+                    sf::Keyboard::setVirtualKeyboardVisible(false);
+                    shape.setOutlineThickness(gs::scale);
+                    shape.setOutlineColor(sf::Color(255,255,255, 100));
+                    shape.setFillColor(sf::Color(0, 0, 0, 130));
+                    return text.getString().getSize();
+                }
+            }
+        }
+        void TextField::Resize(const unsigned int& width, const unsigned int& height)
+        {
+            //if (drawWhenEmpty) if (text.getString().getSize() == 0) text.setString(textWhenEmpty);
+            text.setCharacterSize(characterSize * gs::scScale);
+            shape.setOutlineThickness(gs::scale);
+        }
+        void TextField::Draw(sf::RenderWindow* window)
+        {
+            window->draw(shape);
+            window->draw(text);
+        }
+        void TextField::setPosition(float x, float y)
+        {
+            shape.setPosition(x, y);
+            if (fontLoaded)
+            {
+                sf::String before = text.getString();
+                text.setString("1ASD");
+                text.setOrigin(0, text.getGlobalBounds().height/2);
+                text.setString(before);
+                text.setPosition(x + 5*gs::scale, y + shape.getSize().y/2 - 5*gs::scaley);
+            }
+        }
+        void TextField::setFont(const std::wstring& fontname)
+        {
+            sf::Font* font = fc::GetFont(fontname);
+            if ((fontLoaded = font)) text.setFont(*font);
+        }
     }
+    
 }

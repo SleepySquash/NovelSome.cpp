@@ -56,6 +56,7 @@ namespace ns
     public:
         static std::unordered_map<std::wstring, ImageCollectorObject> images;
         static std::unordered_map<std::wstring, std::thread*> threads;
+        static MessageSender* globalRequestSender;
         
         static icThreadsJoiner threadsJoiner;
         

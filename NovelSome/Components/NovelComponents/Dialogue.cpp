@@ -66,17 +66,7 @@ namespace ns
                         if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
                     else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-                    
-                    if (guiSystem) guiSystem->SetAlphaIfBigger(alpha);
-                    text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
-                    if (text.getOutlineThickness() != 0)
-                        text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, alpha));
-                    if (drawCharacterName)
-                    {
-                        charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
-                        if (charText.getOutlineThickness() != 0)
-                            charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
-                    }
+                    UpdateAlpha(true);
                     break;
                     
                 case disappearing: gs::requestWindowRefresh = true;
@@ -87,17 +77,7 @@ namespace ns
                         if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
                     }
                     else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
-                    
-                    if (guiSystem) guiSystem->SetAlpha(alpha);
-                    text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
-                    if (text.getOutlineThickness() != 0)
-                        text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, alpha));
-                    if (drawCharacterName)
-                    {
-                        charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
-                        if (charText.getOutlineThickness() != 0)
-                            charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
-                    }
+                    UpdateAlpha();
                     break;
                 case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
                 case waitingForTime:
@@ -263,7 +243,7 @@ namespace ns
             
             charText.setString(charString);
             charText.setFont(*ns::FontCollector::GetFont(fontName));
-            fontLoaded = (text.getFont() != nullptr);
+            fontLoaded = text.getFont();
             
             charText.setCharacterSize(characterSize);
             charText.setFillColor(sf::Color::White);
@@ -284,13 +264,13 @@ namespace ns
             printingString = textString;
             if (textAppearMode == textAppearModeEnum::printing)
             {
-                currentString = L"", textAppearMax = base::GetLengthWONewLinesAndSpaces(textString);
+                currentString = L""; textAppearMax = base::GetLengthWONewLinesAndSpaces(textString);
                 text.setString(currentString);
             }
             else text.setString(printingString);
             
             text.setFont(*ns::FontCollector::GetFont(fontName));
-            fontLoaded = (text.getFont() != nullptr);
+            fontLoaded = text.getFont();
             
             text.setCharacterSize(characterSize);
             text.setFillColor(sf::Color::White);
@@ -310,20 +290,118 @@ namespace ns
         }
         void Dialogue::ReceiveMessage(MessageHolder &message) { if (message.info == "Show/Hide Interface") visible = !visible;
             else if (message.info == "FinishedExecute") guiSystem->ReceiveMessage(message); }
-        void Dialogue::Save(std::wofstream& wof)
+        void Dialogue::UpdateAlpha(bool mode)
         {
-            wof << L"textString: " << textString << endl;
+            if (guiSystem) { if (mode) guiSystem->SetAlphaIfBigger(alpha); else guiSystem->SetAlpha(alpha); }
+            text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, alpha));
+            if (text.getOutlineThickness() != 0)
+                text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, alpha));
             if (drawCharacterName)
             {
-                if (character) wof << L"character->name: " << character->name << endl;
-                else wof << L"charString: " << charString << endl;
+                charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
+                if (charText.getOutlineThickness() != 0)
+                    charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
+            }
+        }
+        void Dialogue::Save(std::wofstream& wof)
+        {
+            if (!drawCharacterName) wof << L"text: " << textString << endl;
+            if (drawCharacterName)
+            {
+                if (leftSpeechAddition != 0 || rightSpeechAddition != 0)
+                {
+                    std::wstring text = textString;
+                    if (leftSpeechAddition != 0) text.erase(text.begin());
+                    if (rightSpeechAddition != 0) text.erase(text.begin() + text.length() - 1);
+                    wof << L"text: " << text << endl;
+                } else wof << L"text: " << textString << endl;
+                if (character) wof << L"cname: " << character->name << endl;
+                else wof << L"cstr: " << charString << endl;
             }
             
             if (mode != waitingForInput)
             {
                 wof << L"mode: " << mode << endl;
                 if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                if (waitingTime != 2.f && mode == waitingForTime) wof << L"waitingTime: " << waitingTime << endl;
+                if (mode == appearing && ((Skin::self && appearTime != Skin::self->dialogue.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
             }
+            if ((Skin::self && disappearTime != Skin::self->dialogue.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
+            if ((Skin::self && maxAlpha != Skin::self->dialogue.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
+            if (textAppearMode != textAppearModeEnum::printing) wof << L"tmode: " << (int)textAppearMode << endl;
+            if (textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax) wof << L"tpos: " << textAppearPos << endl;
+            if (sendMessageBack != atDisappearing) wof << L"send: " << sendMessageBack << endl;
+            if (!guiSystem) wof << L"ng" << endl;
+        }
+        std::pair<std::wstring, bool> Dialogue::Load(std::wifstream& wif)
+        {
+            mode = waitingForInput; bool setTextPosToMax{ true };
+            std::wstring line; nss::CommandSettings command; bool done{ false };
+            while (!done)
+            {
+                std::getline(wif, line); command.Command(line);
+                if (nss::Command(command, L"tag(")) done = true;
+                else if (nss::Command(command, L"text: ")) textString = nss::ParseUntil(command, L'\n');
+                else if (nss::Command(command, L"cname: "))
+                {
+                    std::wstring name = nss::ParseUntil(command, L'\n');
+                    auto it = CharacterLibrary::find(name);
+                    if (it != CharacterLibrary::library.end()) { SetCharacterName((*it).second->display); SetCharacter((*it).second); }
+                }
+                else if (nss::Command(command, L"cstr: ")) SetCharacterName(nss::ParseUntil(command, L'\n'));
+                else if (nss::Command(command, L"mode: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: mode = modeEnum::appearing; break;
+                        case 1: mode = modeEnum::waiting; break;
+                        case 2: mode = modeEnum::waitingForTime; break;
+                        case 4: mode = modeEnum::waitingForChoose; break;
+                        case 5: mode = modeEnum::disappearing; break;
+                        case 6: mode = modeEnum::deprecated; break;
+                        default: mode = modeEnum::waitingForInput; break;
+                    }
+                }
+                else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"appeartime: ")) appearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"disappeartime: ")) disappearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"waitingtime: ")) waitingTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"tpos: ")) { textAppearPos = nss::ParseAsInt(command); setTextPosToMax = false; }
+                else if (nss::Command(command, L"tmode: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: textAppearMode = textAppearModeEnum::fading; setTextPosToMax = false; break;
+                        default: textAppearMode = textAppearModeEnum::printing; break;
+                    }
+                }
+                else if (nss::Command(command, L"visible: ")) visible = nss::ParseAsBool(command);
+                else if (nss::Command(command, L"maxalpha: ")) maxAlpha = nss::ParseAsInt(command);
+                else if (nss::Command(command, L"send: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
+                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
+                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
+                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                    }
+                }
+                else if (nss::Command(command, L"ng")) noguiSystem = true;
+                if (wif.eof()) done = true;
+            }
+            
+            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            else alpha = maxAlpha; UpdateAlpha();
+            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 4)) };
+            
+            if (setTextPosToMax) textAppearPos = base::GetLengthWONewLinesAndSpaces(textString);
+            
+            return { line, onHold };
         }
         
         
@@ -332,7 +410,7 @@ namespace ns
         
         
         
-        Choose::Choose(GUISystem* guiSystem) : guiSystem(guiSystem) { }
+        Choose::Choose(GUISystem* guiSystem) : guiSystem(guiSystem), Savable(L"Choose") { }
         void Choose::Init()
         {
             if (Skin::self)
@@ -435,7 +513,7 @@ namespace ns
         {
             /*cout << "   choices: " << endl;
             for (int i = 0; i < choices.size; ++i)
-                cout << ns::base::ConvertToUTF8(choices[i]) << endl;
+                cout << utf8(choices[i]) << endl;
             
             cout << "   choicesStart: " << endl;
             for (int i = 0; i < choiceStart.size; ++i)
@@ -443,7 +521,7 @@ namespace ns
             
             cout << "   actions: " << endl;
             for (int i = 0; i < actions.size; ++i)
-                cout << ns::base::ConvertToUTF8(actions[i]) << endl;*/
+                cout << utf8(actions[i]) << endl;*/
             
             if (choices.size() == 0)
             {
@@ -463,5 +541,80 @@ namespace ns
         }
         void Choose::ReceiveMessage(MessageHolder &message) { if (message.info == "Show/Hide Interface") visible = !visible;
             else if (message.info == "FinishedExecute") guiSystem->ReceiveMessage(message); }
+        void Choose::Save(std::wofstream& wof)
+        {
+            wof << "b1" << endl;
+            for (auto& s : actions) wof << s << endl;
+            wof << "e" << endl << "b2" << endl;
+            for (auto& s : choices) wof << s << endl;
+            wof << "e" << endl << "b3" << endl;
+            for (auto& s : choiceStart) wof << s << endl;
+            wof << "e" << endl;
+            
+            if (mode != waitingForInput)
+            {
+                wof << L"mode: " << mode << endl;
+                if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
+                if (mode == appearing && ((Skin::self && appearTime != Skin::self->choose.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
+            }
+            if ((Skin::self && disappearTime != Skin::self->choose.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
+            if ((Skin::self && maxAlpha != Skin::self->dialogue.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
+            if (sendMessageBack != atDisappearing) wof << L"send: " << sendMessageBack << endl;
+            if (!guiSystem) wof << L"ng" << endl;
+        }
+        std::pair<std::wstring, bool> Choose::Load(std::wifstream& wif)
+        {
+            mode = waitingForInput; bool setTextPosToMax{ true };
+            std::wstring line; nss::CommandSettings command; bool done{ false };
+            while (!done)
+            {
+                std::getline(wif, line); command.Command(line);
+                if (nss::Command(command, L"tag(")) done = true;
+                else if (nss::Command(command, L"b1")) {
+                    std::getline(wif, line); while (line != L"e" && !wif.eof()) { actions.push_back(line); std::getline(wif, line); } }
+                else if (nss::Command(command, L"b2")) {
+                    std::getline(wif, line); while (line != L"e" && !wif.eof()) { choices.push_back(line); std::getline(wif, line); } }
+                else if (nss::Command(command, L"b3")) {
+                    std::getline(wif, line); while (line != L"e" && !wif.eof()) { choiceStart.push_back(base::atoi(line)); std::getline(wif, line); } }
+                else if (nss::Command(command, L"mode: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: mode = modeEnum::appearing; break;
+                        case 2: mode = modeEnum::disappearing; break;
+                        case 3: mode = modeEnum::deprecated; break;
+                        default: mode = modeEnum::waitingForInput; break;
+                    }
+                }
+                else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"appeartime: ")) appearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"disappeartime: ")) disappearTime = nss::ParseAsFloat(command);
+                else if (nss::Command(command, L"visible: ")) visible = nss::ParseAsBool(command);
+                else if (nss::Command(command, L"maxalpha: ")) maxAlpha = nss::ParseAsInt(command);
+                else if (nss::Command(command, L"send: "))
+                {
+                    int md = nss::ParseAsInt(command);
+                    switch (md)
+                    {
+                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
+                        case 1: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
+                        default: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
+                    }
+                }
+                //else if (nss::Command(command, L"ng")) noguiSystem = true;
+                if (wif.eof()) done = true;
+            }
+            
+            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            else alpha = maxAlpha; button.setAlpha(alpha);
+            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            
+            cout << "choices.size(): " << choices.size() << endl;
+            
+            return { line, onHold };
+        }
     }
 }

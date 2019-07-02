@@ -102,6 +102,8 @@ namespace nss
                 return true;
         return false;
     }
+    void Trim(std::wstring& line) { RemoveSpaces(line);
+        while (line.length() > 0 && (line[line.length() - 1] == L' ' || line[line.length() - 1] == L'\t')) line.erase(line.begin() + line.length() - 1); }
     bool ContainsUsefulInformation(const std::wstring& wstr)
     {
         for (int i = 0; i < wstr.length(); i++)
@@ -194,6 +196,7 @@ namespace nss
     }
     
     int ParseAsInt(CommandSettings& results) { return ns::base::atoi(nss::ParseUntil(results, ' ')); }
+    long ParseAsLong(CommandSettings& results) { return ns::base::atol(nss::ParseUntil(results, ' ')); }
     float ParseAsFloat(CommandSettings& results) { return ns::base::atof(nss::ParseUntil(results, ' ')); }
     std::wstring ParseAsString(CommandSettings& results)
     {
