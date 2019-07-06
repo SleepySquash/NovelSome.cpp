@@ -553,7 +553,6 @@ namespace ns
         
         void GUIObject::FadingUpdate(const sf::Time& elapsedTime)
         {
-            sf::Uint8 alpha;
             switch (fadingsMode)
             {
                 case appearing:
@@ -606,7 +605,7 @@ namespace ns
             else if (newMode == disappearing)
             {
                 disappearTime = forTime;
-                if ((unsigned char)guiSystem->lastAlpha == 0) fadingsMode = offline;
+                if (guiSystem->lastAlpha == 0) { fadingsMode = offline; SetAlpha(0); if (child) child->SetAlpha(0); }
                 else fadingsMode = newMode;
             }
             if (newMode == offline) { SetAlpha(0); if (child) child->SetAlpha(0); }
@@ -1251,7 +1250,8 @@ namespace ns
                                                 if (fitMode.length() != 0 && scope.front().type == GUIScopeStruct::Image)
                                                 {
                                                     GUIObjects::Image* img = scope.front().object.img;
-                                                    if (nss::Command(fitMode, L"fill") || nss::Command(fitMode, L"center")) img->fitMode = GUIObjects::Image::fillCentre;
+                                                    if (nss::Command(fitMode, L"fill") || nss::Command(fitMode, L"fit")) img->fitMode = GUIObjects::Image::fill;
+                                                    else if (nss::Command(fitMode, L"fillcenter") || nss::Command(fitMode, L"center")) img->fitMode = GUIObjects::Image::fillCentre;
                                                     else if (nss::Command(fitMode, L"keep") || nss::Command(fitMode, L"keepaspect") || nss::Command(fitMode, L"aspect")) img->fitMode = GUIObjects::Image::keepAspect;
                                                     else if (nss::Command(fitMode, L"stretch")) img->fitMode = GUIObjects::Image::stretch;
                                                     else if (nss::Command(fitMode, L"default")) img->fitMode = GUIObjects::Image::defaultFit;
@@ -1619,6 +1619,13 @@ namespace ns
                         case defaultFit:
                             scaleFactor = (scaleFactorX < scaleFactorY) ? scaleFactorX : scaleFactorY;
                             sprite.setScale(scaleFactor, scaleFactor);
+                            break;
+                        case fill:
+                            scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;
+                            sprite.setScale(scaleFactor, scaleFactor);
+                            defaultPositionX = (float)width/2 - (sprite.getLocalBounds().width/2 + sprite.getOrigin().x)*sprite.getScale().x;
+                            defaultPositionY = (float)height/2 - (sprite.getLocalBounds().height/2 + sprite.getOrigin().y)*sprite.getScale().y;
+                            sprite.setPosition(defaultPositionX, defaultPositionY);
                             break;
                         case fillCentre:
                             scaleFactor = (scaleFactorX > scaleFactorY) ? scaleFactorX : scaleFactorY;

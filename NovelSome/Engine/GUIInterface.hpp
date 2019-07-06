@@ -199,7 +199,7 @@ namespace ns
             void Draw(sf::RenderWindow* window);
             void setFont(const std::wstring& fontname);
             void setPosition(float x, float y);
-            void setActive(const bool& act);
+            bool setActive(const bool& act);
         };
         
         struct Tick

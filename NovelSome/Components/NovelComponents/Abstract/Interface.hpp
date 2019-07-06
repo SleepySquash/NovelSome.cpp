@@ -41,9 +41,12 @@ namespace ns
             GUISystem guiDialogue;
             GUISystem guiChoose;
             
+            std::wstring defaultDialogue, defaultPause, defaultChoose;
+            bool ignoreDialogue{ false }, ignorePause{ false }, ignoreChoose{ false };
+            
             ~Interface();
             void RestoreToDefaults();
-            void LoadFromFile(const std::wstring& fileName);
+            void LoadFromFile(const std::wstring& fileName, const std::wstring& folderPath = L"");
         };
     }
 }

@@ -14,7 +14,7 @@ namespace ns
     {
         void Novel::Update(const sf::Time& elapsedTime)
         {
-            while (fileOpened && !eof && (onHold.empty() || (executeOnHold > 0 && onExecute.empty())) && !(gs::isPause && gs::isPauseEnabled))
+            while (fileOpened && (!eof || !lines.empty()) && (onHold.empty() || (executeOnHold > 0 && onExecute.empty())) && !(gs::isPause && gs::isPauseEnabled))
             {
                 if ((wif.fail() || wif.bad()) && lines.empty())
                     cout << "Warning :: NovelComponent :: Stream.fail() or Stream.bad() caught: " << base::utf8(scenarioPath) << endl;
@@ -167,7 +167,7 @@ namespace ns
                             else question = nss::ParseAsMaybeQuoteString(argument);
                         }
                         
-                        cout << "openedWithBracket: " << openedWithBracket << "  spacesCount: " << spacesCount << "  question: " << ns::base::utf8(question) << endl;
+                        //cout << "openedWithBracket: " << openedWithBracket << "  spacesCount: " << spacesCount << "  question: " << ns::base::utf8(question) << endl;
                         while (!chooseEnded && !eof)
                         {
                             if (wif.eof()) eof = true;
@@ -434,16 +434,20 @@ namespace ns
                         if (!base::FileExists(filePath)) filePath = base::GetFolderPath(scenarioPath) + fileName;
                         if (base::FileExists(filePath))
                         {
-                            wif.close(); scenario = fileName; scenarioPath = filePath;
+                            wif.close(); wif.clear(); eof = false;
+                            scenario = fileName; scenarioPath = filePath;
+                            
+                            std::wifstream wif1;
 #ifdef _WIN32
-                            wif.open(filePath);
+                            wif1.open(filePath);
 #else
-                            wif.open(utf8(filePath));
+                            wif1.open(utf8(filePath));
 #endif
-                            wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
+                            wif1.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
                             lines.clear(); position = 0;
-                            if (!(fileOpened = wif.is_open()))
+                            if (!(fileOpened = wif1.is_open()))
                                 cout << "Error :: NovelComponent :: File couldn't be opened, path: " << utf8(filePath) << endl;
+                            wif.swap(wif1);
                         }
                         else cout << "Error :: NovelComponent :: Couldn't find scenario with path: \"" << utf8(filePath) << "\"." << endl;
                     }
@@ -853,7 +857,31 @@ namespace ns
                                 }
                         }
                     }
-                    // TODO: gui switch "dialogue"
+                    else if (nss::Command(command, L"skin "))
+                    {
+                        std::wstring possibleStr1 = nss::ParseAsMaybeQuoteString(command);
+                        if (possibleStr1.length() != 0)
+                        {
+                            nss::SkipSpaces(command);
+                            std::wstring possibleStr2 = nss::ParseAsMaybeQuoteString(command);
+                            std::wstring filename, scopename;
+                            if (possibleStr2.length() != 0)
+                            {
+                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
+                                else { scopename = possibleStr2; filename = possibleStr1; }
+                            } else { scopename = L""; filename = possibleStr1; }
+                            if (scopename != L"dialogue" && scopename != L"choose") Skin::self->RestoreToDefaults(scopename);
+                            Skin::self->LoadFromFile(folderPath + filename, scopename);
+                            if (scopename == L"") { Skin::self->changedDialogue = Skin::self->changedAmbient = Skin::self->changedBackground = Skin::self->changedCharacter = Skin::self->changedMusic = Skin::self->changedSound = Skin::self->changedChoose = true; Skin::self->defaultDialogue = Skin::self->defaultAmbient = Skin::self->defaultBackground = Skin::self->defaultCharacter = Skin::self->defaultMusic = Skin::self->defaultSound = Skin::self->defaultChoose = filename; }
+                            else if (scopename == L"dialogue") { Skin::self->changedDialogue = true; Skin::self->defaultDialogue = filename; }
+                            else if (scopename == L"choose") { Skin::self->changedChoose = true; Skin::self->defaultChoose = filename; }
+                            else if (scopename == L"ambient") { Skin::self->changedAmbient = true; Skin::self->defaultAmbient = filename; }
+                            else if (scopename == L"sound") { Skin::self->changedSound = true; Skin::self->defaultSound = filename; }
+                            else if (scopename == L"music") { Skin::self->changedMusic = true; Skin::self->defaultMusic = filename; }
+                            else if (scopename == L"background") { Skin::self->changedBackground = true; Skin::self->defaultBackground = filename; }
+                            else if (scopename == L"character") { Skin::self->changedCharacter = true; Skin::self->defaultCharacter = filename; }
+                        }
+                    }
                     else if (nss::Command(command, L"gui "))
                     {
                         bool noMessage{ false }; if (command.ExplicitNoMessage()) noMessage = true;
@@ -864,54 +892,94 @@ namespace ns
                             std::wstring possibleStr2 = nss::ParseAsMaybeQuoteString(command);
                             if (possibleStr2.length() != 0)
                             {
-                                auto* component = layers.PrioritizeComponent<ns::NovelComponents::GUISystem>(16000);
-                                component->isNovel = true;
-                                // TODO: Сделать свои Skin для GUI.
-                                if (Skin::self) {
-                                    component->appearTime = Skin::self->character.appearTime;
-                                    component->disappearTime = Skin::self->character.disappearTime;
-                                    component->maxAlpha = Skin::self->character.maxAlpha; }
-                                if (noMessage) component->sendMessageBack = component->noMessage;
+                                std::wstring filename, scopename;
+                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
+                                else { scopename = possibleStr2; filename = possibleStr1; }
                                 
-                                vector<std::wstring> arguments;
-                                nss::ParseArguments(command, arguments);
-                                for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                                if (scopename == L"dialogue")
                                 {
-                                    nss::CommandSettings argument; argument.Command(*it);
-                                    if (nss::Command(argument, L"fade:"))
-                                    {
-                                        float value = nss::ArgumentAsFloat(argument);
-                                        component->appearTime = value;
-                                        component->disappearTime = value;
-                                    }
-                                    else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
-                                        component->appearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
-                                        component->disappearTime = nss::ArgumentAsFloat(argument);
-                                    else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
-                                        component->maxAlpha = nss::ArgumentAsInt(argument);
-                                    else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
-                                    {
-                                        std::wstring stringValue = nss::ArgumentAsString(argument);
-                                        if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                            component->sendMessageBack = component->atAppearance;
-                                        else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                            component->sendMessageBack = component->atDisappearing;
-                                        else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                            component->sendMessageBack = component->atDeprecated;
-                                        else if (stringValue == L"nomessage" || stringValue == L"no")
-                                            component->sendMessageBack = component->noMessage;
-                                    }
-                                    else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
-                                        layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
+                                    sf::Uint8 alpha{ interface.guiDialogue.alpha };
+                                    interface.guiDialogue.clear();
+                                    LocalVariables_Set(L"@name", std::wstring(L""));
+                                    Skin::self->RestoreToDefaults(scopename);
+                                    Skin::self->LoadFromFile(folderPath + filename, scopename);
+                                    Skin::self->changedDialogue = false;
+                                    interface.guiDialogue.LoadFromFile(folderPath + filename, scopename);
+                                    interface.guiDialogue.ResetResize(); interface.guiDialogue.Resize(gs::width, gs::height);
+                                    interface.guiDialogue.trueFileName = filename;
+                                    interface.guiDialogue.SetAlpha(alpha);
                                 }
-                                
-                                if (component->sendMessageBack != component->noMessage) OnHold(component);
-                                GUIGroup.insert(GUIGroup.begin(), component);
-                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) {
-                                    component->LoadFromFile(folderPath + possibleStr2, possibleStr1); component->trueFileName = possibleStr2; }
-                                else {component->LoadFromFile(folderPath + possibleStr1, possibleStr2); component->trueFileName = possibleStr1;}
-                                component->SetAlpha(255); component->ResetResize(); component->Resize(gs::width, gs::height);
+                                else if (scopename == L"choose")
+                                {
+                                    /// not supported yet - dunno the consequenses.
+                                    /*sf::Uint8 alpha{ interface.guiDialogue.alpha };
+                                    interface.guiDialogue.clear();
+                                    LocalVariables_Set(L"@name", std::wstring(L""));
+                                    Skin::self->LoadFromFile(folderPath + filename, scopename);
+                                    Skin::self->changedDialogue = false;
+                                    interface.guiDialogue.LoadFromFile(folderPath + filename, scopename);
+                                    interface.guiDialogue.ResetResize(); interface.guiDialogue.Resize(gs::width, gs::height);
+                                    interface.guiDialogue.trueFileName = filename;
+                                    interface.guiDialogue.SetAlpha(alpha);*/
+                                }
+                                else if (scopename == L"gamepause")
+                                {
+                                    sf::Uint8 alpha{ interface.guiPause.alpha };
+                                    interface.guiPause.clear();
+                                    interface.guiPause.LoadFromFile(folderPath + filename, scopename);
+                                    interface.guiPause.ResetResize(); interface.guiPause.Resize(gs::width, gs::height);
+                                    interface.guiPause.trueFileName = filename;
+                                    interface.guiPause.SetAlpha(alpha);
+                                }
+                                else
+                                {
+                                    auto* component = layers.PrioritizeComponent<ns::NovelComponents::GUISystem>(16000);
+                                    component->isNovel = true;
+                                    // TODO: Сделать свои Skin для GUI.
+                                    if (Skin::self) {
+                                        component->appearTime = Skin::self->character.appearTime;
+                                        component->disappearTime = Skin::self->character.disappearTime;
+                                        component->maxAlpha = Skin::self->character.maxAlpha; }
+                                    if (noMessage) component->sendMessageBack = component->noMessage;
+                                    
+                                    vector<std::wstring> arguments;
+                                    nss::ParseArguments(command, arguments);
+                                    for (auto it = arguments.begin(); it != arguments.end(); ++it)
+                                    {
+                                        nss::CommandSettings argument; argument.Command(*it);
+                                        if (nss::Command(argument, L"fade:"))
+                                        {
+                                            float value = nss::ArgumentAsFloat(argument);
+                                            component->appearTime = value;
+                                            component->disappearTime = value;
+                                        }
+                                        else if (nss::Command(argument, L"fadein:") || nss::Command(argument, L"appear:"))
+                                            component->appearTime = nss::ArgumentAsFloat(argument);
+                                        else if (nss::Command(argument, L"fadeout:") || nss::Command(argument, L"disappear:"))
+                                            component->disappearTime = nss::ArgumentAsFloat(argument);
+                                        else if (nss::Command(argument, L"alpha:") || nss::Command(argument, L"maxalpha:"))
+                                            component->maxAlpha = nss::ArgumentAsInt(argument);
+                                        else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
+                                        {
+                                            std::wstring stringValue = nss::ArgumentAsString(argument);
+                                            if (stringValue == L"atappearance" || stringValue == L"appearance")
+                                                component->sendMessageBack = component->atAppearance;
+                                            else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
+                                                component->sendMessageBack = component->atDisappearing;
+                                            else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
+                                                component->sendMessageBack = component->atDeprecated;
+                                            else if (stringValue == L"nomessage" || stringValue == L"no")
+                                                component->sendMessageBack = component->noMessage;
+                                        }
+                                        else if (nss::Command(argument, L"depth:") || nss::Command(argument, L"layer:") || nss::Command(argument, L"d:"))
+                                            layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
+                                    }
+                                    
+                                    if (component->sendMessageBack != component->noMessage) OnHold(component);
+                                    GUIGroup.insert(GUIGroup.begin(), component);
+                                    component->LoadFromFile(folderPath + filename, scopename); component->trueFileName = filename;
+                                    component->SetAlpha(255); component->ResetResize(); component->Resize(gs::width, gs::height);
+                                }
                             }
                         }
                     }
@@ -1178,41 +1246,32 @@ namespace ns
                         std::wstring varName;
                         if (command.line[command.lastPos] == '"')
                             varName = nss::ParseAsQuoteString(command);
-                        else
-                            varName = nss::ParseUntil(command, ' ');
+                        else varName = nss::ParseUntil(command, ' ');
                         if (varName.length() != 0)
                         {
                             if (varName != L"@dialogue" && varName != L"@name")
                             {
                                 nss::SkipSpaces(command);
-                                if (command.line[command.lastPos] == '=')
-                                {
-                                    command.lastPos++;
-                                    nss::SkipSpaces(command);
-                                }
+                                if (command.line[command.lastPos] == '=') { command.lastPos++; nss::SkipSpaces(command); }
                                 
                                 std::wstring valueString;
                                 bool asString{ false };
                                 if ((asString = (command.line[command.lastPos] == '"')))
                                     valueString = nss::ParseAsQuoteString(command);
-                                else
-                                    valueString = nss::ParseUntil(command, ' ');
+                                else valueString = nss::ParseUntil(command, ' ');
                                 
                                 if (valueString.length() != 0)
                                 {
-                                    if (asString)
-                                        LocalVariables_Set(varName, valueString);
+                                    if (asString) LocalVariables_Set(varName, valueString);
                                     else
                                     {
                                         if (valueString == L"true" || valueString == L"false")
                                             LocalVariables_Set(varName, base::atob(valueString));
-                                        else
-                                            LocalVariables_Set(varName, base::atoi(valueString));
+                                        else LocalVariables_Set(varName, base::atoi(valueString));
                                     }
                                 }
                             }
-                            else
-                                cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
+                            else cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
                         }
                     }
                     else if (nss::Command(command, L"delete "))
@@ -1220,8 +1279,7 @@ namespace ns
                         std::wstring varName;
                         if (command.line[command.lastPos] == '"')
                             varName = nss::ParseAsQuoteString(command);
-                        else
-                            varName = nss::ParseUntil(command, ' ');
+                        else varName = nss::ParseUntil(command, ' ');
                         
                         if (varName.length() != 0)
                         {
@@ -1234,8 +1292,7 @@ namespace ns
                                     delete nvar;
                                 }
                             }
-                            else
-                                cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
+                            else cout << "NSS :: Prohibited change of @dialogue or @name variables." << endl;
                         }
                     }
                     ///----------------------------------------DEBUG----------------------------------------

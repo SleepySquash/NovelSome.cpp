@@ -61,6 +61,9 @@ namespace ns
             
             gamePause = entity->AddComponent<GamePause>(&interface.guiPause);
             std::wstring skinPath = L"skin.nskin";
+            if (Skin::self) delete Skin::self;
+            Skin::self = new Skin();
+            Skin::self->folderScope = folderPath;
             if (nvl)
             {
                 std::wifstream wifn; bool done{ false };
@@ -73,20 +76,49 @@ namespace ns
                 
                 if (wifn.is_open())
                 {
-                    std::wstring line; nss::CommandSettings command;
-                    while (!wifn.eof() && !done)
+                    std::wstring line; int remainingLines{ 20 }; nss::CommandSettings command;
+                    while (!wifn.eof() && remainingLines > 0)
                     {
                         std::getline(wifn, line); command.Command(line);
-                        if (nss::Command(command, L"skin ")) { skinPath = nss::ParseAsMaybeQuoteString(command); done = true; }
+                        if (nss::Command(command, L"skin "))
+                        {
+                            skinPath = nss::ParseAsMaybeQuoteString(command);
+                            Skin::self->LoadFromFile(folderPath + skinPath);
+                            Skin::self->defaultDialogue = Skin::self->defaultChoose = Skin::self->defaultMusic = Skin::self->defaultSound = Skin::self->defaultBackground = Skin::self->defaultCharacter = Skin::self->defaultAmbient = skinPath;
+                            done = true;
+                        }
+                        else if (done)
+                        {
+                            --remainingLines;
+                            if (nss::Command(command, L"dialogue "))
+                            {
+                                std::wstring path = nss::ParseAsMaybeQuoteString(command);
+                                Skin::self->LoadFromFile(folderPath + path, L"dialogue"); Skin::self->defaultDialogue = path;
+                                interface.ignoreDialogue = interface.guiDialogue.LoadFromFile(folderPath + path, L"dialogue");
+                                interface.guiDialogue.trueFileName = interface.defaultDialogue = path;
+                                remainingLines = 20;
+                            }
+                            else if (nss::Command(command, L"choose "))
+                            {
+                                std::wstring path = nss::ParseAsMaybeQuoteString(command);
+                                Skin::self->LoadFromFile(folderPath + path, L"choose"); Skin::self->defaultChoose = path;
+                                interface.ignoreChoose = interface.guiChoose.LoadFromFile(folderPath + path, L"choose");
+                                interface.guiChoose.trueFileName = interface.defaultChoose = path;
+                                remainingLines = 20;
+                            }
+                            else if (nss::Command(command, L"gamepause ") || nss::Command(command, L"pause "))
+                            {
+                                std::wstring path = nss::ParseAsMaybeQuoteString(command);
+                                interface.ignorePause = interface.guiPause.LoadFromFile(folderPath + path, L"gamepause");
+                                interface.guiPause.trueFileName = interface.defaultPause = path;
+                                remainingLines = 20;
+                            }
+                        }
                     }
                     wifn.close();
                 }
             }
-            
-            if (Skin::self) delete Skin::self;
-            Skin::self = new Skin();
-            Skin::self->LoadFromFile(folderPath + skinPath);
-            interface.LoadFromFile(folderPath + skinPath);
+            interface.LoadFromFile(skinPath, folderPath);
             
             
             entity->SendMessage({"SaveUI :: Novel", nvl});
@@ -132,7 +164,7 @@ namespace ns
         {
             while (lines.size() <= preloadLinesAmount && !wif.eof())
             {
-                std::getline(wif, line); ++position;
+                std::getline(wif, line); ++position; // cout << utf8(scenario) << " : " << utf8(line) << endl;
                 if (line.length() && line[line.length() - 1] == 13) line.erase(line.begin() + (line.size() - 1));
                 
                 nss::CommandSettings settings;
@@ -278,6 +310,19 @@ namespace ns
                     for (auto& l : execute) wof << l << endl;
                     wof << L"e" << endl;
                 }
+            }
+            if (interface.guiDialogue.trueFileName != interface.defaultDialogue) wof << L"i_dialogue: " << interface.guiDialogue.trueFileName << endl;
+            if (interface.guiPause.trueFileName != interface.defaultPause) wof << L"i_pause: " << interface.guiPause.trueFileName << endl;
+            if (interface.guiChoose.trueFileName != interface.defaultChoose) wof << L"i_choose: " << interface.guiChoose.trueFileName << endl;
+            if (Skin::self)
+            {
+                if (Skin::self->changedDialogue) wof << L"s_dialogue: " << Skin::self->defaultDialogue << endl;
+                if (Skin::self->changedChoose) wof << L"s_choose: " << Skin::self->defaultChoose << endl;
+                if (Skin::self->changedBackground) wof << L"s_background: " << Skin::self->defaultBackground << endl;
+                if (Skin::self->changedCharacter) wof << L"s_character: " << Skin::self->defaultCharacter << endl;
+                if (Skin::self->changedMusic) wof << L"s_music: " << Skin::self->defaultMusic << endl;
+                if (Skin::self->changedSound) wof << L"s_sound: " << Skin::self->defaultSound << endl;
+                if (Skin::self->changedAmbient) wof << L"s_ambient: " << Skin::self->defaultAmbient << endl;
             }
             if (!var::localVariables.empty())
             {
@@ -425,6 +470,53 @@ namespace ns
                                 else if (nss::Command(command, L"scenariopath: ")) novel->scenarioPath = nss::ParseUntil(command, L'\n');
                                 else if (nss::Command(command, L"s: ")) novel = entity->AddComponent<Novel>(nss::ParseUntil(command, L'\n'), nvl);
                                 else if (nss::Command(command, L"position: ")) novel->position = static_cast<unsigned long>(nss::ParseAsLong(command));
+                                else if (nss::Command(command, L"i_dialogue: ")) {
+                                    std::wstring path = nss::ParseUntil(command, L'\n');
+                                    novel->interface.guiDialogue.clear();
+                                    novel->interface.guiDialogue.LoadFromFile(novel->folderPath + path, L"dialogue");
+                                    novel->interface.guiDialogue.trueFileName = path;
+                                    // Skin::self->RestoreToDefaults(L"dialogue");
+                                    Skin::self->LoadFromFile(novel->folderPath + path, L"dialogue"); }
+                                else if (nss::Command(command, L"i_pause: ")) {
+                                    std::wstring path = nss::ParseUntil(command, L'\n');
+                                    novel->interface.guiPause.clear();
+                                    novel->interface.guiPause.LoadFromFile(novel->folderPath + path, L"gamepause");
+                                    novel->interface.guiPause.trueFileName = path; }
+                                else if (nss::Command(command, L"i_choose: ")) {
+                                    std::wstring path = nss::ParseUntil(command, L'\n');
+                                    novel->interface.guiChoose.clear();
+                                    novel->interface.guiChoose.LoadFromFile(novel->folderPath + path, L"choose");
+                                    novel->interface.guiChoose.trueFileName = path;
+                                    // Skin::self->RestoreToDefaults(L"choose");
+                                    Skin::self->LoadFromFile(novel->folderPath + path, L"choose"); }
+                                else if (nss::Command(command, L"s_dialogue: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultDialogue != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"dialogue");
+                                        Skin::self->changedDialogue = true; Skin::self->defaultDialogue = path; } }
+                                else if (nss::Command(command, L"s_choose: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultChoose != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"choose");
+                                        Skin::self->changedChoose = true; Skin::self->defaultChoose = path; } }
+                                else if (nss::Command(command, L"s_background: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultBackground != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"background");
+                                        Skin::self->changedBackground = true; Skin::self->defaultBackground = path; } }
+                                else if (nss::Command(command, L"s_character: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultCharacter != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"character");
+                                        Skin::self->changedCharacter = true; Skin::self->defaultCharacter = path; } }
+                                else if (nss::Command(command, L"s_music: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultMusic != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"music");
+                                        Skin::self->changedMusic = true; Skin::self->defaultMusic = path; } }
+                                else if (nss::Command(command, L"s_ambient: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultAmbient != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"ambient");
+                                        Skin::self->changedAmbient = true; Skin::self->defaultAmbient = path; } }
+                                else if (nss::Command(command, L"s_sound: ")) { std::wstring path = nss::ParseUntil(command, L'\n');
+                                    if (Skin::self->defaultSound != path) {
+                                        Skin::self->LoadFromFile(novel->folderPath + path, L"sound");
+                                        Skin::self->changedSound = true; Skin::self->defaultSound = path; } }
                                 else if (nss::Command(command, L"b1")) { std::getline(wif, line);
                                     while (line != L"e" && !wif.eof()) { novel->lines.push_back(line); std::getline(wif, line); } }
                                 else if (nss::Command(command, L"b2")) { std::getline(wif, line);

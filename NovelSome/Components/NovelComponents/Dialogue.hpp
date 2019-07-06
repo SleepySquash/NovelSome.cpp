@@ -49,6 +49,7 @@ namespace ns
             
             sf::Text charText;
             std::wstring charString{ L"" };
+            float charThickness{ 0.f };
             
             GUISystem* guiSystem{ nullptr };
             CharacterData* character{ nullptr };

@@ -139,7 +139,7 @@ namespace ns
             enum fadingsModeEnum { appearing, disappearing, offline };
             fadingsModeEnum fadingsMode{ offline };
             
-            sf::Uint8 maxAlpha = 255;
+            sf::Uint8 maxAlpha{ 255 }, alpha{ 0 };
             bool visible{ true }, ignoreVariableChange{ false }, regulateFadings{ false };
             float currentTime{ 0.f }, appearTime{ 0.f }, disappearTime{ 0.f };
             
@@ -216,7 +216,7 @@ namespace ns
                 
                 int defaultPositionX{ 0 }, defaultPositionY{ 0 };
                 float scaleX{ 1.f }, scaleY{ 1.f };
-                enum { noFit, defaultFit, fillCentre, stretch, keepAspect, keepAspectSc, defaultFill } fitMode = defaultFit;
+                enum { noFit, defaultFit, fillCentre, fill, stretch, keepAspect, keepAspectSc, defaultFill } fitMode = defaultFit;
                 bool doParallax{ /*gs::isParallaxEnabled*/ false };
                 float parallaxPower { gs::defaultParallaxBackground };
                 

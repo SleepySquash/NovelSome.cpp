@@ -119,8 +119,9 @@ namespace ns
                                             else if (nss::Command(command, L"thickness "))
                                             {
                                                 std::wstring possibleThickness = nss::ParseUntil(command, '\0');
-                                                if (possibleThickness.length() != 0)
+                                                if (possibleThickness.length() != 0) {
                                                     charData->outlineThickness = ns::base::atof(possibleThickness);
+                                                    charData->thicknessSet = true; }
                                             }
                                         }
                                         else

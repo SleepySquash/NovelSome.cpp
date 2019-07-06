@@ -47,7 +47,7 @@ namespace ns
             std::wstring name{ L"" }, display{ L"" }, filePath{ L"" };
             sf::Color fillColor{ sf::Color::White };
             sf::Color outlineColor{ sf::Color::Black };
-            float outlineThickness{ 0.f };
+            float outlineThickness{ 0.f }; bool thicknessSet{ false };
         };
         
         struct CharacterLibrary

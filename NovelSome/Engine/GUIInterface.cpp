@@ -558,11 +558,9 @@ namespace ns
                 else active = shape.getGlobalBounds().contains(event.touch.x, event.touch.y);
             }
             
-            setActive(active);
-            
-            return false;
+            return setActive(active);
         }
-        void TextField::setActive(const bool& act)
+        bool TextField::setActive(const bool& act)
         {
             if (wasActive != active)
             {
@@ -585,6 +583,7 @@ namespace ns
                     return text.getString().getSize();
                 }
             }
+            return false;
         }
         void TextField::Resize(const unsigned int& width, const unsigned int& height)
         {

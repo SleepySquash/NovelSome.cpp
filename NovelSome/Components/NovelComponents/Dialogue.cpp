@@ -144,7 +144,9 @@ namespace ns
                 }
             }
         }
-        void Dialogue::Destroy() { novelSystem->SendMessage({"Destroy", this});
+        void Dialogue::Destroy()
+        {
+            novelSystem->SendMessage({"Destroy", this});
             if (TemporarySettings::dialogue == &text) TemporarySettings::dialogue = nullptr;
             if (TemporarySettings::name == &charText) TemporarySettings::name = nullptr;
         }
@@ -157,8 +159,8 @@ namespace ns
             {
                 if (Skin::self && Skin::self->dialogue.outlineThickness != 0)
                     text.setOutlineThickness(Skin::self->dialogue.outlineThickness * gs::scale);
-                if (drawCharacterName && character && character->outlineThickness != 0)
-                    charText.setOutlineThickness(character->outlineThickness * gs::scale);
+                if (drawCharacterName && charThickness)
+                    charText.setOutlineThickness(charThickness * gs::scale);
                 if (guiSystem)
                 {
                     if (charString != L"") guiSystem->ResetResize();
@@ -231,7 +233,8 @@ namespace ns
             if (character)
             {
                 this->character = character;
-                charText.setOutlineThickness(character->outlineThickness);
+                charThickness = (character->thicknessSet ? character->outlineThickness : (Skin::self ? Skin::self->dialogue.nameThickness : 0));
+                charText.setOutlineThickness(charThickness);
                 charText.setFillColor(sf::Color(character->fillColor.r, character->fillColor.g, character->fillColor.b, alpha));
                 charText.setOutlineColor(sf::Color(character->outlineColor.r, character->outlineColor.g, character->outlineColor.b, alpha));
             }
@@ -246,11 +249,13 @@ namespace ns
             fontLoaded = text.getFont();
             
             charText.setCharacterSize(characterSize);
-            charText.setFillColor(sf::Color::White);
+            if (Skin::self) { charText.setFillColor(Skin::self->dialogue.nameFillColor);
+                charText.setOutlineColor(Skin::self->dialogue.nameOutlineColor);
+                charThickness = Skin::self->dialogue.nameThickness; }
+            else { charText.setFillColor(sf::Color::White); charText.setOutlineColor(sf::Color::Black); }
             
             charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
-            if (charText.getOutlineThickness() != 0)
-                charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
+            charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
         }
         void Dialogue::SetDialogue(const sf::String& dialogue)
         {
@@ -299,8 +304,7 @@ namespace ns
             if (drawCharacterName)
             {
                 charText.setFillColor(sf::Color(charText.getFillColor().r, charText.getFillColor().g, charText.getFillColor().b, alpha));
-                if (charText.getOutlineThickness() != 0)
-                    charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
+                charText.setOutlineColor(sf::Color(charText.getOutlineColor().r, charText.getOutlineColor().g, charText.getOutlineColor().b, alpha));
             }
         }
         void Dialogue::Save(std::wofstream& wof)

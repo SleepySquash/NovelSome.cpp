@@ -228,7 +228,20 @@ namespace ns
                             }
                             
                             bool unselectNovelSelected{ false };
-                            if (((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) || event.type == sf::Event::TouchEnded) && scrollThershold < 4) unselectNovelSelected = true;
+                            if (isNovelSelected && ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left) || event.type == sf::Event::TouchEnded) && scrollThershold < 4)
+                            {
+                                if (gs::verticalOrientation)
+                                {
+                                    sf::Vector2i dot; if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y }; else dot = { event.touch.x, event.touch.y };
+                                    if (dot.y < novelBackShape.getPosition().y) {
+                                        if (novelSelected == Novels::info.begin()) novelSelected = Novels::info.end(); --novelSelected;
+                                        SelectNovel(novelSelected, true, true); }
+                                    else if (dot.y > novelBackShape.getPosition().y + novelBackShape.getSize().y) {
+                                        ++novelSelected; if (novelSelected == Novels::info.end()) novelSelected = Novels::info.begin();
+                                        SelectNovel(novelSelected, true, true); }
+                                    else unselectNovelSelected = true;
+                                } else unselectNovelSelected = true;
+                            }
                             if (scrollThershold > 4) novelButtons.anyButtonPressed = false;
                             if ((!gs::verticalOrientation || !isNovelSelected) && scrollThershold < 4)
                             {
@@ -407,9 +420,9 @@ namespace ns
                 novelButtons.setSize({gs::width * 4.7f/5, 120*gs::scScale});
                 novelButtons.setPosition(0.3*gs::width/10, 0);
             } else {
-                novelBackShape.setSize({(1280 - 630 - 30)*gs::scalex, gs::height * 4.f/5});
+                novelBackShape.setSize({(1280 - 610 - 30)*gs::scalex, gs::height * 4.f/5});
                 novelBackShape.setPosition(15*gs::scalex, gs::height/15);
-                novelButtons.setSize({630*gs::scalex, 120*gs::scScale});
+                novelButtons.setSize({610*gs::scalex, 120*gs::scScale});
                 novelButtons.setPosition(gs::width - novelButtons.shape.getSize().x, 0);
             }
             novelButtons.Resize(width, height);

@@ -51,7 +51,8 @@ namespace ns
                 int afterRedLineShift{ 0 };
                 
                 sf::Color fillColor{ sf::Color::White }, outlineColor{ sf::Color::Black };
-                float outlineThickness{ 0.f };
+                sf::Color nameFillColor{ sf::Color::White }, nameOutlineColor{ sf::Color::Black };
+                float outlineThickness{ 0.f }, nameThickness{ 0.f };
                 
                 float appearTime{ 0.6f }, disappearTime{ 0.6f };
             };
@@ -87,7 +88,7 @@ namespace ns
             static Skin* self;
             
             //std::wstring defaultFontName{ L"NotoSansCJK-Regular.ttc" };
-            std::wstring defaultFontName{ L"Arial.ttf" };
+            std::wstring defaultFontName{ L"Arial.ttf" }, folderScope{ L"" };
             Skins::Dialogue dialogue;
             Skins::Choose choose;
             Skins::Background background;
@@ -96,8 +97,11 @@ namespace ns
             Skins::Ambient ambient;
             Skins::Sound sound;
             
-            void RestoreToDefaults();
-            void LoadFromFile(const std::wstring& fileName);
+            bool changedDialogue{ false }, changedChoose{ false }, changedBackground{ false }, changedCharacter{ false }, changedMusic{ false }, changedAmbient{ false }, changedSound{ false };
+            std::wstring defaultDialogue, defaultChoose, defaultBackground, defaultCharacter, defaultMusic, defaultAmbient, defaultSound;
+            Skin();
+            void RestoreToDefaults(const std::wstring& scopeName = L"");
+            void LoadFromFile(const std::wstring& fileName, const std::wstring& scopeName = L"");
         };
     }
 }

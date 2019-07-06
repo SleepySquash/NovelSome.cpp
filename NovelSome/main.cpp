@@ -79,9 +79,12 @@
 // TODO: Изображения чтоб можно было image:"..."
 // TODO: Элементы интерфейса - поиск также в папках GUI, Interface и так далее.
 // TODO: Отвязать as Name от ширины/высоты @name.
-// TODO: Проверить, почему Arial.ttf не загрузился, когда не было шрифта.
+// DONE: Проверить, почему Arial.ttf не загрузился, когда не было шрифта.
 // TODO: Макросы для скейлинга только по X и только по Y.
 // TODO: Возможность ГУИ объектам быть только горизонтальными или только вертикальными.
+
+// TODO: Возможность менять настройки диалога при загрузке его гуи системы (т.е. при смене, например).
+// TODO: Возможность менять skin (+ сохранение и загрузка, если было изменено с дефолта).
 
 
 
@@ -200,7 +203,7 @@ int main()
     ///----------------------------------------------------------
     /// \brief Entity to hold NekoUI components
     ///
-    /// Entity holds components like NekoUI room, its interfaces etc.
+    /// Entity holds networking components.
     ///
     ///----------------------------------------------------------
     Entity* Tenshi = system.AddEntity();
@@ -212,7 +215,7 @@ int main()
     /// \brief Entity to hold novel and stuff it depends on
     ///
     /// Entity holds the novel itself in order to have some ierarchy of entities.
-    /// It also may hold some libraries etc that novel depends on.
+    /// It also may hold some interfaces etc that novel depends on.
     ///
     ///----------------------------------------------------------
     Entity* Elizabeth = system.AddEntity();
@@ -228,7 +231,6 @@ int main()
     /// \brief Entity to hold essential components
     ///
     /// Entity holds components like always-on debug UI layer, system's components and other essential stuff.
-    /// It also may hold components like NovelComponent that runs the novel, cuz it has to be essential component.
     ///
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();

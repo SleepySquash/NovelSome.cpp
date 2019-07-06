@@ -17,7 +17,9 @@ namespace ns
         else
         {
             std::wstring fullPath = fontName;
-            if (!base::FileExists(fontName)) fullPath = base::utf16(resourcePath()) + L"Data/Fonts/" + fontName;
+            if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fontName;
+            if (!base::FileExists(fullPath)) fullPath = L"Data/Fonts/" + fontName;
+            if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + L"Data/Fonts/" + fontName;
             if (base::FileExists(fullPath))
             {
                 sf::Font* font = new sf::Font();
@@ -50,7 +52,7 @@ namespace ns
                     return font;
                 }
             }
-            if (fontName != L"Data/Fonts/Arial.ttf" && fontName != L"Arial.ttf") return nullptr;
+            if (fontName == L"Data/Fonts/Arial.ttf" || fontName == L"Arial.ttf") return nullptr;
             else return GetFont(L"Arial.ttf");
         }
     }

@@ -62,10 +62,12 @@ namespace ns
     namespace NovelComponents
     {
         struct Novel;
-        struct NovelLoader : Component {
+        struct NovelLoader : Component
+        {
             std::wstring fileName; NovelInfo* nvl; NovelSystem* system;
             NovelLoader(const std::wstring& fileName, NovelSystem* system, NovelInfo* nvl);
-            void Update(const sf::Time& elapsedTime) override; };
+            void Update(const sf::Time& elapsedTime) override;
+        };
         struct EventListener : NovelObject, Savable
         {
             Novel* novel;
@@ -105,7 +107,10 @@ namespace ns
             list<GUISystem*> GUIGroup;
             
             Novel(const std::wstring& path, NovelInfo* nvl = nullptr);
-            Novel(NovelInfo* nvl); ~Novel();
+            Novel(NovelInfo* nvl);
+            Novel(const Novel&) = delete;
+            Novel(Novel&&) = delete;
+            ~Novel();
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
             void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
@@ -123,8 +128,6 @@ namespace ns
             void LocalVariables_Set(const std::wstring& name, int value);
             template<typename T> void FreeGroup(list<T*>& elements) { elements.clear(); }
         };
-        
-        
     }
 }
 

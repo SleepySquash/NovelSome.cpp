@@ -63,20 +63,24 @@ namespace ns
             menuButton->constrains.posXS = L".width/2";
             menuButton->constrains.posYS = L".height - .height/5";
         }
-        void Interface::LoadFromFile(const std::wstring& fileName)
+        void Interface::LoadFromFile(const std::wstring& fileName, const std::wstring& folderPath)
         {
-            std::wstring fullPath = fileName;
+            std::wstring fullPath;
+            if (folderPath == L"") fullPath = fileName; else fullPath = folderPath + fileName;
             if (!base::FileExists(fullPath)) fullPath = base::utf16(resourcePath()) + fullPath;
             
-            bool loadDefaultGUI{ true };
-            bool loadDefaultChoice{ true };
-            bool loadDefaultPause{ true };
+            bool loadDefaultGUI{ !ignoreDialogue };
+            bool loadDefaultChoice{ !ignoreChoose };
+            bool loadDefaultPause{ !ignorePause };
             if (base::FileExists(fullPath))
             {
-                guiDialogue.clear(); loadDefaultGUI = !guiDialogue.LoadFromFile(fileName, L"dialogue");
-                guiChoose.clear(); loadDefaultChoice = !guiChoose.LoadFromFile(fileName, L"choose");
-                guiPause.clear(); loadDefaultPause = !guiPause.LoadFromFile(fileName, L"gamepause");
+                if (!ignoreDialogue) { guiDialogue.clear(); loadDefaultGUI = !guiDialogue.LoadFromFile(folderPath + fileName, L"dialogue"); }
+                if (!ignoreChoose) { guiChoose.clear(); loadDefaultChoice = !guiChoose.LoadFromFile(folderPath + fileName, L"choose"); }
+                if (!ignorePause) { guiPause.clear(); loadDefaultPause = !guiPause.LoadFromFile(folderPath + fileName, L"gamepause"); }
             }
+            if (!ignoreDialogue) guiDialogue.trueFileName = defaultDialogue = fileName;
+            if (!ignoreChoose) guiChoose.trueFileName = defaultChoose = fileName;
+            if (!ignorePause) guiPause.trueFileName = defaultPause = fileName;
             if (loadDefaultGUI)
             {
                 //Adding the dialogue's box
@@ -96,7 +100,6 @@ namespace ns
                 nameRect->shape.setFillColor(sf::Color::Black);
                 nameRect->maxAlpha = 170;
                 nameRect->constrains.leftS = L"10";
-                nameRect->constrains.rightS = L"0";
                 nameRect->constrains.bottomS = L".height + 5";
                 nameRect->constrains.widthS = L"@name.width + 20";
                 nameRect->constrains.heightS = L"@name.height + 10";
@@ -127,6 +130,9 @@ namespace ns
                 menuButton->constrains.posXS = L".width/2";
                 menuButton->constrains.posYS = L".height - .height/5";
             }
+            ignoreDialogue = false;
+            ignorePause = false;
+            ignoreChoose = false;
         }
     }
 }
