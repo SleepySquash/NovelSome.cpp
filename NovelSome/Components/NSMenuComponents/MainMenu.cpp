@@ -417,12 +417,12 @@ namespace ns
             {
                 novelBackShape.setSize({gs::width * 4.65f/5, gs::height * 4.f/5});
                 novelBackShape.setPosition(0.35*gs::width/10, gs::height/15);
-                novelButtons.setSize({gs::width * 4.7f/5, 120*gs::scScale});
+                novelButtons.setSize({gs::width * 4.7f/5, 110*gs::scScale});
                 novelButtons.setPosition(0.3*gs::width/10, 0);
             } else {
                 novelBackShape.setSize({(1280 - 610 - 30)*gs::scalex, gs::height * 4.f/5});
                 novelBackShape.setPosition(15*gs::scalex, gs::height/15);
-                novelButtons.setSize({610*gs::scalex, 120*gs::scScale});
+                novelButtons.setSize({610*gs::scalex, 110*gs::scScale});
                 novelButtons.setPosition(gs::width - novelButtons.shape.getSize().x, 0);
             }
             novelButtons.Resize(width, height);

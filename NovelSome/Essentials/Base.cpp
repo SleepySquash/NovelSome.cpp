@@ -194,10 +194,20 @@ namespace ns
         }
         std::wstring GetFilenameWOProhibited(const std::wstring& filename)
         {
-            std::wstring wstr = filename; std::size_t pos;
+            if (!filename.length()) return filename;
+            std::wstring wstr; std::size_t pos;
+#ifdef _WIN32
+            for (unsigned long i = 0; i < 254 && i < filename.length(); ++i)
+                if (filename[i] >= 32 && filename[i] != 58 && filename[i] != 60 && filename[i] != 62 && filename[i] != 63 && filename[i] != 34 && filename[i] != 124 && filename[i] != 42 && filename[i] != 47 && filename[i] != 92) wstr += filename[i]; else wstr += L"_";
+            std::wstring lowercase = LowercaseTheString(wstr);
+            if (lowercase == L"con" || lowercase == L"prn" || lowercase == L"aux" || lowercase == L"prn" || lowercase == L"nul" || lowercase == L"com1" || lowercase == L"com2" || lowercase == L"com3" || lowercase == L"com4" || lowercase == L"com5" || lowercase == L"com6" || lowercase == L"com7" || lowercase == L"com8" || lowercase == L"com9" || lowercase == L"lpt1" || lowercase == L"lpt2" || lowercase == L"lpt3" || lowercase == L"lpt4" || lowercase == L"lpt5" || lowercase == L"lpt6" || lowercase == L"lpt7" || lowercase == L"lpt8" || lowercase == L"lpt9") wstr += L"q";
+            else if (wstr[wstr.length() - 1] == L' ' || wstr[wstr.length() - 1] == L'.') wstr += L"q";
+#else
+            wstr = filename;
             pos = wstr.find('\0'); if (pos != std::string::npos) wstr = wstr.replace(pos, 1, L"_");
             pos = wstr.find('/'); if (pos != std::string::npos)  wstr = wstr.replace(pos, 1, L"_");
             pos = wstr.find('\\'); if (pos != std::string::npos) wstr = wstr.replace(pos, 1, L"_");
+#endif
             return wstr;
         }
         
