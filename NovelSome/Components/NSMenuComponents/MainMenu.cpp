@@ -299,7 +299,7 @@ namespace ns
                                 if (doParallax) { if (drawBlur) CalculateParallax(blur, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                                     CalculateParallax(background, sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y); }
                                 sf::Vector2i dot; if (event.type == sf::Event::MouseButtonReleased) dot = { event.mouseButton.x, event.mouseButton.y }; else dot = { event.touch.x, event.touch.y };
-#ifndef MSC_VER
+#ifndef _MSC_VER
                                 unselectNovelSelected = !novelBackShape.getGlobalBounds().contains(dot.x, dot.y);
 #endif
                                 if (unselectNovelSelected)

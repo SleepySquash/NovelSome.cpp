@@ -117,8 +117,8 @@
 		DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */; };
 		DDBD1F7F221341B400CFF750 /* NovelsLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */; };
 		DDBD1F80221341B400CFF750 /* NovelsLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */; };
-		DDD9549E229E7AEF00DC9E80 /* Client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* Client.cpp */; };
-		DDD9549F229E7AEF00DC9E80 /* Client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* Client.cpp */; };
+		DDD9549E229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */; };
+		DDD9549F229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */; };
 		DDF736F8216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
 		DDF736F9216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
 /* End PBXBuildFile section */
@@ -238,8 +238,8 @@
 		DDBB618A215E9D550062CC3D /* EssentialComponents.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = EssentialComponents.hpp; sourceTree = "<group>"; };
 		DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelsLibrary.cpp; sourceTree = "<group>"; };
 		DDBD1F7E221341B400CFF750 /* NovelsLibrary.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelsLibrary.hpp; sourceTree = "<group>"; };
-		DDD9549C229E7AEF00DC9E80 /* Client.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Client.cpp; sourceTree = "<group>"; };
-		DDD9549D229E7AEF00DC9E80 /* Client.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Client.hpp; sourceTree = "<group>"; };
+		DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ClientImpl.cpp; sourceTree = "<group>"; };
+		DDD9549D229E7AEF00DC9E80 /* ClientImpl.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ClientImpl.hpp; sourceTree = "<group>"; };
 		DDF736F6216B65770065845D /* GUIInterface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GUIInterface.cpp; sourceTree = "<group>"; };
 		DDF736F7216B65770065845D /* GUIInterface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GUIInterface.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -534,8 +534,8 @@
 		DDD9549B229E7ACF00DC9E80 /* ClientComponents */ = {
 			isa = PBXGroup;
 			children = (
-				DDD9549C229E7AEF00DC9E80 /* Client.cpp */,
-				DDD9549D229E7AEF00DC9E80 /* Client.hpp */,
+				DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */,
+				DDD9549D229E7AEF00DC9E80 /* ClientImpl.hpp */,
 			);
 			path = ClientComponents;
 			sourceTree = "<group>";
@@ -695,7 +695,7 @@
 				DD75662D229FC4F1000FF9D5 /* Client.cpp in Sources */,
 				DDBB6177215E9CDD0062CC3D /* Audio.cpp in Sources */,
 				DD5648612256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
-				DDD9549E229E7AEF00DC9E80 /* Client.cpp in Sources */,
+				DDD9549E229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
 				DDBB6184215E9D200062CC3D /* GUISystem.cpp in Sources */,
 				DD5B6B76223E514200997FFF /* Font.cpp in Sources */,
 				DD5B6B6E223E510900997FFF /* Image.cpp in Sources */,
@@ -730,7 +730,7 @@
 				DD550D7D22A9A6760037A799 /* HeavensGateUI.cpp in Sources */,
 				DD8F82C5215E5C73000CB7BB /* NovelSomeScript.cpp in Sources */,
 				DD75662E229FC4F1000FF9D5 /* Client.cpp in Sources */,
-				DDD9549F229E7AEF00DC9E80 /* Client.cpp in Sources */,
+				DDD9549F229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
 				DD3AC04522318F3000012A86 /* Skin.cpp in Sources */,
 				DD5B6B73223E513B00997FFF /* Sound.cpp in Sources */,
 				DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */,

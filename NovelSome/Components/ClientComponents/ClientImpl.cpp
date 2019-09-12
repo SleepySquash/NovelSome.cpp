@@ -6,7 +6,7 @@
 //  Copyright © 2019 Melancholy Hill. All rights reserved.
 //
 
-#include "Client.hpp"
+#include "ClientImpl.hpp"
 
 namespace HeavensGate
 {

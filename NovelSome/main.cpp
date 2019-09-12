@@ -157,7 +157,7 @@
 #include "Components/NSMenuComponents/MainMenu.hpp"
 #include "Components/NSMenuComponents/NovelLoader.hpp"
 #include "Components/NovelComponents/Novel.hpp"
-#include "Components/ClientComponents/Client.hpp"
+#include "Components/ClientComponents/ClientImpl.hpp"
 
 #include "Components/Interfaces/SaveLoadUI.hpp"
 #include "Components/Interfaces/SettingsUI.hpp"
