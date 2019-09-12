@@ -45,7 +45,8 @@ namespace ns
             bool ignoreDialogue{ false }, ignorePause{ false }, ignoreChoose{ false };
             
             ~Interface();
-            void RestoreToDefaults();
+            enum class RestoreInterface{ All, Dialogue, Choose, Pause };
+            void RestoreToDefaults(const RestoreInterface& restore = RestoreInterface::All);
             void LoadFromFile(const std::wstring& fileName, const std::wstring& folderPath = L"");
         };
     }

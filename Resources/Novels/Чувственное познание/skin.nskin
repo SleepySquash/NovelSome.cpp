@@ -1,35 +1,3 @@
-font: "Pacifica.ttf"
-
-dialogue
-{
-    appearTime: 0.4
-    disappearTime: 0.4
-    alpha: 1.
-
-    insecond: 0.03
-    mode: insecond
-
-    ladd: "
-    radd: "
-    shift: 15
-
-    fill: white
-    outline: black
-    thickness: 1
-
-    font: "NotoSansCJK-Regular.ttc"
-    size: 30
-}
-
-choose
-{
-    appearTime: 0.4
-    disappearTime: 0.4
-    alpha: 1.
-
-    font: "NotoSansCJK-Regular.ttc"
-}
-
 background
 {
     appearTime: 0.6
@@ -71,6 +39,12 @@ sound
 
 gui choose
 {
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
+    font: "NotoSansCJK-Regular.ttc"
+
     rectangle as Choose
     {
         alpha: .8
@@ -123,6 +97,23 @@ gui gamepause
 
 gui dialogue
 {
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
+    insecond: 0.03
+    mode: insecond
+
+    ladd: "
+    radd: "
+    shift: 15
+
+    fill: white
+    outline: black
+    thickness: 1
+
+    font: "NotoSansCJK-Regular.ttc"
+    size: 30
     rectangle as Dialogue
     {
         alpha: .66

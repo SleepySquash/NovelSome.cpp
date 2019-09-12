@@ -12,6 +12,7 @@ namespace ns
 {
     std::unordered_map<std::string, std::wstring> Language::dictionary;
     std::string Language::currentLanguage{ "en" };
+    std::wstring Language::menufont, Language::font;
         
     std::wstring Language::get(const std::string& str)
     {
@@ -22,6 +23,8 @@ namespace ns
     void Language::Default()
     {
         currentLanguage = "en";
+        menufont = L"Pacifica.ttf";
+        font = L"Arial.ttf";
         dictionary["Novel selection"] = L"Novel selection";
         dictionary["Editor"] = L"Editor";
         dictionary["Settings"] = L"Settings";
@@ -34,9 +37,12 @@ namespace ns
         dictionary["Login"] = L"Login";
         dictionary["Registration"] = L"Registration";
         dictionary["Description"] = L"Description";
+        dictionary["Continue"] = L"Continue";
     }
     void Language::Load(const std::wstring& path)
     {
+        menufont = L"Pacifica.ttf";
+        font = L"Arial.ttf";
         std::wifstream wif;
 #ifdef _WIN32
         wif.open(path);
@@ -54,6 +60,18 @@ namespace ns
                 std::getline(wif, line); command.Command(line);
                 if (nss::Command(command, L"%version ")) version = nss::ParseAsInt(command);
                 else if (nss::Command(command, L"%name ")) currentLanguage = utf8(nss::ParseAsString(command));
+                else if (nss::Command(command, L"%font "))
+                {
+                    font = nss::ParseAsMaybeQuoteString(command);
+                    if (!base::FileExists(L"Data/Fonts/" + font) && !base::FileExists(utf16(resourcePath()) + L"Data/Fonts/" + font))
+                        font = L"Arial.ttf";
+                }
+                else if (nss::Command(command, L"%menu ") || nss::Command(command, L"%menufont "))
+                {
+                    menufont = nss::ParseAsMaybeQuoteString(command);
+                    if (!base::FileExists(L"Data/Fonts/" + menufont) && !base::FileExists(utf16(resourcePath()) + L"Data/Fonts/" + menufont))
+                        menufont = L"Pacifica.ttf";
+                }
                 else if (version == 1)
                 {
                     std::wstring stated = nss::ParseUntil(command, L'='); ++command.lastPos;

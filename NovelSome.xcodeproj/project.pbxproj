@@ -37,6 +37,8 @@
 		DD3AC04522318F3000012A86 /* Skin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3AC04222318F3000012A86 /* Skin.cpp */; };
 		DD3AC04822318F9400012A86 /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3AC04622318F9400012A86 /* Interface.cpp */; };
 		DD3AC04922318F9400012A86 /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3AC04622318F9400012A86 /* Interface.cpp */; };
+		DD3C33B822D3E9DE0089D683 /* NovelLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */; };
+		DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */; };
 		DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
 		DD3FBA212212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
 		DD550D7C22A9A6760037A799 /* HeavensGateUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD550D7A22A9A6760037A799 /* HeavensGateUI.cpp */; };
@@ -153,6 +155,8 @@
 		DD3AC04322318F3000012A86 /* Skin.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Skin.hpp; sourceTree = "<group>"; };
 		DD3AC04622318F9400012A86 /* Interface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Interface.cpp; sourceTree = "<group>"; };
 		DD3AC04722318F9400012A86 /* Interface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Interface.hpp; sourceTree = "<group>"; };
+		DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelLoader.cpp; sourceTree = "<group>"; };
+		DD3C33B722D3E9DE0089D683 /* NovelLoader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelLoader.hpp; sourceTree = "<group>"; };
 		DD3FBA1E2212111400E66342 /* MainMenu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MainMenu.cpp; sourceTree = "<group>"; };
 		DD3FBA1F2212111400E66342 /* MainMenu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MainMenu.hpp; sourceTree = "<group>"; };
 		DD550D7A22A9A6760037A799 /* HeavensGateUI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HeavensGateUI.cpp; sourceTree = "<group>"; };
@@ -276,6 +280,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DD09430B22FC820700FEF1AB /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */,
+				DDBB618A215E9D550062CC3D /* EssentialComponents.hpp */,
+				DD12BE3B22A48AA900F542D4 /* LanguageLibrary.cpp */,
+				DD12BE3C22A48AA900F542D4 /* LanguageLibrary.hpp */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
 		DD3FBA1D221210EB00E66342 /* NSMenuComponents */ = {
 			isa = PBXGroup;
 			children = (
@@ -285,8 +300,8 @@
 				DD5648602256A2BC0045EA5F /* NovelMenu.hpp */,
 				DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */,
 				DDBD1F7E221341B400CFF750 /* NovelsLibrary.hpp */,
-				DD12BE3B22A48AA900F542D4 /* LanguageLibrary.cpp */,
-				DD12BE3C22A48AA900F542D4 /* LanguageLibrary.hpp */,
+				DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */,
+				DD3C33B722D3E9DE0089D683 /* NovelLoader.hpp */,
 			);
 			path = NSMenuComponents;
 			sourceTree = "<group>";
@@ -378,8 +393,7 @@
 				DDA1A07C216D45C200A9BE38 /* NekoComponents */,
 				DDBB616B215E9C0A0062CC3D /* NovelComponents */,
 				DD3FBA1D221210EB00E66342 /* NSMenuComponents */,
-				DDBB6189215E9D550062CC3D /* EssentialComponents.cpp */,
-				DDBB618A215E9D550062CC3D /* EssentialComponents.hpp */,
+				DD09430B22FC820700FEF1AB /* Helpers */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -659,6 +673,7 @@
 				DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */,
 				DD095052223EE698002887EA /* etc.cpp in Sources */,
 				DD7A07FB225DDAAE00B770F7 /* GamePause.cpp in Sources */,
+				DD3C33B822D3E9DE0089D683 /* NovelLoader.cpp in Sources */,
 				DDBB6171215E9CBE0062CC3D /* NovelUpdate.cpp in Sources */,
 				DD3AC04822318F9400012A86 /* Interface.cpp in Sources */,
 				DD8F82BE215E5B7E000CB7BB /* Settings.cpp in Sources */,
@@ -703,6 +718,7 @@
 				DD095053223EE698002887EA /* etc.cpp in Sources */,
 				DD8F82C2215E5C73000CB7BB /* EntitySystem.cpp in Sources */,
 				DD8F82C3215E5C73000CB7BB /* Settings.cpp in Sources */,
+				DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */,
 				DD5648622256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
 				DD3AC0412231282000012A86 /* CharacterLibrary.cpp in Sources */,
 				DD3AC04922318F9400012A86 /* Interface.cpp in Sources */,

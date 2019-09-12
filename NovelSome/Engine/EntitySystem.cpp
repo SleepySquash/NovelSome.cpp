@@ -28,7 +28,7 @@ namespace ns
         while (it != components.end())
         {
             //if ((*it)->offline) { delete (*it); components.erase(it++); }
-            if ((*it)->offline) { if ((*it)->sleep) (*it)->sleep = (*it)->offline = false; else { delete (*it); components.erase(it++); } }
+            if ((*it)->offline) { if ((*it)->sleep) (*it)->sleep = (*it)->offline = false; else { delete (*it); it = components.erase(it); } }
             else { (*it)->Update(elapsedTime); ++it; }
         }
     }
@@ -58,7 +58,7 @@ namespace ns
     void Entity::Destroy()
     {
         list<Component*>::iterator it = components.begin();
-        while (it != components.end()) { (*it)->Destroy(); delete (*it); components.erase(it++); }
+        while (it != components.end()) { (*it)->Destroy(); delete (*it); it = components.erase(it); }
     }
     void Entity::SendMessage(MessageHolder message) { ReceiveMessage(message); }
     void Entity::ReceiveMessage(MessageHolder& message)
@@ -94,7 +94,7 @@ namespace ns
         list<Entity*>::iterator it = entities.begin();
         while (it != entities.end())
         {
-            if ((*it)->offline) { delete (*it); entities.erase(it++); }
+            if ((*it)->offline) { delete (*it); it = entities.erase(it); }
             else { (*it)->Update(elapsedTime); ++it; }
         }
     }
@@ -143,7 +143,7 @@ namespace ns
     void EntitySystem::clear()
     {
         list<Entity*>::iterator it = entities.begin();
-        while (it != entities.end()) { (*it)->Destroy(); delete (*it); entities.erase(it++); }
+        while (it != entities.end()) { (*it)->Destroy(); delete (*it); it = entities.erase(it); }
         entities.clear();
     }
 }

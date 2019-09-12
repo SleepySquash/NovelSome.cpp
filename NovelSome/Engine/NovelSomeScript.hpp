@@ -13,14 +13,15 @@
 #include <string>
 #include <vector>
 
-//nss::SetStringWithLineBreaks
+// nss::SetStringWithLineBreaks
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Color.hpp>
 
-//for ns::base::LowercaseTheString
+// for ns::base::LowercaseTheString
 #include "../Essentials/Base.hpp"
+#include "../Essentials/ResourcePath.hpp"
 
-//for mathparser, stack functionality
+// for mathparser, stack functionality
 #include "List.hpp"
 
 using std::cout;
@@ -55,11 +56,12 @@ namespace nss
     /// \returns true if parsed string starts with specified command, false otherwise.
     ///----------------------------------------------------------
     bool Command(CommandSettings& results, const std::wstring& command);
-    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase = true);
+    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase = true, bool skipSpaces = true);
     bool Command(const std::string& line, const std::string& command);
     
     //TODO: Documentation
     void SkipSpaces(CommandSettings& results);
+    void SkipDelimiters(CommandSettings& results, const std::vector<wchar_t>& delimiters);
     void RemoveSpaces(CommandSettings& results);
     void RemoveSpaces(std::wstring& line);
     void Trim(std::wstring& line);
@@ -71,6 +73,7 @@ namespace nss
     
     //TODO: Documentation
     std::wstring ParseUntil(CommandSettings& results, const wchar_t until);
+    std::wstring ParseUntil(CommandSettings& results, const std::vector<wchar_t>& delimiters);
     std::string ParseUntil(std::string line, const char until, unsigned int from = 0);
     std::wstring ParseUntilReverse(std::wstring line, const wchar_t until, unsigned int from = 0);
     std::wstring ParseWhile(CommandSettings& results, const wchar_t until);

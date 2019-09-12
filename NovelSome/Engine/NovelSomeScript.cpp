@@ -50,12 +50,12 @@ namespace nss
         
         return ReallyFound;
     }
-    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase)
+    bool Command(const std::wstring& line, const std::wstring& command, bool lowercase, bool skipSpaces)
     {
         bool ReallyFound{ false };
         
         int lastPos{ 0 };
-        while (lastPos < line.length() && (line[lastPos] == L' ' || line[lastPos] == L'\t')) ++lastPos;
+        if (skipSpaces) while (lastPos < line.length() && (line[lastPos] == L' ' || line[lastPos] == L'\t')) ++lastPos;
         std::wstring commandLine = lowercase ? ns::base::LowercaseTheString(line) : line;
         if (command.length() <= commandLine.length())
         {
@@ -89,6 +89,18 @@ namespace nss
     {
         while (results.lastPos < results.line.length() && (results.line[results.lastPos] == L' ' || results.line[results.lastPos] == L'\t'))
             results.lastPos++;
+    }
+    void SkipDelimiters(CommandSettings& results, const std::vector<wchar_t>& delimiters)
+    {
+        bool moveNext{ true };
+        auto it = delimiters.begin();
+        while (it != delimiters.end())
+        {
+            moveNext = true;
+            while (results.lastPos < results.line.length() && results.line[results.lastPos] == *it) {
+                results.lastPos++; it = delimiters.begin(); moveNext = false; }
+            if (moveNext) ++it;
+        }
     }
     void RemoveSpaces(CommandSettings& results)
     {
@@ -125,6 +137,22 @@ namespace nss
                 if (results.line[pos] != 13) text += results.line[pos];
                 ++pos;
             }
+        results.lastPos = pos + 1;
+        return text;
+    }
+    std::wstring ParseUntil(CommandSettings& results, const std::vector<wchar_t>& delimiters)
+    {
+        unsigned int pos{ results.lastPos };
+        std::wstring text = L""; bool Found{ false };
+        while (!Found && pos < results.line.length())
+        {
+            for (auto& until : delimiters) if ((Found = (results.line[pos] == until))) break;
+            if (!Found)
+            {
+                if (results.line[pos] != 13) text += results.line[pos];
+                ++pos;
+            }
+        }
         results.lastPos = pos + 1;
         return text;
     }
@@ -216,15 +244,16 @@ namespace nss
     sf::Color ParseColor(CommandSettings& results)
     {
         nss::SkipSpaces(results);
-        std::wstring color1 = nss::ParseUntil(results, ' ');
+        std::vector<wchar_t> delimiters = { ' ', ',', '\t' };
+        std::wstring color1 = nss::ParseUntil(results, delimiters);
         if (color1.length() != 0)
         {
-            nss::SkipSpaces(results);
-            std::wstring color2 = nss::ParseUntil(results, ' ');
+            nss::SkipDelimiters(results, delimiters);
+            std::wstring color2 = nss::ParseUntil(results, delimiters);
             if (color2.length() != 0)
             {
-                nss::SkipSpaces(results);
-                std::wstring color3 = nss::ParseUntil(results, ' ');
+                nss::SkipDelimiters(results, delimiters);
+                std::wstring color3 = nss::ParseUntil(results, delimiters);
                 if (color3.length() != 0)
                 {
                     int rColor = ns::base::atoi(color1);

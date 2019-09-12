@@ -78,5 +78,24 @@ namespace ns
             yy -= projectText.getLocalBounds().height*2 - 20*gs::scale;
             performanceText.setPosition(width - performanceText.getLocalBounds().width - 10*gs::scale, yy - performanceText.getLocalBounds().height);
         }
+        
+        
+        
+        void FadingFromBlackScreen::Init() { shape.setFillColor(sf::Color::Black); gs::ignoreDraw = true; }
+        void FadingFromBlackScreen::Update(const sf::Time& elapsedTime)
+        {
+            gs::requestWindowRefresh = true;
+            if (waitFor > 0.f) waitFor -= elapsedTime.asSeconds();
+            else if (elapsedSeconds < elapsedFor)
+            {
+                gs::ignoreDraw = false;
+                alpha = 255.f * (elapsedFor - elapsedSeconds)/elapsedFor;
+                shape.setFillColor(sf::Color(0,0,0, alpha));
+                elapsedSeconds += elapsedTime.asSeconds();
+            }
+            else { entity->PopComponent(this); }
+        }
+        void FadingFromBlackScreen::Draw(sf::RenderWindow* window) { window->draw(shape); }
+        void FadingFromBlackScreen::Resize(const unsigned int& width, const unsigned int& height) { shape.setSize({(float)width, (float)height}); }
     }
 }

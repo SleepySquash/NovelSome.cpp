@@ -34,9 +34,8 @@
 #include "../../Engine/Language.hpp"
 
 #include "NovelsLibrary.hpp"
-#include "LanguageLibrary.hpp"
-#include "../NovelComponents/Novel.hpp"
-#include "../NovelComponents/GUISystem.hpp"
+#include "NovelMenu.hpp"
+#include "../Helpers/LanguageLibrary.hpp"
 #include "../Interfaces/Popup.hpp"
 
 using std::cin;
@@ -51,9 +50,9 @@ namespace ns
     {
         struct MainMenu : Component
         {
-            NovelComponents::GUISystem guiSystem;
+            //NovelComponents::GUISystem guiSystem;
             
-            bool active{ true };
+            bool active{ true }, ignoreNovelsEnding{ false };
             sf::Sprite background;
             bool spriteLoaded{ false };
             enum class Page { Main, Novels, Editor, Settings, Language, Account };
@@ -82,12 +81,14 @@ namespace ns
             unsigned long novelsLoaded{ 0 };
             GUI::RectangleButtons novelButtons;
             sf::RectangleShape novelBackShape;
-            GUI::TextButton novelStartButton;
+            GUI::TextButton novelStartButton, novelLoadButton;
             sf::Text novelText; float yyNovelText{ 0 };
             std::wstring novelTextDescription{ L"" }, novelRawDescription{ L"" }, novelAuthor{ L"" };
             bool novelShowBackground{ false }; sf::Sprite novelBackground; std::wstring novelBackTexture{ L"" };
             std::unique_ptr<char[]> fileInMemory;
             sf::Music novelMusic; float novelMusic_from{ 0 };
+            std::wstring menuPath{ L"" }, scenario{ L"" };
+            bool hasMenu{ false }; GUI::TextButton novelMenuButton;
 #ifdef _WIN32
             int scrollSensitivity{ 28 };
 #else

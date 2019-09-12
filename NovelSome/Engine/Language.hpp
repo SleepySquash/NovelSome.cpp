@@ -24,6 +24,7 @@ namespace ns
         
     public:
         static std::string currentLanguage;
+        static std::wstring menufont, font;
         
         static std::wstring get(const std::string&);
         static void Default();

@@ -65,11 +65,27 @@ namespace ns
         size_t GetLengthWONewLinesAndSpaces(const std::wstring& string);
         
         std::wstring LowercaseTheString(const std::wstring& str);
+        int ConvertToInt(const std::string& stringValue);
         int atoi(const std::wstring& stringValue);
         long atol(const std::wstring& stringValue);
-        int ConvertToInt(const std::string& stringValue);
         float atof(const std::wstring& stringValue);
         bool atob(const std::wstring& stringValue);
+        
+        double atan(double x);
+        
+        //////////////////////////////////////////////////////////////////////////////
+        /// This code below belongs to https://stackoverflow.com/users/592323/leemes
+        //////////////////////////////////////////////////////////////////////////////
+        template<typename It> class Range
+        {
+            It b, e;
+        public:
+            Range(It b, It e) : b(b), e(e) {}
+            It begin() const { return b; }
+            It end() const { return e; }
+        };
+        template<typename ORange, typename OIt = decltype(std::begin(std::declval<ORange>())), typename It = std::reverse_iterator<OIt>>
+        Range<It> reverse(ORange && originalRange) { return Range<It>(It(std::end(originalRange)), It(std::begin(originalRange))); }
     }
 }
 

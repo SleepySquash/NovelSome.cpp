@@ -2,34 +2,6 @@ name "Default"
 
 font: "Pacifica.ttf"
 
-dialogue
-{
-    appearTime: 0.4
-    disappearTime: 0.4
-    alpha: 1.
-
-    insecond: 0.03
-    mode: insecond
-
-    ladd: "
-    radd: "
-    shift: 15
-
-    fill: white
-    outline: black
-    thickness: 1
-
-    font: "NotoSansCJK-Regular.ttc"
-    size: 30
-}
-
-choose
-{
-    appearTime: 0.4
-    disappearTime: 0.4
-    alpha: 1.
-}
-
 background
 {
     appearTime: 0.6
@@ -282,6 +254,10 @@ gui menu
 
 gui choose
 {
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
+
     rectangle as Choose
     {
         alpha: .8
@@ -385,8 +361,25 @@ gui gamepause
 
 gui dialogue
 {
+    appearTime: 0.4
+    disappearTime: 0.4
+    alpha: 1.
 
-    rectangle as Dialogue
+    insecond: 0.03
+    mode: insecond
+
+    ladd: "
+    radd: "
+    shift: 15
+
+    fill: white
+    outline: black
+    thickness: 1
+
+    font: "NotoSansCJK-Regular.ttc"
+    size: 30
+
+    rectangle as Dialogue horizontal
     {
         alpha: .66
 
@@ -443,6 +436,65 @@ gui dialogue
             }
         }
     }
+
+    rectangle as Dialogue vertical
+    {
+        alpha: .66
+
+        left: 0
+        right: 0
+        bottom: 0
+        height: .height/4.6
+
+        @dialogue
+        {
+            left: 10
+            right: 10
+            top: 10
+            bottom: 2
+
+            alpha: .9
+            color: magenta
+        }
+
+        button "GUI/hide.png"
+        {
+            v: bottom
+            h: right
+            action: { switch
+            gui plsreturn((( "skin.nskin" fade:0! }
+            posx: .width - 30
+            posy: -30
+            scale: 0.5
+        }
+
+        button texture: "GUI/pause.png"
+        {
+            v: bottom
+            h: right
+            action: { pause }
+            posx: .width - 100
+            posy: -30
+            scale: 0.4
+        }
+
+        rectangle as Name
+        {
+            maxAlpha: .66
+
+            left: 10
+            bottom: .height + 5
+            width: @name.width + 20
+            height: @name.height + 10
+
+            @name
+            {
+                left: 7
+                bottom: 5
+            }
+        }
+    }
+
 }
 
 gui plsreturn(((

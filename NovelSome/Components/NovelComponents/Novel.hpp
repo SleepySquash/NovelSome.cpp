@@ -64,8 +64,8 @@ namespace ns
         struct Novel;
         struct NovelLoader : Component
         {
-            std::wstring fileName; NovelInfo* nvl; NovelSystem* system;
-            NovelLoader(const std::wstring& fileName, NovelSystem* system, NovelInfo* nvl);
+            std::wstring fileName; NovelInfo* nvl;
+            NovelLoader(const std::wstring& fileName, NovelInfo* nvl);
             void Update(const sf::Time& elapsedTime) override;
         };
         struct EventListener : NovelObject, Savable

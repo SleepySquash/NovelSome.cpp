@@ -45,6 +45,7 @@ namespace ns
                     {
                         alpha = maxAlpha; currentTime = 0.f;
                         mode = afterAppearSwitchTo;
+                        novelSystem->SendMessage({"Background :: Appeared", this});
                         if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
                     else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
@@ -84,6 +85,8 @@ namespace ns
                         CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                 }
             }
+            else if (message.address == hideAfter && message.info == "Background :: Appeared")
+                { sendMessageBack = noMessage; mode = disappearing; }
         }
         void Background::CalculateParallax(int mouseX, int mouseY)
         {
@@ -141,8 +144,8 @@ namespace ns
                     wof << L"mode: " << mode << endl;
                     if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
                     if (mode == appearing && ((Skin::self && appearTime != Skin::self->background.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
-                    if ((Skin::self && disappearTime != Skin::self->background.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
                 }
+                if ((Skin::self && disappearTime != Skin::self->background.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
                 if (sendMessageBack != atAppearance) wof << L"send: " << sendMessageBack << endl;
             }
         }

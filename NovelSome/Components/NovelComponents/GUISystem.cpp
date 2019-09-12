@@ -18,7 +18,7 @@ namespace ns
         void GUISystem::PollEvent(sf::Event& event)
         {
             for (auto g : guiObjects)
-                if (g->visible)
+                if (g->visible && ((gs::trueVerticalOrientation && g->scaleVertical) || (!gs::trueVerticalOrientation && g->scaleHorizontal)))
                 {
                     g->PollEvent(event);
                     if (g->child) g->child->PollEvent(event);
@@ -75,7 +75,7 @@ namespace ns
             {
                 lastWidth = width; lastHeight = height;
                 for (auto g : guiObjects)
-                    if (g->visible)
+                    if (g->visible && ((gs::trueVerticalOrientation && g->scaleVertical) || (!gs::trueVerticalOrientation && g->scaleHorizontal)))
                     {
                         //TODO: Make working good conditions to show something or not (constrains.displayWhenVariableIsTrue)
                         g->constrains.Recalculcalation(*g, width, height);
@@ -86,7 +86,7 @@ namespace ns
         void GUISystem::Draw(sf::RenderWindow* window)
         {
             for (auto g : guiObjects)
-                if (g->visible)
+                if (g->visible && ((gs::trueVerticalOrientation && g->scaleVertical) || (!gs::trueVerticalOrientation && g->scaleHorizontal)))
                 {
                     g->Draw(window);
                     if (drawConstrains)
@@ -555,7 +555,7 @@ namespace ns
         {
             switch (fadingsMode)
             {
-                case appearing:
+                case appearing: gs::requestWindowRefresh = true;
                     currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
                     {
@@ -574,7 +574,7 @@ namespace ns
                     }
                     break;
                     
-                case disappearing:
+                case disappearing: gs::requestWindowRefresh = true;
                     currentTime += elapsedTime.asSeconds();
                     if (currentTime >= disappearTime)
                     {
@@ -815,15 +815,14 @@ namespace ns
                 bool parsingGUI{ (guiScope == L"") };
                 list<GUIScopeStruct> scope; scope.emplace_front(nullptr);
                 unsigned int knownType = 0;
-                std::wstring forArgumentsParsing{ L"" };
+                std::wstring forArgumentsParsing{ L"" }, defaultFont{ L"" };
                 GUIObject* component{ nullptr };
                 
                 while (!eof)
                 {
                     if (!wif.eof())
                     {
-                        std::getline(wif, line); nss::RemoveSpaces(line);
-                        command.Command(line, true);
+                        std::getline(wif, line); command.Command(line, true);
                         if (!parsingGUI)
                         {
                             if (nss::Command(command, L"//")) { /* that's a comment */ }
@@ -839,9 +838,12 @@ namespace ns
                                     if (!typeFound) knownType = 1;
                                 }
                             }
+                            else if (nss::Command(line, L"font ", true, false) || nss::Command(line, L"font:", true, false)) {
+                                command.lastPos += 5; defaultFont = nss::ParseAsMaybeQuoteString(command); }
                         }
                         else
                         {
+                            nss::RemoveSpaces(line);
                             bool thatsAScope{ false }, onlyOneLine{ false };
                             if (!nss::Command(command, L"action") && !nss::Command(command, L"action:"))
                                 for (int i = 0; i < line.length(); ++i)
@@ -882,6 +884,7 @@ namespace ns
                                         GUISystem* guiSystemToAddTo{ nullptr };
                                         if (scope.front().object.obj) guiSystemToAddTo = scope.front().object.obj->GetChildSystem();
                                         else if (!scope.front().object.obj && scope.size() == 1) guiSystemToAddTo = this;
+                                        GUIObject* parent = scope.front().object.obj;
                                         
                                         if (guiSystemToAddTo)
                                         {
@@ -899,7 +902,9 @@ namespace ns
                                                     break;
                                                 case 3: /// text
                                                     text = guiSystemToAddTo->AddComponent<GUIObjects::Text>();
-                                                    if (Skin::self) text->SetFont(Skin::self->defaultFontName);
+                                                    if (defaultFont.length() && defaultFont != L"") text->SetFont(defaultFont);
+                                                    else if (Skin::self) text->SetFont(Skin::self->defaultFontName);
+                                                    else text->SetFont(lang::menufont);
                                                     component = text; scope.emplace_front(component, GUIScopeStruct::Text);
                                                     break;
                                                 case 4: /// image
@@ -907,21 +912,23 @@ namespace ns
                                                     component = img; scope.emplace_front(component, GUIScopeStruct::Image);
                                                     break;
                                                 case 10: /// image (background)
-                                                    img = guiSystemToAddTo->AddComponent<GUIObjects::Image>(); img->fitMode = GUIObjects::Image::fillCentre;
+                                                    img = guiSystemToAddTo->AddComponent<GUIObjects::Image>();
+                                                    img->fitMode = GUIObjects::Image::fillCentre; img->doParallax = gs::isParallaxEnabled;
                                                     component = img; scope.emplace_front(component, GUIScopeStruct::Image);
                                                     break;
                                                 case 5: /// @dialogue
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
                                                     component = dconstr; scope.emplace_front(component, GUIScopeStruct::DialogueConstrains);
-                                                    if (Skin::self) Skin::self->dialogue.textConstrains = component;
+                                                    //if (Skin::self) Skin::self->dialogue.textConstrains = component;
                                                     break;
                                                 case 6: /// @name
                                                     dconstr = guiSystemToAddTo->AddComponent<GUIObjects::DialogueConstrains>();
                                                     component = dconstr; scope.emplace_front(component, GUIScopeStruct::DialogueConstrains);
-                                                    if (Skin::self) Skin::self->dialogue.nameConstrains = component;
+                                                    //if (Skin::self) Skin::self->dialogue.nameConstrains = component;
                                                     break;
                                                 case 7: /// button: (text button)
                                                     button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Text);
+                                                    if (defaultFont.length() && defaultFont != L"") button->text->setFont(defaultFont);
                                                     component = button; scope.emplace_front(component, GUIScopeStruct::Button);
                                                     break;
                                                 case 8: /// button (sprite button)
@@ -930,9 +937,15 @@ namespace ns
                                                     break;
                                                 case 9: /// button: (rectangle button)
                                                     button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Rect);
+                                                    if (defaultFont.length() && defaultFont != L"") button->rect->setFont(defaultFont);
                                                     component = button; scope.emplace_front(component, GUIScopeStruct::Button);
                                                     break;
                                                 default: component = nullptr; scope.emplace_front(component); break;
+                                            }
+                                            if (component && parent)
+                                            {
+                                                component->scaleHorizontal = parent->scaleHorizontal;
+                                                component->scaleVertical = parent->scaleVertical;
                                             }
                                             
                                             nss::CommandSettings argumentLine;
@@ -940,6 +953,7 @@ namespace ns
                                             
                                             vector<std::wstring> arguments;
                                             nss::ParseArguments(argumentLine, arguments);
+                                            bool asName{ false }, asDialogue{ false };
                                             for (auto arg : arguments)
                                             {
                                                 nss::CommandSettings argument; argument.Command(arg);
@@ -957,15 +971,17 @@ namespace ns
                                                 }
                                                 else if (nss::Command(argument, L"}")) { /* ignoring */ }
                                                 else if (nss::Command(argument, L"{")) { /* ignoring */ }
-                                                else if (nss::Command(argument, L"name") && guiScope == L"dialogue")
-                                                {
+                                                else if (nss::Command(argument, L"name") && guiScope == L"dialogue") asName = true;
+                                                /*{
                                                     if (Skin::self) { Skin::self->dialogue.nameRect = component;
                                                         Skin::self->dialogue.nameRect->SetFadings(GUIObject::offline); }
-                                                }
-                                                else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue" && Skin::self)
-                                                    Skin::self->dialogue.dialogueRect = component;
+                                                }*/
+                                                else if (nss::Command(argument, L"dialogue") && guiScope == L"dialogue") asDialogue = true; /*&& Skin::self)
+                                                    Skin::self->dialogue.dialogueRect = component;*/
                                                 else if (nss::Command(argument, L"choose") && guiScope == L"choose" && Skin::self)
                                                     Skin::self->choose.chooseRect = component;
+                                                else if (nss::Command(argument, L"horizontal")) component->scaleVertical = false;
+                                                else if (nss::Command(argument, L"vertical")) component->scaleHorizontal = false;
                                                 else
                                                 {
                                                     std::wstring str = nss::ParseAsMaybeQuoteString(argument);
@@ -974,6 +990,30 @@ namespace ns
                                                         img->LoadImage(folderPath + str, /*this*/ic::globalRequestSender);
                                                     else if (knownType == 8 && button && !button->sprite->spriteLoaded)
                                                         button->sprite->setTexture(folderPath + str, /*this*/ic::globalRequestSender);
+                                                }
+                                            }
+                                            if (!component->scaleVertical && !component->scaleHorizontal) component->scaleVertical = component->scaleHorizontal = true;
+                                            if (Skin::self)
+                                            {
+                                                if (asName) {
+                                                    if (component->scaleVertical) { Skin::self->dialogue.nameRectV = component;
+                                                        Skin::self->dialogue.nameRectV->SetFadings(GUIObject::offline); }
+                                                    if (component->scaleHorizontal) { Skin::self->dialogue.nameRectH = component;
+                                                        Skin::self->dialogue.nameRectH->SetFadings(GUIObject::offline); } }
+                                                if (asDialogue) {
+                                                    if (component->scaleVertical) Skin::self->dialogue.dialogueRectV = component;
+                                                    if (component->scaleHorizontal) Skin::self->dialogue.dialogueRectH = component; }
+                                                switch (knownType)
+                                                {
+                                                    case 5:
+                                                        if (component->scaleVertical) Skin::self->dialogue.textConstrainsV = component;
+                                                        if (component->scaleHorizontal) Skin::self->dialogue.textConstrainsH = component;
+                                                        break;
+                                                    case 6:
+                                                        if (component->scaleVertical) Skin::self->dialogue.nameConstrainsV = component;
+                                                        if (component->scaleHorizontal) Skin::self->dialogue.nameConstrainsH = component;
+                                                        break;
+                                                    default: break;
                                                 }
                                             }
                                         }
@@ -1027,7 +1067,7 @@ namespace ns
                                                      nss::Command(command, L"alpha ") || nss::Command(command, L"maxalpha "))
                                             {
                                                 int possibleValue = nss::ParseAlpha(command);
-                                                if (possibleValue != -1) scope.front()->maxAlpha = possibleValue;
+                                                if (possibleValue != -1) { scope.front()->maxAlpha = possibleValue; /*scope.front()->SetAlpha(255);*/ }
                                             }
                                             else if (nss::Command(command, L"fillcolor ") ||
                                                      nss::Command(command, L"color ") || nss::Command(command, L"colour ") ||
@@ -1052,8 +1092,56 @@ namespace ns
                                                     if (scope.front().type == GUIScopeStruct::Text) scope.front().object.text->text.setOutlineColor(possibleColor);
                                                     else if (scope.front().type == GUIScopeStruct::Button) {
                                                         GUIObjects::Button* button = scope.front().object.but;
-                                                        if (button->type == GUIObjects::Button::Text) button->text->text.setOutlineColor(possibleColor);
-                                                        else if (button->type == GUIObjects::Button::Rect) button->rect->text.setOutlineColor(possibleColor);
+                                                        if (button->type == GUIObjects::Button::Text) { button->text->onormalColor = possibleColor; button->text->text.setOutlineColor(sf::Color(possibleColor.r, possibleColor.g, possibleColor.b, button->text->text.getOutlineColor().a)); }
+                                                        else if (button->type == GUIObjects::Button::Rect) { /*button->rect->onormalColor = possibleColor;*/ button->rect->text.setOutlineColor(sf::Color(possibleColor.r, possibleColor.g, possibleColor.b, button->alpha)); }
+                                                    }
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"hover ") || nss::Command(command, L"hovercolor ") ||
+                                                     nss::Command(command, L"hcolor ") || nss::Command(command, L"hcolour ") ||
+                                                     nss::Command(command, L"hover:") || nss::Command(command, L"hovercolor:") ||
+                                                     nss::Command(command, L"hcolor:") || nss::Command(command, L"hcolour:"))
+                                            {
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255 && scope.front().type == GUIScopeStruct::Button)
+                                                    scope.front().object.but->button->hoverColor = possibleColor;
+                                            }
+                                            else if (nss::Command(command, L"outlinehover ") || nss::Command(command, L"outlinehover:") ||
+                                                     nss::Command(command, L"ohcolor ") || nss::Command(command, L"ohcolor:") ||
+                                                     nss::Command(command, L"ohovercolor ") || nss::Command(command, L"ohovercolor:") ||
+                                                     nss::Command(command, L"outlinehcolor ") || nss::Command(command, L"outlinehcolor:"))
+                                            {
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255)
+                                                {
+                                                    if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->ohoverColor = possibleColor;
+                                                        // else if (button->type == GUIObjects::Button::Rect) button->rect->ohoverColor = possibleColor;
+                                                    }
+                                                }
+                                            }
+                                            else if (nss::Command(command, L"presscolor ") || nss::Command(command, L"presscolor:") ||
+                                                     nss::Command(command, L"pcolor ") || nss::Command(command, L"pcolor:") ||
+                                                     nss::Command(command, L"pcolour ") || nss::Command(command, L"pcolour:") ||
+                                                     nss::Command(command, L"presscolour ") || nss::Command(command, L"presscolour:"))
+                                            {
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255 && scope.front().type == GUIScopeStruct::Button)
+                                                    scope.front().object.but->button->pressColor = possibleColor;
+                                            }
+                                            else if (nss::Command(command, L"outlinepress ") || nss::Command(command, L"outlinepress:") ||
+                                                     nss::Command(command, L"opcolor ") || nss::Command(command, L"opcolor:") ||
+                                                     nss::Command(command, L"opresscolor ") || nss::Command(command, L"opresscolor:") ||
+                                                     nss::Command(command, L"outlinepcolor ") || nss::Command(command, L"outlinepcolor:"))
+                                            {
+                                                sf::Color possibleColor = nss::ParseColor(command);
+                                                if (possibleColor.a != 255)
+                                                {
+                                                    if (scope.front().type == GUIScopeStruct::Button) {
+                                                        GUIObjects::Button* button = scope.front().object.but;
+                                                        if (button->type == GUIObjects::Button::Text) button->text->opressColor = possibleColor;
+                                                        // else if (button->type == GUIObjects::Button::Rect) button->rect->ohoverColor = possibleColor;
                                                     }
                                                 }
                                             }
@@ -1236,10 +1324,31 @@ namespace ns
                                                 std::wstring imageName = nss::ParseAsMaybeQuoteStringFull(command);
                                                 if (imageName.length() != 0 && scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite) scope.front().object.but->sprite->setTexture(folderPath + imageName, this);
                                             }
+                                            else if (nss::Command(command, L"scale.:") || nss::Command(command, L"scale. "))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                if (scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite)
+                                                {
+                                                    float fromScope{ 1.f };
+                                                    if (scope.size() > 1)
+                                                    {
+                                                        auto it = scope.begin();
+                                                        std::advance(it, 1);
+                                                        if (it->type == GUIScopeStruct::Image) fromScope = it->object.img->sprite.getScale().x;
+                                                    }
+                                                    cout << fromScope << endl;
+                                                    scope.front().object.but->sprite->setScale(fromScope * nss::ParseAsFloat(command));
+                                                }
+                                            }
                                             else if (nss::Command(command, L"scale ") || nss::Command(command, L"scale:"))
                                             {
                                                 nss::SkipSpaces(command);
                                                 if (scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite) scope.front().object.but->sprite->setScale(nss::ParseAsFloat(command));
+                                            }
+                                            else if (nss::Command(command, L"nocolorchanging ") || nss::Command(command, L"nocolor"))
+                                            {
+                                                nss::SkipSpaces(command);
+                                                if (scope.front().type == GUIScopeStruct::Button && scope.front().object.but->type == GUIObjects::Button::Sprite) scope.front().object.but->sprite->noColorChanging = true;
                                             }
                                             else if (nss::Command(command, L"fit ") || nss::Command(command, L"fit:") ||
                                                      nss::Command(command, L"fill ") || nss::Command(command, L"fill:") ||
@@ -1257,7 +1366,18 @@ namespace ns
                                                     else if (nss::Command(fitMode, L"default")) img->fitMode = GUIObjects::Image::defaultFit;
                                                 }
                                             }
+                                            else if (nss::Command(command, L"parallax: ") || nss::Command(command, L"parallax "))
+                                            {
+                                                nss::SkipSpaces(command); std::wstring parallaxPower = nss::ParseAsString(command);
+                                                if (parallaxPower.length() != 0 && scope.front().type == GUIScopeStruct::Image)
+                                                {
+                                                    GUIObjects::Image* img = scope.front().object.img;
+                                                    img->doParallax = gs::isParallaxEnabled; img->parallaxPower = base::atof(parallaxPower);
+                                                    if (img->parallaxPower == 0) img->doParallax = false;
+                                                }
+                                            }
                                         }
+                                        else if (nss::Command(command, L"font ") || nss::Command(command, L"font:")) defaultFont = nss::ParseAsMaybeQuoteString(command);
                                     }
                                 }
                             }
@@ -1416,7 +1536,7 @@ namespace ns
             }
             void Rectangle::SetAlpha(sf::Uint8 alpha)
             {
-                sf::Uint8 realAlpha = sf::Int8(alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, realAlpha));
             }
             void Rectangle::SetColor(const sf::Color& fillColour) { shape.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, shape.getFillColor().a)); }
@@ -1549,6 +1669,11 @@ namespace ns
             
             
             void Image::Destroy() { if (spriteLoaded && imagePath != L"" && imagePath.length() != 0) ic::DeleteImage(imagePath); }
+            void Image::PollEvent(sf::Event &event)
+            {
+                if (event.type == sf::Event::MouseMoved && doParallax && parallaxPower > 0 && visible)
+                    CalculateParallax(event.mouseMove.x, event.mouseMove.y);
+            }
             void Image::Draw(sf::RenderWindow* window) { if (spriteLoaded) window->draw(sprite); }
             void Image::PreCalculate(const unsigned int& width, const unsigned int& height) { sprite.setScale(1, 1); }
             void Image::PreCalculatedSize(const unsigned int& width, const unsigned int& height)
@@ -1566,12 +1691,13 @@ namespace ns
                     //sprite.setScale({static_cast<float>(constrains.width) / sprite.getTexture()->getSize().x, static_cast<float>(constrains.height)  / sprite.getTexture()->getSize().y});
                     sprite.setPosition(constrains.globalBounds.left, constrains.globalBounds.top);
                     CalculateScale(constrains.globalBounds.width, constrains.globalBounds.height);
-                    if (fitMode != fillCentre) {
+                    //if (fitMode != fillCentre) {
                         constrains.globalBounds.left = sprite.getGlobalBounds().left;
                         constrains.globalBounds.top = sprite.getGlobalBounds().top;
                         constrains.globalBounds.width = sprite.getGlobalBounds().width;
                         constrains.globalBounds.height = sprite.getGlobalBounds().height;
-                    }
+                    //}
+                    if (doParallax) CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                 }
             }
             void Image::SetAlpha(sf::Uint8 alpha)
@@ -1652,13 +1778,15 @@ namespace ns
                 {
                     case Text:
                         text = new GUI::TextButton(); button = text;
-                        text->setFont(Skin::self->defaultFontName);
+                        if (Skin::self) text->setFont(Skin::self->defaultFontName);
+                        else text->setFont(lang::menufont);
                         text->setCharacterSize(48);
                         text->setString(L"Button");
                         break;
                     case Rect:
                         rect = new GUI::RectangleButton(); button = rect;
-                        rect->setFont(Skin::self->defaultFontName);
+                        if (Skin::self) rect->setFont(Skin::self->defaultFontName);
+                        else text->setFont(lang::menufont);
                         rect->setCharacterSize(48);
                         rect->setString(L"Button");
                         break;
@@ -1672,32 +1800,34 @@ namespace ns
             {
                 if (maxAlpha == button->getAlpha() && button->PollEvent(event))
                 {
-                    nss::CommandSettings command;
+                    nss::CommandSettings command; MessageSender* sender;
                     NovelSystem* system = FindNovelSystem();
-                    if (system)
+                    if (system) sender = system; else sender = ic::globalRequestSender;
+                    if (sender)
                     {
                         std::list<std::wstring*> toTheRanch;
                         for (auto it = actions.begin(); it != actions.end(); ++it)
                         {
                             command.Command(*it);
                             if (nss::Command(command, L"page")) cout << "page" << endl;
-                            else if (nss::Command(command, L"switch interface") || nss::Command(command, L"interface switch") || nss::Command(command, L"switch")) system->SendMessage({"Show/Hide Interface"});
+                            else if (nss::Command(command, L"switch interface") || nss::Command(command, L"interface switch") || nss::Command(command, L"switch")) sender->SendMessage({"Show/Hide Interface"});
                             else if (nss::Command(command, L"menu") || nss::Command(command, L"go to menu")) {
-                                gs::isPause = false; system->SendMessage({"GamePause :: Return to menu"}); }
+                                gs::isPause = false; sender->SendMessage({"GamePause :: Return to menu"}); }
                             else if (nss::Command(command, L"pause off") || nss::Command(command, L"pause false")) {
-                                if (gs::isPause) { gs::isPause = false; system->SendMessage({"GamePause"}); } }
+                                if (gs::isPause) { gs::isPause = false; sender->SendMessage({"GamePause"}); } }
                             else if (nss::Command(command, L"pause on") || nss::Command(command, L"game true")) {
-                                if (!gs::isPause) { gs::isPause = true; system->SendMessage({"GamePause"}); } }
+                                if (!gs::isPause) { gs::isPause = true; sender->SendMessage({"GamePause"}); } }
                             else if (nss::Command(command, L"pause") || nss::Command(command, L"game pause")) {
-                                gs::isPause = !gs::isPause; system->SendMessage({"GamePause"}); }
-                            else if (nss::Command(command, L"save")) system->SendMessage({"Save"});
-                            else if (nss::Command(command, L"load")) system->SendMessage({"Load"});
+                                gs::isPause = !gs::isPause; sender->SendMessage({"GamePause"}); }
+                            else if (nss::Command(command, L"save")) sender->SendMessage({"Save"});
+                            else if (nss::Command(command, L"load")) sender->SendMessage({"Load"});
+                            else if (!system && (nss::Command(command, L"play") || nss::Command(command, L"read"))) sender->SendMessage({"NM :: Start"});
                             else toTheRanch.push_back(&(*it));
                         }
-                        if ((eventPolling = toTheRanch.size()))
+                        if ((eventPolling = toTheRanch.size()) && system)
                         {
-                            system->SendMessage({"ExecuteInsert"});
-                            for (auto it = toTheRanch.rbegin(); it != toTheRanch.rend(); ++it) system->SendMessage({"Execute", *(*it)});
+                            sender->SendMessage({"ExecuteInsert"});
+                            for (auto it = toTheRanch.rbegin(); it != toTheRanch.rend(); ++it) sender->SendMessage({"Execute", *(*it)});
                             button->active = false;
                         }
                     }

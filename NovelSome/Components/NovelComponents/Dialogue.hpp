@@ -54,7 +54,7 @@ namespace ns
             GUISystem* guiSystem{ nullptr };
             CharacterData* character{ nullptr };
             
-            bool visible{ true };
+            bool visible{ true }, wasPressed{ false };
             bool drawCharacterName{ false }, fontLoaded{ false }, noguiSystem{ false };
             sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, waitingTime{ 2.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };

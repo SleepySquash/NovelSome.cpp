@@ -109,7 +109,8 @@ namespace ns
     unsigned int gs::relativeHeight = 0;
     float gs::scalex = 1.f, gs::scaley = 1.f;
     float gs::scale = 1.f; float gs::scScale = 1.f;
-    bool gs::verticalOrientation = false;
+    bool gs::verticalOrientation = false, gs::trueVerticalOrientation = false;
+    int gs::screenOffsetTop{ 0 }, gs::notchEffectFromTop{ 0 };
     
     std::pair<int, int> gs::lastMousePos = { 0, 0 };
 #ifdef _WIN32
@@ -129,6 +130,7 @@ namespace ns
     
     bool gs::isPauseEnabled = true;
     bool gs::isPause = false;
+    bool gs::pauseOnFocusLost = true;
     bool gs::requestWindowRefresh = true;
     float gs::autosaveDeltaTime = 240.f;
     bool gs::ignoreEvent = false, gs::ignoreDraw = false;
@@ -148,7 +150,8 @@ namespace ns
     float gs::defaultParallaxClose = 0.105;
     float gs::defaultParallaxFrontground = 0.13;
     
-    bool gs::forcePressInsideDialogue = true, gs::drawGUIBoundaries = false;
+    bool gs::forcePressInsideDialogue = true, gs::drawGUIBoundaries = false, gs::buttonHovering = true;
+    bool gs::bundleNovel = false;
     
     float gs::maxVolumeGlobal = 1.f;
     float gs::maxVolumeMusic = 1.f;

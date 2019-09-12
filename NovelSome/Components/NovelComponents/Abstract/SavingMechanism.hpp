@@ -42,7 +42,7 @@ namespace ns
         };
         
         void SaveGameState(const std::wstring& fileName, NovelSystem& system);
-        void LoadGameState(std::wstring fileName, NovelSystem& system, void* entityaddress = nullptr, void* nvl = nullptr);
+        void LoadGameState(std::wstring fileName, void* entityaddress = nullptr, void* nvl = nullptr);
     }
 }
 

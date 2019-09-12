@@ -1,0 +1,26 @@
+font: "Pacifica.ttf"
+
+gui menu
+{
+    background "Неко.jpg" { }
+    text "Bundle"
+    {
+        x: .width/2
+        y: 200
+        size: 60
+        thickness: 2
+        h: center
+    }
+    button:"Читать"
+    {
+        x: .width/2
+        y: .height/2
+        action: read
+    }
+    button:"Загрузить"
+    {
+        x: .width/2
+        y: .height/2 + 70
+        action: load
+    }
+}

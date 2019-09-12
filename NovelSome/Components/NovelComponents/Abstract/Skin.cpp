@@ -24,7 +24,7 @@ namespace ns
                 dialogue.forcePressInsideDialogue = true;
                 dialogue.characterInSecond = 0.03f;
                 dialogue.textAppearMode = 1;
-                dialogue.fontName = L"Arial.ttf";//L"NotoSansCJK-Regular.ttc"; // TODO: default font is based on the lang::currentLanguage.
+                dialogue.fontName = lang::font;//L"NotoSansCJK-Regular.ttc"; // TODO: default font is based on the lang::currentLanguage.
                 
                 dialogue.leftSpeechAddition = dialogue.rightSpeechAddition = dialogue.afterRedLineShift = 0;
                 
@@ -38,7 +38,7 @@ namespace ns
             {
                 choose.characterSize = 36;
                 choose.maxAlpha = 255;
-                choose.fontName = L"Arial.ttf"; //{ L"NotoSansCJK-Regular.ttc" };
+                choose.fontName = lang::font; //{ L"NotoSansCJK-Regular.ttc" };
                 choose.appearTime = 0.4f; choose.disappearTime = 0.4f;
             }
             else if (scopeName == L"background")
@@ -62,6 +62,7 @@ namespace ns
             else if (scopeName == L"sound") { sound.maxVolume = 100; sound.appearTime = 0; sound.disappearTime = 0; }
             else
             {
+                defaultFontName = lang::font;
                 RestoreToDefaults(L"dialogue");
                 RestoreToDefaults(L"background");
                 RestoreToDefaults(L"character");
@@ -139,7 +140,7 @@ namespace ns
                             {
                                 if (scopeName == L"dialogue") dialogue.fontName = possibleValue;
                                 else if (scopeName == L"choose") choose.fontName = possibleValue;
-                                else defaultFontName = possibleValue, dialogue.fontName = possibleValue;
+                                else defaultFontName = possibleValue, dialogue.fontName = possibleValue, choose.fontName = possibleValue;;
                             }
                         }
                         

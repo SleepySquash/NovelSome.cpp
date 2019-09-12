@@ -30,7 +30,7 @@ namespace ns
         list<NovelObject*>::iterator it = objects.begin();
         while (it != objects.end())
         {
-            if ((*it)->offline) { delete (*it); objects.erase(it++); }
+            if ((*it)->offline) { delete (*it); it = objects.erase(it); }
             else { (*it)->Update(elapsedTime); ++it; }
         }
     }
@@ -66,7 +66,7 @@ namespace ns
     void NovelSystem::clear()
     {
         list<NovelObject*>::iterator it = objects.begin();
-        while (it != objects.end()) { if (!(*it)->offline) (*it)->Destroy(); delete (*it); objects.erase(it++); }
+        while (it != objects.end()) { if (!(*it)->offline) (*it)->Destroy(); delete (*it); it = objects.erase(it); }
         objects.clear();
     }
     bool NovelSystem::empty() { return objects.empty(); }

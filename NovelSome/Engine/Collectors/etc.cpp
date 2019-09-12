@@ -37,13 +37,15 @@ namespace ns
                     switch (mode)
                     {
                         case 1:
-                            for (int i = 0; i <= 1 && !found; i++)
+                            for (int i = 0; i <= 3 && !found; i++)
                             {
                                 std::wstring currentPath;
                                 switch (i)
                                 {
                                     case 0: currentPath = onlyFolder + L"backgrounds/" + onlyFileName; break;
                                     case 1: currentPath = onlyFolder + L"Backgrounds/" + onlyFileName; break;
+                                    case 2: currentPath = onlyFolder + L"background/" + onlyFileName; break;
+                                    case 3: currentPath = onlyFolder + L"Background/" + onlyFileName; break;
                                     default: break;
                                 }
                                 if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;
@@ -51,7 +53,7 @@ namespace ns
                             break;
                             
                         case 2:
-                            for (int i = 0; i <= 3 && !found; i++)
+                            for (int i = 0; i <= 7 && !found; i++)
                             {
                                 std::wstring currentPath;
                                 switch (i)
@@ -60,6 +62,10 @@ namespace ns
                                     case 1: currentPath = onlyFolder + L"sprites/" + onlyFileName; break;
                                     case 2: currentPath = onlyFolder + L"Images/" + onlyFileName; break;
                                     case 3: currentPath = onlyFolder + L"Sprites/" + onlyFileName; break;
+                                    case 4: currentPath = onlyFolder + L"image/" + onlyFileName; break;
+                                    case 5: currentPath = onlyFolder + L"sprite/" + onlyFileName; break;
+                                    case 6: currentPath = onlyFolder + L"Image/" + onlyFileName; break;
+                                    case 7: currentPath = onlyFolder + L"Sprite/" + onlyFileName; break;
                                     default: break;
                                 }
                                 if (((found = base::DoesFileExistWithResolutionClass(currentPath)))) fullPath = currentPath;

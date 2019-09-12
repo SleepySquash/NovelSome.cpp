@@ -13,6 +13,7 @@ event Scan
 {
     background "Неко.jpg"
     music "Pixie Paris - Es rappelt im Karton (Картон).ogg" from 39.8
+    menu "menu.nmenu"
 }
 
 event NovelStart

@@ -3,7 +3,7 @@
 //  NovelSome
 //
 //  Created by Никита Исаенко on 01/07/2019.
-//  Copyright © 2019 Melanholy Hill. All rights reserved.
+//  Copyright © 2019 Melancholy Hill. All rights reserved.
 //
 
 #include "Initialization.hpp"
@@ -27,6 +27,8 @@ void CalculateScaleRatios(unsigned int width, unsigned int height)
     float ratioFactorX = (float)width/(float)height;
     float ratioFactorY = (float)height/(float)width;
     gs::verticalOrientation = ratioFactorX < 1.23;
+    gs::trueVerticalOrientation = ratioFactorX < 1;
+    if (gs::trueVerticalOrientation) gs::screenOffsetTop = gs::notchEffectFromTop; else gs::screenOffsetTop = 0;
     
     gs::scale = factorX > factorY ? factorX : factorY;
     gs::scScale = gs::scale;
@@ -126,6 +128,13 @@ void SetResolutionClass()
                 if (underVersion == 4) gs::resolutionClass = 1;
                 else gs::resolutionClass = 2;
             }
+            
+            if (version == 10)
+            {
+                int underVersion = base::ConvertToInt(nss::ParseUntil(device, '\0', 8));
+                if (underVersion == 3 || underVersion == 6) gs::notchEffectFromTop = 70;
+            }
+            else if (version >= 11) gs::notchEffectFromTop = 70;
         }
         else if (nss::Command(device, "iPad"))
         {
@@ -152,12 +161,12 @@ void SetResolutionClass()
 
 void ExecuteInitalization()
 {
-    CalculateScaleRatios(gs::width, gs::height);
-    
     AndroidInitalization();
     
     gs::Load(L"UserDefined.nsoptions");
     SetResolutionClass();
+    
+    CalculateScaleRatios(gs::width, gs::height);
 }
 
 

@@ -21,6 +21,7 @@
 #include "../../../Engine/Settings.hpp"
 #include "../../../Engine/GUIInterface.hpp"
 #include "../../../Engine/NovelSomeScript.hpp"
+#include "../../../Engine/Language.hpp"
 
 using std::cin;
 using std::cout;
@@ -37,8 +38,10 @@ namespace ns
         {
             struct Dialogue
             {
-                GUIObject* dialogueRect{ nullptr }, *textConstrains{ nullptr };
-                GUIObject* nameRect{ nullptr }, *nameConstrains{ nullptr };
+                GUIObject* dialogueRectH{ nullptr }, *textConstrainsH{ nullptr };
+                GUIObject* nameRectH{ nullptr }, *nameConstrainsH{ nullptr };
+                GUIObject* dialogueRectV{ nullptr }, *textConstrainsV{ nullptr };
+                GUIObject* nameRectV{ nullptr }, *nameConstrainsV{ nullptr };
                 
                 unsigned int characterSize{ 30 };
                 int maxAlpha = 255;

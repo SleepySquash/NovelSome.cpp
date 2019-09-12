@@ -26,7 +26,6 @@
 #include "../../Engine/NovelSomeScript.hpp"
 
 #include "NovelsLibrary.hpp"
-#include "../NovelComponents/Novel.hpp"
 #include "../NovelComponents/GUISystem.hpp"
 
 using std::cin;
@@ -40,9 +39,12 @@ namespace ns
         struct NovelMenu : public Component
         {
             NovelComponents::GUISystem guiSystem;
+            GUI::TextButton backToMenu;
             
             bool active{ true };
+            NovelInfo* nvl; std::wstring menuPath, scenario;
             
+            NovelMenu(const std::wstring& menuPath, const std::wstring& scenario, NovelInfo* nvl);
             void Init() override;
             void PollEvent(sf::Event& event) override;
             void Resize(const unsigned int& width, const unsigned int& height) override;

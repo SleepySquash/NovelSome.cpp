@@ -98,17 +98,26 @@ namespace ns
                         TemporarySettings::dialogue = &component->text;
                         TemporarySettings::name = &component->charText;
                         
-                        if (Skin::self && Skin::self->dialogue.dialogueRect)
-                            Skin::self->dialogue.dialogueRect->ignoreVariableChange = true;
+                        if (Skin::self)
+                        {
+                            if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = true;
+                            if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = true;
                         
-                        if (std::wstring(var::localVariables.at(L"@name")->value.asString) != L"")
-                            if (Skin::self && Skin::self->dialogue.nameRect)
-                                Skin::self->dialogue.nameRect->SetFadings(GUIObject::disappearing, component->disappearTime);
+                            if (std::wstring(var::localVariables.at(L"@name")->value.asString) != L"")
+                            {
+                                if (Skin::self->dialogue.nameRectH)
+                                    Skin::self->dialogue.nameRectH->SetFadings(GUIObject::disappearing, component->disappearTime);
+                                if (Skin::self->dialogue.nameRectV)
+                                    Skin::self->dialogue.nameRectV->SetFadings(GUIObject::disappearing, component->disappearTime);
+                            }
+                        }
                         LocalVariables_Set(L"@dialogue", dialogueLine);
                         LocalVariables_Set(L"@name", std::wstring(L""));
-                        
-                        if (Skin::self && Skin::self->dialogue.dialogueRect)
-                            Skin::self->dialogue.dialogueRect->ignoreVariableChange = false;
+                        if (Skin::self)
+                        {
+                            if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = false;
+                            if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = false;
+                        }
                         
                         component->SetDialogue(dialogueLine);
                     }
@@ -365,6 +374,7 @@ namespace ns
                                     }
                                     b->SetStateMode(b->disappearing);
                                     if (disappearTime >= 0) b->disappearTime = disappearTime;
+                                    b->hideAfter = nullptr;
                                 }
                             if (characterGroup.size())
                                 for (auto c : characterGroup)
@@ -493,20 +503,23 @@ namespace ns
                                 }
                                 b->SetStateMode(b->disappearing);
                                 if (disappearTime >= 0) b->disappearTime = disappearTime;
+                                b->hideAfter = nullptr;
                             }
                         }
                     }
                     else if ((backgroundAddingMode = nss::Command(command, L"background add ")) || nss::Command(command, L"background ") || nss::Command(command, L"задний фон "))
                     {
                         std::wstring filePath = nss::ParseAsQuoteString(command);
+                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Background>(0);
+                        
                         if (!backgroundAddingMode && backgroundGroup.size() != 0)
                             for (auto b : backgroundGroup)
                             {
                                 b->sendMessageBack = b->noMessage;
-                                b->SetStateMode(b->disappearing);
+                                b->hideAfter = component;
+                                // b->SetStateMode(b->disappearing);
                             }
                         
-                        auto* component = layers.PrioritizeComponent<ns::NovelComponents::Background>(0);
                         component->folderPath = folderPath;
                         if (Skin::self) {
                             component->appearTime = Skin::self->background.appearTime;
@@ -1424,21 +1437,30 @@ namespace ns
                                         component->SetCharacterName(characterName);
                                         if (characterData) component->SetCharacter(characterData);
                                         
-                                        if (Skin::self && Skin::self->dialogue.dialogueRect)
-                                            Skin::self->dialogue.dialogueRect->ignoreVariableChange = true;
-                                        if (Skin::self && Skin::self->dialogue.nameRect)
-                                            Skin::self->dialogue.nameRect->ignoreVariableChange = true;
+                                        if (Skin::self)
+                                        {
+                                            if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = true;
+                                            if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = true;
+                                            if (Skin::self->dialogue.nameRectH) Skin::self->dialogue.nameRectH->ignoreVariableChange = true;
+                                            if (Skin::self->dialogue.nameRectV) Skin::self->dialogue.nameRectV->ignoreVariableChange = true;
                                         
-                                        if (std::wstring(var::localVariables.at(L"@name")->value.asString) == L"")
-                                            if (Skin::self && Skin::self->dialogue.nameRect)
-                                                Skin::self->dialogue.nameRect->SetFadings(GUIObject::appearing, component->appearTime);
+                                            if (std::wstring(var::localVariables.at(L"@name")->value.asString) == L"")
+                                            {
+                                                if (Skin::self->dialogue.nameRectH)
+                                                    Skin::self->dialogue.nameRectH->SetFadings(GUIObject::appearing, component->appearTime);
+                                                if (Skin::self->dialogue.nameRectV)
+                                                    Skin::self->dialogue.nameRectV->SetFadings(GUIObject::appearing, component->appearTime);
+                                            }
+                                        }
                                         LocalVariables_Set(L"@dialogue", possibleDialogue);
                                         LocalVariables_Set(L"@name", characterName);
-                                        
-                                        if (Skin::self && Skin::self->dialogue.dialogueRect)
-                                            Skin::self->dialogue.dialogueRect->ignoreVariableChange = false;
-                                        if (Skin::self && Skin::self->dialogue.nameRect)
-                                            Skin::self->dialogue.nameRect->ignoreVariableChange = false;
+                                        if (Skin::self)
+                                        {
+                                            if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = false;
+                                            if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = false;
+                                            if (Skin::self->dialogue.nameRectH) Skin::self->dialogue.nameRectH->ignoreVariableChange = false;
+                                            if (Skin::self->dialogue.nameRectV) Skin::self->dialogue.nameRectV->ignoreVariableChange = false;
+                                        }
                                         
                                         component->SetDialogue(possibleDialogue);
                                     }

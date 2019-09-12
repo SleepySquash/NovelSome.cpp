@@ -143,7 +143,7 @@ namespace ns
                 delete[] fileInMemory;
             }
 #else
-            if (!(soundLoaded = sound->loadFromFile(base::utf8(fullPath))))
+            if (!(soundLoaded = sound->loadFromFile(base::utf8(fullPath)))) /// TODO: CRASHES SOMETIMES!!!!!
                 std::cerr << "Unable to open file: " << base::utf8(fullPath) << std::endl;
 #endif
             

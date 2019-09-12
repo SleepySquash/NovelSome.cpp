@@ -26,9 +26,14 @@ namespace ns
         {
             sf::Vector2i dot;
             sf::FloatRect bounds{ 0, (float)gs::relativeWidth, 0, (float)gs::relativeHeight };
-            int leftBound{ 0 }; bool regulateBounds{ false };
-            int maxAlpha{ 255 };
+            int leftBound{ 0 }; bool regulateBounds{ false }, wasHovered{ false };
+            sf::Uint8 alpha{ 255 }, maxAlpha{ 255 };
             bool visible{ true }, active{ true };
+            
+            bool noColorChanging{ false };
+            sf::Color normalColor{ sf::Color::White },
+                      hoverColor{ 255, 255, 210 },
+                      pressColor{ sf::Color::Yellow };
             
             Halign halign{ Halign::Center };
             Valign valign{ Valign::Center };
@@ -54,6 +59,10 @@ namespace ns
             sf::String string;
             unsigned int characterSize{ 20 };
             float thickness{ 1.f };
+            
+            sf::Color onormalColor{ sf::Color::Black },
+                      ohoverColor{ 140, 140, 140 },
+                      opressColor{ sf::Color::Black };
             
             TextButton();
             void Draw(sf::RenderTarget* window) override;

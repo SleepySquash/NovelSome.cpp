@@ -139,6 +139,7 @@ namespace ns
             wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t, 0x10FFFF, std::consume_header>));
             
             if (!(fileOpened = wif.is_open())) { cout << "Error :: NovelComponent :: File couldn't be opened, path: " << base::utf8(scenarioPath) << endl; if (!noDestroyMessage) entity->SendMessage(MessageHolder("Novel :: Destroying")); }
+            else entity->SendMessage(MessageHolder("Novel :: Starting"));
         }
         Novel::~Novel()
         {
@@ -276,7 +277,8 @@ namespace ns
                 else if (nss::Command(settings, L"sound "))
                 {
                     std::wstring filePath = nss::ParseAsQuoteString(settings);
-                    sc::PreloadSound(folderPath + filePath);
+                    // TODO: sc::PreloadSound(folderPath + filePath);
+                    // TODO: Fix crashing due to thread.
                 }
                 
                 if (shouldPush) lines.push_front(line);
@@ -424,7 +426,7 @@ namespace ns
         
         
         
-        void LoadGameState(std::wstring fileName, NovelSystem& system, void* entityaddress, void* nvl)
+        void LoadGameState(std::wstring fileName, void* entityaddress, void* nvl)
         {
             if (entityaddress && nvl)
             {
@@ -433,12 +435,12 @@ namespace ns
                 {
                     entity->SendMessage({"DestroyNovel"});
                     NovelInfo* nvlinfo  = reinterpret_cast<NovelInfo*>(nvl);
-                    if (nvlinfo) entity->AddComponent<NovelLoader>(fileName, &system, nvlinfo);
+                    if (nvlinfo) entity->AddComponent<NovelLoader>(fileName, nvlinfo);
                     else throw std::runtime_error("Couldn't load from file specified :: nvlinfo is null");
                 } else throw std::runtime_error("Couldn't load from file specified :: entityaddress is null");
             }
         }
-        NovelLoader::NovelLoader(const std::wstring& fileName, NovelSystem* system, NovelInfo* nvl) : fileName(fileName), system(system), nvl(nvl) { }
+        NovelLoader::NovelLoader(const std::wstring& fileName, NovelInfo* nvl) : fileName(fileName), nvl(nvl) { }
         void NovelLoader::Update(const sf::Time& elapsedTime)
         {
             if (!base::FileExists(fileName)) fileName = utf16(resourcePath()) + fileName;
@@ -664,26 +666,41 @@ namespace ns
                     TemporarySettings::dialogue = &component->text;
                     TemporarySettings::name = &component->charText;
                     
-                    if (Skin::self && Skin::self->dialogue.dialogueRect)
-                        Skin::self->dialogue.dialogueRect->ignoreVariableChange = true;
-                    if (Skin::self && Skin::self->dialogue.nameRect)
-                        Skin::self->dialogue.nameRect->ignoreVariableChange = true;
+                    if (Skin::self)
+                    {
+                        if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = true;
+                        if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = true;
+                        if (Skin::self->dialogue.nameRectH) Skin::self->dialogue.nameRectH->ignoreVariableChange = true;
+                        if (Skin::self->dialogue.nameRectV) Skin::self->dialogue.nameRectV->ignoreVariableChange = true;
                     
-                    if (!component->drawCharacterName && std::wstring(var::localVariables.at(L"@name")->value.asString) != L"")
-                        if (Skin::self && Skin::self->dialogue.nameRect) {
-                            Skin::self->dialogue.nameRect->SetFadings(GUIObject::disappearing, component->disappearTime);
-                            Skin::self->dialogue.nameRect->currentTime = component->currentTime; }
-                    if (component->drawCharacterName && std::wstring(var::localVariables.at(L"@name")->value.asString) == L"")
-                        if (Skin::self && Skin::self->dialogue.nameRect) {
-                            Skin::self->dialogue.nameRect->SetFadings(GUIObject::appearing, component->appearTime);
-                            Skin::self->dialogue.nameRect->currentTime = component->currentTime; }
+                        if (!component->drawCharacterName && std::wstring(var::localVariables.at(L"@name")->value.asString) != L"")
+                        {
+                            if (Skin::self->dialogue.nameRectH) {
+                                Skin::self->dialogue.nameRectH->SetFadings(GUIObject::disappearing, component->disappearTime);
+                                Skin::self->dialogue.nameRectH->currentTime = component->currentTime; }
+                            if (Skin::self->dialogue.nameRectV) {
+                                Skin::self->dialogue.nameRectV->SetFadings(GUIObject::disappearing, component->disappearTime);
+                                Skin::self->dialogue.nameRectV->currentTime = component->currentTime; }
+                        }
+                        if (component->drawCharacterName && std::wstring(var::localVariables.at(L"@name")->value.asString) == L"")
+                        {
+                            if (Skin::self->dialogue.nameRectH) {
+                                Skin::self->dialogue.nameRectH->SetFadings(GUIObject::appearing, component->appearTime);
+                                Skin::self->dialogue.nameRectH->currentTime = component->currentTime; }
+                            if (Skin::self->dialogue.nameRectV) {
+                                Skin::self->dialogue.nameRectV->SetFadings(GUIObject::appearing, component->appearTime);
+                                Skin::self->dialogue.nameRectV->currentTime = component->currentTime; }
+                        }
+                    }
                     novel->LocalVariables_Set(L"@dialogue", component->textString);
                     novel->LocalVariables_Set(L"@name", component->charString);
-                    
-                    if (Skin::self && Skin::self->dialogue.dialogueRect)
-                        Skin::self->dialogue.dialogueRect->ignoreVariableChange = false;
-                    if (Skin::self && Skin::self->dialogue.nameRect)
-                        Skin::self->dialogue.nameRect->ignoreVariableChange = false;
+                    if (Skin::self)
+                    {
+                        if (Skin::self->dialogue.dialogueRectH) Skin::self->dialogue.dialogueRectH->ignoreVariableChange = false;
+                        if (Skin::self->dialogue.dialogueRectV) Skin::self->dialogue.dialogueRectV->ignoreVariableChange = false;
+                        if (Skin::self->dialogue.nameRectH) Skin::self->dialogue.nameRectH->ignoreVariableChange = false;
+                        if (Skin::self->dialogue.nameRectV) Skin::self->dialogue.nameRectV->ignoreVariableChange = false;
+                    }
                     
                     component->SetDialogue(component->textString);
                     if (component->noguiSystem) { component->Draw(gs::window); component->guiSystem = nullptr; }

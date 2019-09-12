@@ -50,7 +50,8 @@ namespace ns
         static float scale, scScale;
         static float scalex, scaley;
         static unsigned int relativeWidth, relativeHeight;
-        static bool verticalOrientation;
+        static bool verticalOrientation, trueVerticalOrientation;
+        static int notchEffectFromTop, screenOffsetTop;
         
         static std::pair<int, int> lastMousePos;
         static int windowPositionOffset;
@@ -62,7 +63,7 @@ namespace ns
         static int resolutionClassSetting, resolutionClass;
         static bool prefer0xRatherThatpx;
         
-        static bool isPauseEnabled, isPause, inGame;
+        static bool isPauseEnabled, isPause, pauseOnFocusLost, inGame;
         static bool ignoreEvent, ignoreDraw;
         static bool requestWindowRefresh;
         static float autosaveDeltaTime;
@@ -80,7 +81,8 @@ namespace ns
         static float defaultParallaxBackground, defaultParallaxFar, defaultParallaxNormal, defaultParallaxClose, defaultParallaxFrontground;
         static float maxVolumeGlobal, maxVolumeMusic, maxVolumeAmbient, maxVolumeSound;
         
-        static bool forcePressInsideDialogue, drawGUIBoundaries;
+        static bool forcePressInsideDialogue, drawGUIBoundaries, buttonHovering;
+        static bool bundleNovel;
     };
     
     typedef GlobalSettings gs;

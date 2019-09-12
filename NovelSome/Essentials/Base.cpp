@@ -301,6 +301,15 @@ namespace ns
         
         
         
+        int ConvertToInt(const std::string& stringValue)
+        {
+            std::string parsingString = "";
+            for (int i = 0; stringValue[i] != '\0'; i++)
+                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
+                    parsingString += (char)stringValue[i];
+            
+            try { return std::atoi(parsingString.c_str()); } catch(...) { throw; }
+        }
         int atoi(const std::wstring& stringValue)
         {
             std::string parsingString = "";
@@ -319,15 +328,6 @@ namespace ns
             
             try { return std::atol(parsingString.c_str()); } catch(...) { throw; }
         }
-        int ConvertToInt(const std::string& stringValue)
-        {
-            std::string parsingString = "";
-            for (int i = 0; stringValue[i] != '\0'; i++)
-                if ((stringValue[i] >= 48 && stringValue[i] <= 57) || stringValue[i] == 45)
-                    parsingString += (char)stringValue[i];
-            
-            try { return std::atoi(parsingString.c_str()); } catch(...) { throw; }
-        }
         float atof(const std::wstring& stringValue)
         {
             std::string parsingString = "";
@@ -339,10 +339,11 @@ namespace ns
         }
         bool atob(const std::wstring& stringValue)
         {
-            if (stringValue == L"true" || stringValue == L"True" || stringValue == L"T" || stringValue == L"истина" || stringValue == L"1")
-                return true;
-            else
-                return false;
+            if (stringValue == L"true" || stringValue == L"True" || stringValue == L"T" || stringValue == L"истина" || stringValue == L"1") return true;
+            else return false;
         }
+        
+        // double atan(double x) { return 0.79f*x - x*(std::fabs(x) - 1)*(0.2447 + 0.0663*std::fabs(x)); }
+        double atan(double x) { return x * (0.9724 - 0.1919 * x * x); }
     }
 }

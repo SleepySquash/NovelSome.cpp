@@ -47,7 +47,8 @@ namespace ns
             bool visible{ true };
             bool spriteLoaded{ false };
             sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
-            float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };;
+            float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
+            Background* hideAfter{ nullptr };
             
             float scaleX{ 1.f }, scaleY{ 1.f };
             float defaultPositionX{ 0.f }, defaultPositionY{ 0.f };

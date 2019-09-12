@@ -152,9 +152,10 @@
 #include "Engine/Settings.hpp"
 #include "Engine/Initialization.hpp"
 
-#include "Components/EssentialComponents.hpp"
+#include "Components/Helpers/EssentialComponents.hpp"
+#include "Components/Helpers/LanguageLibrary.hpp"
 #include "Components/NSMenuComponents/MainMenu.hpp"
-#include "Components/NSMenuComponents/LanguageLibrary.hpp"
+#include "Components/NSMenuComponents/NovelLoader.hpp"
 #include "Components/NovelComponents/Novel.hpp"
 #include "Components/ClientComponents/Client.hpp"
 
@@ -178,7 +179,7 @@ int main()
 {
 #if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
     sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "NovelSome", sf::Style::Default);
-    gs::isParallaxEnabled = false;
+    gs::isParallaxEnabled = gs::buttonHovering = false;
 #else
     sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
 #endif
@@ -225,6 +226,7 @@ int main()
         Elizabeth->AddComponent<SaveLoadUI>();
         Elizabeth->AddComponent<SettingsUI>();
         Elizabeth->AddComponent<NSMenuComponents::MainMenu>();
+        Elizabeth->AddComponent<NovelLoader>();
     }
     
     ///----------------------------------------------------------
@@ -235,9 +237,10 @@ int main()
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 20");
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 21");
+        Shimakaze->AddComponent<EssentialComponents::FadingFromBlackScreen>();
 #if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
-        Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
+        // Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
 #endif
     }
     gs::lastMousePos = { sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y };
@@ -298,6 +301,7 @@ int main()
                     
                 case sf::Event::TextEntered: if (gs::listenForTextInput) system.PollEvent(event); break; 
                 case sf::Event::KeyPressed: system.PollEvent(event); break;
+                case sf::Event::KeyReleased: if (event.key.code == sf::Keyboard::Key::Enter) system.PollEvent(event); break;
                     
                 case sf::Event::Resized:
                     gs::width = event.size.width;

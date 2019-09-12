@@ -99,15 +99,14 @@ namespace ns
                 if (guiSystem && visible) guiSystem->PollEvent(event);
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) visible = !visible;
             }
-            if (mode == waitingForInput)
+            if (mode == waitingForInput && visible)
             {
-                if (visible && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded))
+                if (wasPressed && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded))
                 {
-                    bool pressed{ ((event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Button::Left && workingArea.contains(event.mouseButton.x, event.mouseButton.y)) || (event.type == sf::Event::TouchEnded && workingArea.contains(event.touch.x, event.touch.y))) };
-                    
-                    if (pressed)
+                    wasPressed = workingArea.contains(gs::lastMousePos.first, gs::lastMousePos.second);
+                    if (wasPressed)
                     {
-                        bool fadeAway{ true };
+                        bool fadeAway{ true }; wasPressed = false;
                         if (textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
                             currentString = printingString, text.setString(currentString), textAppearPos = textAppearMax, fadeAway = false;
                         
@@ -119,6 +118,8 @@ namespace ns
                         }
                     }
                 }
+                else if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchBegan)
+                    wasPressed = workingArea.contains(gs::lastMousePos.first, gs::lastMousePos.second);
             }
             else if (mode == waitingForChoose)
             {
@@ -171,8 +172,19 @@ namespace ns
                 int nameTextWidth = width, nameTextXOffset = 0, nameTextYOffset = 0;
                 if (Skin::self)
                 {
-                    GUIObject* textConstrains = Skin::self->dialogue.textConstrains;
-                    if (!textConstrains) textConstrains = Skin::self->dialogue.dialogueRect;
+                    GUIObject* textConstrains = nullptr;
+                    if (gs::trueVerticalOrientation) { textConstrains = Skin::self->dialogue.textConstrainsV;
+                        if (!textConstrains) textConstrains = Skin::self->dialogue.textConstrainsH; }
+                    else { textConstrains = Skin::self->dialogue.textConstrainsH;
+                        if (!textConstrains) textConstrains = Skin::self->dialogue.textConstrainsV; }
+                    
+                    GUIObject* dialogueRect = nullptr;
+                    if (gs::trueVerticalOrientation) { dialogueRect = Skin::self->dialogue.dialogueRectV;
+                        if (!dialogueRect) dialogueRect = Skin::self->dialogue.dialogueRectH; }
+                    else { dialogueRect = Skin::self->dialogue.dialogueRectH;
+                        if (!dialogueRect) dialogueRect = Skin::self->dialogue.dialogueRectV; }
+                    
+                    if (!textConstrains) textConstrains = dialogueRect;
                     
                     if (textConstrains)
                     {
@@ -182,19 +194,29 @@ namespace ns
                         textYOffset = textConstrains->constrains.globalBounds.top;
                     }
                     
-                    if (Skin::self->dialogue.dialogueRect)
+                    if (dialogueRect)
                     {
-                        workingArea.left = Skin::self->dialogue.dialogueRect->constrains.globalBounds.left;
-                        workingArea.width = Skin::self->dialogue.dialogueRect->constrains.globalBounds.width;
-                        workingArea.top = Skin::self->dialogue.dialogueRect->constrains.globalBounds.top;
-                        workingArea.height = Skin::self->dialogue.dialogueRect->constrains.globalBounds.height;
+                        workingArea.left = dialogueRect->constrains.globalBounds.left;
+                        workingArea.width = dialogueRect->constrains.globalBounds.width;
+                        workingArea.top = dialogueRect->constrains.globalBounds.top;
+                        workingArea.height = dialogueRect->constrains.globalBounds.height;
                     }
                     else { workingArea.left = 0; workingArea.width = width; workingArea.top = 0; workingArea.height = height; }
                     
                     if (charString != L"")
                     {
-                        GUIObject* nameConstrains = Skin::self->dialogue.nameConstrains;
-                        if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameRect;
+                        GUIObject* nameConstrains = nullptr;
+                        if (gs::trueVerticalOrientation) { nameConstrains = Skin::self->dialogue.nameConstrainsV;
+                            if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameConstrainsH; }
+                        else { nameConstrains = Skin::self->dialogue.nameConstrainsH;
+                            if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameConstrainsV; }
+                        if (!nameConstrains)
+                        {
+                            if (gs::trueVerticalOrientation) { nameConstrains = Skin::self->dialogue.nameRectV;
+                                if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameRectH; }
+                            else { nameConstrains = Skin::self->dialogue.nameRectH;
+                                if (!nameConstrains) nameConstrains = Skin::self->dialogue.nameRectV; }
+                        }
                         if (nameConstrains)
                         {
                             nameTextWidth = nameConstrains->constrains.globalBounds.width;

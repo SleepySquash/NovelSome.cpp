@@ -55,7 +55,7 @@ namespace ns
         {
             if (!available) return;
             try {
-                if (loading) NovelComponents::LoadGameState(absolutePath, *system, entity, novel);
+                if (loading) NovelComponents::LoadGameState(absolutePath, entity, novel);
                 else         NovelComponents::SaveGameState(absolutePath, *system);
             } catch (std::exception& e) { cout << "Error :: SaveLoadUI :: " << e.what() << "." << endl; }
             entity->SendMessage({"SaveLoadUI :: Close"});

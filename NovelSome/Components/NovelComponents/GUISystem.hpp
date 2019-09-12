@@ -141,6 +141,7 @@ namespace ns
             
             sf::Uint8 maxAlpha{ 255 }, alpha{ 0 };
             bool visible{ true }, ignoreVariableChange{ false }, regulateFadings{ false };
+            bool scaleHorizontal{ true }, scaleVertical{ true };
             float currentTime{ 0.f }, appearTime{ 0.f }, disappearTime{ 0.f };
             
             GUIConstrains constrains;
@@ -221,6 +222,7 @@ namespace ns
                 float parallaxPower { gs::defaultParallaxBackground };
                 
                 void Destroy() override;
+                void PollEvent(sf::Event& event) override;
                 void PreCalculate(const unsigned int& width, const unsigned int& height) override;
                 void PreCalculatedSize(const unsigned int& width, const unsigned int& height) override;
                 void Resize(const unsigned int& width, const unsigned int& height) override;
