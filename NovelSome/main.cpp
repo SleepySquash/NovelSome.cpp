@@ -237,7 +237,7 @@ int main()
     ///----------------------------------------------------------
     Entity* Shimakaze = system.AddEntity();
     {
-        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 21");
+        Shimakaze->AddComponent<EssentialComponents::DebugComponent>("Update 0 build 22");
         Shimakaze->AddComponent<EssentialComponents::FadingFromBlackScreen>();
 #if defined(SFML_SYSTEM_IOS) || defined(SFML_SYSTEM_ANDROID)
         // Shimakaze->AddComponent<EssentialComponents::GyroscopeParallax>();
@@ -301,7 +301,20 @@ int main()
                     
                 case sf::Event::TextEntered: if (gs::listenForTextInput) system.PollEvent(event); break; 
                 case sf::Event::KeyPressed: system.PollEvent(event); break;
-                case sf::Event::KeyReleased: if (event.key.code == sf::Keyboard::Key::Enter) system.PollEvent(event); break;
+                case sf::Event::KeyReleased: if (event.key.code == sf::Keyboard::Key::Enter) system.PollEvent(event);
+                    else if (event.key.code == sf::Keyboard::Key::F11)
+                    {
+                        if ((gs::fullscreen = !gs::fullscreen)) window.create(sf::VideoMode::getFullscreenModes()[0], "NovelSome", sf::Style::Fullscreen);
+                        else sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
+                        
+                        gs::width = window.getSize().x; gs::height = window.getSize().y;
+                        CalculateScaleRatios(gs::width, gs::height); system.Resize(gs::width, gs::height);
+                        window.setView(sf::View(sf::FloatRect(0, 0, gs::width, gs::height)));
+#ifdef SFML_SYSTEM_ANDROID
+                        if (active) { window.clear(); system.Draw(&window); window.display(); }
+#endif
+                    }
+                    break;
                     
                 case sf::Event::Resized:
                     gs::width = event.size.width;

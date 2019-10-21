@@ -46,6 +46,7 @@ namespace ns
         
         static unsigned int width, height;
         static unsigned int resizeToWidth, resizeToHeight;
+        static bool fullscreen;
         
         static float scale, scScale;
         static float scalex, scaley;

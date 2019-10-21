@@ -104,6 +104,7 @@ namespace ns
     
     unsigned int gs::resizeToWidth = 0;
     unsigned int gs::resizeToHeight = 0;
+    bool gs::fullscreen = false;
     
     unsigned int gs::relativeWidth = 0;
     unsigned int gs::relativeHeight = 0;

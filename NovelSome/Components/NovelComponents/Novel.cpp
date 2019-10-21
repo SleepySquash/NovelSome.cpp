@@ -87,9 +87,9 @@ namespace ns
                             Skin::self->defaultDialogue = Skin::self->defaultChoose = Skin::self->defaultMusic = Skin::self->defaultSound = Skin::self->defaultBackground = Skin::self->defaultCharacter = Skin::self->defaultAmbient = skinPath;
                             done = true;
                         }
-                        else if (done)
+                        else
                         {
-                            --remainingLines;
+                            // if (done) --remainingLines; // TODO: it's not really required since .novel files are not long currently.
                             if (nss::Command(command, L"dialogue "))
                             {
                                 std::wstring path = nss::ParseAsMaybeQuoteString(command);

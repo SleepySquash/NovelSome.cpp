@@ -1001,7 +1001,7 @@ namespace ns
                     ///----------------------------------------AUDIO----------------------------------------
                     else if ((backgroundAddingMode = nss::Command(command, L"ambient stop")) || nss::Command(command, L"music stop") || nss::Command(command, L"stop"))
                     {
-                        if (musicGroup.size() != 0)
+                        if ((musicGroup.size() != 0 && !backgroundAddingMode) || (ambientGroup.size() != 0 && backgroundAddingMode))
                         {
                             float disappearTime{ -1.f };
                             enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
