@@ -21,7 +21,7 @@
 #include "../../Engine/Collectors/Image.hpp"
 #include "../../Engine/EntitySystem.hpp"
 #include "../../Engine/NovelSystem.hpp"
-#include "../../Engine/GUIInterface.hpp"
+#include "../../Engine/GUI/Button/SomeButtons.hpp"
 #include "../../Engine/Language.hpp"
 
 #include "../NovelComponents/Abstract/SavingMechanism.hpp"

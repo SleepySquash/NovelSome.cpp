@@ -928,6 +928,7 @@ namespace ns
                                                     break;
                                                 case 7: /// button: (text button)
                                                     button = guiSystemToAddTo->AddComponent<GUIObjects::Button>(GUIObjects::Button::Text);
+                                                    button->text->correctBoundaries = true;
                                                     if (defaultFont.length() && defaultFont != L"") button->text->setFont(defaultFont);
                                                     component = button; scope.emplace_front(component, GUIScopeStruct::Button);
                                                     break;
@@ -988,7 +989,7 @@ namespace ns
                                                     if (knownType == 3 && text && text->textString == L"") text->SetString(str);
                                                     else if ((knownType == 4 || knownType == 10) && img && !img->spriteLoaded)
                                                         img->LoadImage(folderPath + str, /*this*/ic::globalRequestSender);
-                                                    else if (knownType == 8 && button && !button->sprite->spriteLoaded)
+                                                    else if (knownType == 8 && button && !button->sprite->loaded)
                                                         button->sprite->setTexture(folderPath + str, /*this*/ic::globalRequestSender);
                                                 }
                                             }

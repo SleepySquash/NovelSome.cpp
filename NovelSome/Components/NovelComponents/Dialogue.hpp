@@ -23,7 +23,7 @@
 #include "../../Engine/NovelSystem.hpp"
 #include "../../Engine/Settings.hpp"
 #include "../../Engine/Collectors/Font.hpp"
-#include "../../Engine/GUIInterface.hpp"
+#include "../../Engine/GUI/Button/SomeButtons.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
 #include "Abstract/Skin.hpp"

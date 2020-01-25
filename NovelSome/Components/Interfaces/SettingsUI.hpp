@@ -19,7 +19,7 @@
 #include "../../Engine/Collectors/Font.hpp"
 #include "../../Engine/Collectors/Image.hpp"
 #include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/GUIInterface.hpp"
+#include "../../Engine/GUI/Button/SomeButtons.hpp"
 #include "../../Engine/Language.hpp"
 
 using std::cin;

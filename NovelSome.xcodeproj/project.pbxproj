@@ -39,6 +39,14 @@
 		DD3AC04922318F9400012A86 /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3AC04622318F9400012A86 /* Interface.cpp */; };
 		DD3C33B822D3E9DE0089D683 /* NovelLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */; };
 		DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */; };
+		DD3C9B1C23DB35FE00DA63FA /* RoundedRectangleShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B1A23DB35FE00DA63FA /* RoundedRectangleShape.cpp */; };
+		DD3C9B1D23DB35FE00DA63FA /* RoundedRectangleShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B1A23DB35FE00DA63FA /* RoundedRectangleShape.cpp */; };
+		DD3C9B2023DB361B00DA63FA /* Button.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B1E23DB361B00DA63FA /* Button.cpp */; };
+		DD3C9B2123DB361B00DA63FA /* Button.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B1E23DB361B00DA63FA /* Button.cpp */; };
+		DD3C9B2423DB36C200DA63FA /* SomeButtons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B2223DB36C200DA63FA /* SomeButtons.cpp */; };
+		DD3C9B2523DB36C200DA63FA /* SomeButtons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B2223DB36C200DA63FA /* SomeButtons.cpp */; };
+		DD3C9B2823DB370100DA63FA /* TextField.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B2623DB370100DA63FA /* TextField.cpp */; };
+		DD3C9B2923DB370100DA63FA /* TextField.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3C9B2623DB370100DA63FA /* TextField.cpp */; };
 		DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
 		DD3FBA212212111400E66342 /* MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD3FBA1E2212111400E66342 /* MainMenu.cpp */; };
 		DD550D7C22A9A6760037A799 /* HeavensGateUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD550D7A22A9A6760037A799 /* HeavensGateUI.cpp */; };
@@ -119,8 +127,6 @@
 		DDBD1F80221341B400CFF750 /* NovelsLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDBD1F7D221341B400CFF750 /* NovelsLibrary.cpp */; };
 		DDD9549E229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */; };
 		DDD9549F229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */; };
-		DDF736F8216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
-		DDF736F9216B65770065845D /* GUIInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDF736F6216B65770065845D /* GUIInterface.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -157,6 +163,15 @@
 		DD3AC04722318F9400012A86 /* Interface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Interface.hpp; sourceTree = "<group>"; };
 		DD3C33B622D3E9DE0089D683 /* NovelLoader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NovelLoader.cpp; sourceTree = "<group>"; };
 		DD3C33B722D3E9DE0089D683 /* NovelLoader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelLoader.hpp; sourceTree = "<group>"; };
+		DD3C9B1723DB35E300DA63FA /* enums.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = enums.hpp; sourceTree = "<group>"; };
+		DD3C9B1A23DB35FE00DA63FA /* RoundedRectangleShape.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RoundedRectangleShape.cpp; sourceTree = "<group>"; };
+		DD3C9B1B23DB35FE00DA63FA /* RoundedRectangleShape.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = RoundedRectangleShape.hpp; sourceTree = "<group>"; };
+		DD3C9B1E23DB361B00DA63FA /* Button.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Button.cpp; sourceTree = "<group>"; };
+		DD3C9B1F23DB361B00DA63FA /* Button.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Button.hpp; sourceTree = "<group>"; };
+		DD3C9B2223DB36C200DA63FA /* SomeButtons.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SomeButtons.cpp; sourceTree = "<group>"; };
+		DD3C9B2323DB36C200DA63FA /* SomeButtons.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SomeButtons.hpp; sourceTree = "<group>"; };
+		DD3C9B2623DB370100DA63FA /* TextField.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TextField.cpp; sourceTree = "<group>"; };
+		DD3C9B2723DB370100DA63FA /* TextField.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TextField.hpp; sourceTree = "<group>"; };
 		DD3FBA1E2212111400E66342 /* MainMenu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MainMenu.cpp; sourceTree = "<group>"; };
 		DD3FBA1F2212111400E66342 /* MainMenu.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MainMenu.hpp; sourceTree = "<group>"; };
 		DD550D7A22A9A6760037A799 /* HeavensGateUI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HeavensGateUI.cpp; sourceTree = "<group>"; };
@@ -182,6 +197,7 @@
 		DD7A07FE225DDBA900B770F7 /* Savable.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Savable.hpp; sourceTree = "<group>"; };
 		DD7A0801225DDDDE00B770F7 /* SavingMechanism.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SavingMechanism.cpp; sourceTree = "<group>"; };
 		DD7A0802225DDDDE00B770F7 /* SavingMechanism.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SavingMechanism.hpp; sourceTree = "<group>"; };
+		DD87E10F237486B600083FB9 /* NovelSome.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NovelSome.entitlements; sourceTree = "<group>"; };
 		DD8F8298215E5988000CB7BB /* NovelSomeScript.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelSomeScript.hpp; sourceTree = "<group>"; };
 		DD8F8299215E5988000CB7BB /* EntitySystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EntitySystem.cpp; sourceTree = "<group>"; };
 		DD8F829A215E5988000CB7BB /* List.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = List.hpp; sourceTree = "<group>"; };
@@ -240,8 +256,6 @@
 		DDBD1F7E221341B400CFF750 /* NovelsLibrary.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NovelsLibrary.hpp; sourceTree = "<group>"; };
 		DDD9549C229E7AEF00DC9E80 /* ClientImpl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ClientImpl.cpp; sourceTree = "<group>"; };
 		DDD9549D229E7AEF00DC9E80 /* ClientImpl.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ClientImpl.hpp; sourceTree = "<group>"; };
-		DDF736F6216B65770065845D /* GUIInterface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GUIInterface.cpp; sourceTree = "<group>"; };
-		DDF736F7216B65770065845D /* GUIInterface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = GUIInterface.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -289,6 +303,30 @@
 				DD12BE3C22A48AA900F542D4 /* LanguageLibrary.hpp */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		DD3C9B1423DB35BF00DA63FA /* GUI */ = {
+			isa = PBXGroup;
+			children = (
+				DD3C9B1523DB35C700DA63FA /* Button */,
+				DD3C9B1723DB35E300DA63FA /* enums.hpp */,
+				DD3C9B1A23DB35FE00DA63FA /* RoundedRectangleShape.cpp */,
+				DD3C9B1B23DB35FE00DA63FA /* RoundedRectangleShape.hpp */,
+				DD3C9B2623DB370100DA63FA /* TextField.cpp */,
+				DD3C9B2723DB370100DA63FA /* TextField.hpp */,
+			);
+			path = GUI;
+			sourceTree = "<group>";
+		};
+		DD3C9B1523DB35C700DA63FA /* Button */ = {
+			isa = PBXGroup;
+			children = (
+				DD3C9B1E23DB361B00DA63FA /* Button.cpp */,
+				DD3C9B1F23DB361B00DA63FA /* Button.hpp */,
+				DD3C9B2223DB36C200DA63FA /* SomeButtons.cpp */,
+				DD3C9B2323DB36C200DA63FA /* SomeButtons.hpp */,
+			);
+			path = Button;
 			sourceTree = "<group>";
 		};
 		DD3FBA1D221210EB00E66342 /* NSMenuComponents */ = {
@@ -362,6 +400,7 @@
 			children = (
 				DD5B6B67223E50DE00997FFF /* Collectors */,
 				DD5B6B69223E50EA00997FFF /* Collectors.hpp */,
+				DD3C9B1423DB35BF00DA63FA /* GUI */,
 				DD3AC0372231019100012A86 /* MessageHolder.cpp */,
 				DD3AC0362231019100012A86 /* MessageHolder.hpp */,
 				DD8F8299215E5988000CB7BB /* EntitySystem.cpp */,
@@ -375,8 +414,6 @@
 				DD8F8298215E5988000CB7BB /* NovelSomeScript.hpp */,
 				DDBB6167215E9BE10062CC3D /* NovelSystem.cpp */,
 				DDBB6168215E9BE10062CC3D /* NovelSystem.hpp */,
-				DDF736F6216B65770065845D /* GUIInterface.cpp */,
-				DDF736F7216B65770065845D /* GUIInterface.hpp */,
 				DD75662B229FC4F1000FF9D5 /* Client.cpp */,
 				DD75662C229FC4F1000FF9D5 /* Client.hpp */,
 				DD75662F22A10A5D000FF9D5 /* Language.cpp */,
@@ -445,6 +482,7 @@
 		DDAB746B215D88050062F8B6 /* NovelSome */ = {
 			isa = PBXGroup;
 			children = (
+				DD87E10F237486B600083FB9 /* NovelSome.entitlements */,
 				DDAB7471215D88050062F8B6 /* main.cpp */,
 				DD8F82AB215E5A9A000CB7BB /* Essentials */,
 				DD8F8297215E5988000CB7BB /* Engine */,
@@ -585,7 +623,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 1000;
-				ORGANIZATIONNAME = "Melanholy Hill";
+				ORGANIZATIONNAME = "Melancholy Hill";
 				TargetAttributes = {
 					DDAB7468215D88050062F8B6 = {
 						CreatedOnToolsVersion = 10.0;
@@ -666,6 +704,8 @@
 				DD3AC04422318F3000012A86 /* Skin.cpp in Sources */,
 				DD8F82BB215E5B7E000CB7BB /* EntitySystem.cpp in Sources */,
 				DD8F82BC215E5B7E000CB7BB /* NovelSomeScript.cpp in Sources */,
+				DD3C9B2823DB370100DA63FA /* TextField.cpp in Sources */,
+				DD3C9B2423DB36C200DA63FA /* SomeButtons.cpp in Sources */,
 				DDBB617D215E9CFB0062CC3D /* Character.cpp in Sources */,
 				DD12BE3922A46DB400F542D4 /* SaveLoadUI.cpp in Sources */,
 				DD3AC0382231019100012A86 /* MessageHolder.cpp in Sources */,
@@ -684,7 +724,6 @@
 				DD3AC03C22310E6700012A86 /* VariableSystem.cpp in Sources */,
 				DD75663122A10A5D000FF9D5 /* Language.cpp in Sources */,
 				DDBB6187215E9D300062CC3D /* Misc.cpp in Sources */,
-				DDF736F8216B65770065845D /* GUIInterface.cpp in Sources */,
 				DD02AA6921FDC51700E9E909 /* NekoNinja.cpp in Sources */,
 				DD2FC3CE2269E93500A039B8 /* Savable.cpp in Sources */,
 				DD8F82B7215E5A9A000CB7BB /* ResourcePath.cpp in Sources */,
@@ -697,6 +736,7 @@
 				DD5648612256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
 				DDD9549E229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
 				DDBB6184215E9D200062CC3D /* GUISystem.cpp in Sources */,
+				DD3C9B2023DB361B00DA63FA /* Button.cpp in Sources */,
 				DD5B6B76223E514200997FFF /* Font.cpp in Sources */,
 				DD5B6B6E223E510900997FFF /* Image.cpp in Sources */,
 				DD31534C22CA172E00E9DAB6 /* Initialization.cpp in Sources */,
@@ -708,6 +748,7 @@
 				DD7A0803225DDDDE00B770F7 /* SavingMechanism.cpp in Sources */,
 				DD3AC0402231282000012A86 /* CharacterLibrary.cpp in Sources */,
 				DD5B6B72223E513B00997FFF /* Sound.cpp in Sources */,
+				DD3C9B1C23DB35FE00DA63FA /* RoundedRectangleShape.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,18 +758,19 @@
 			files = (
 				DD095053223EE698002887EA /* etc.cpp in Sources */,
 				DD8F82C2215E5C73000CB7BB /* EntitySystem.cpp in Sources */,
+				DD3C9B1D23DB35FE00DA63FA /* RoundedRectangleShape.cpp in Sources */,
 				DD8F82C3215E5C73000CB7BB /* Settings.cpp in Sources */,
 				DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */,
 				DD5648622256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
 				DD3AC0412231282000012A86 /* CharacterLibrary.cpp in Sources */,
 				DD3AC04922318F9400012A86 /* Interface.cpp in Sources */,
-				DDF736F9216B65770065845D /* GUIInterface.cpp in Sources */,
 				DDBB6185215E9D200062CC3D /* GUISystem.cpp in Sources */,
 				DD7A0804225DDDDE00B770F7 /* SavingMechanism.cpp in Sources */,
 				DDBB617E215E9CFB0062CC3D /* Character.cpp in Sources */,
 				DD3AC0392231019100012A86 /* MessageHolder.cpp in Sources */,
 				DD550D7D22A9A6760037A799 /* HeavensGateUI.cpp in Sources */,
 				DD8F82C5215E5C73000CB7BB /* NovelSomeScript.cpp in Sources */,
+				DD3C9B2123DB361B00DA63FA /* Button.cpp in Sources */,
 				DD75662E229FC4F1000FF9D5 /* Client.cpp in Sources */,
 				DDD9549F229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
 				DD3AC04522318F3000012A86 /* Skin.cpp in Sources */,
@@ -752,8 +794,10 @@
 				DD8F82B6215E5A9A000CB7BB /* Base.cpp in Sources */,
 				DD2FC3CF2269E93500A039B8 /* Savable.cpp in Sources */,
 				DDAB74A1215D89CD0062F8B6 /* main.cpp in Sources */,
+				DD3C9B2923DB370100DA63FA /* TextField.cpp in Sources */,
 				DD5B6B77223E514200997FFF /* Font.cpp in Sources */,
 				DDBB617B215E9CEC0062CC3D /* Background.cpp in Sources */,
+				DD3C9B2523DB36C200DA63FA /* SomeButtons.cpp in Sources */,
 				DD265515216020CB008F1545 /* ResourcePath.mm in Sources */,
 				DD5B6B6F223E510900997FFF /* Image.cpp in Sources */,
 				DD12BE3A22A46DB400F542D4 /* SaveLoadUI.cpp in Sources */,
@@ -784,6 +828,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"$(SFML_SYSTEM)",
@@ -826,6 +871,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"$(SFML_SYSTEM)",
@@ -853,8 +899,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_macOS;
+				CODE_SIGN_ENTITLEMENTS = NovelSome/NovelSome.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/;
 				INFOPLIST_FILE = "$(SRCROOT)/NovelSome/NovelSome.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
@@ -875,8 +923,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon_macOS;
+				CODE_SIGN_ENTITLEMENTS = NovelSome/NovelSome.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A2VZ8FCF86;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = /Library/Frameworks/;
 				INFOPLIST_FILE = "$(SRCROOT)/NovelSome/NovelSome.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";

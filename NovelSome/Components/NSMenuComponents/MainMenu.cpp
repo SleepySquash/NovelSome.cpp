@@ -80,6 +80,8 @@ namespace ns
             novelButtons.setFont(lang::menufont);
             novelButtons.setCharacterSize(52);
             novelButtons.thickness = 2.f;
+            novelButtons.ralpha = 170;
+            novelButtons.updateColor();
             
             novelBackShape.setFillColor(sf::Color(0,0,0, 170));
             novelBackShape.setOutlineColor(sf::Color(255,255,255,190));
@@ -230,6 +232,17 @@ namespace ns
                             SelectNovel(novelSelected, true, true); }
                         else
                         {
+                            if (event.type == sf::Event::MouseMoved && !sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && (!gs::verticalOrientation || !isNovelSelected) && gs::buttonHovering)
+                            {
+                                yy = yyNovels*gs::scaley; long i = 0;
+                                for (auto it = Novels::info.begin(); it != Novels::info.end() && active; ++it)
+                                {
+                                    novelButtons.index = i;
+                                    novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
+                                    novelButtons.PollEvent(event);
+                                    yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
+                                }
+                            }
                             if ((event.type == sf::Event::MouseMoved && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) || event.type == sf::Event::TouchMoved)
                             {
                                 if (event.type == sf::Event::MouseMoved) dot = { event.mouseMove.x, event.mouseMove.y }; else dot = { event.touch.x, event.touch.y };
@@ -560,9 +573,9 @@ namespace ns
                             novelButtons.index = i;
                             novelButtons.setString((*it).name);
                             novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
-                            if (isNovelSelected && novelSelected == it) novelButtons.shape.setFillColor(sf::Color(200, 200, 200, 170));
+                            if (isNovelSelected && novelSelected == it) { novelButtons.shape.setFillColor({200, 200, 200, 170}); }
                             novelButtons.Draw(window);
-                            if (isNovelSelected && novelSelected == it) novelButtons.shape.setFillColor(novelButtons.shapeFillColor);
+                            if (isNovelSelected && novelSelected == it) { novelButtons.shape.setFillColor({novelButtons.snormalColor.r, novelButtons.snormalColor.g, novelButtons.snormalColor.b, 170}); }
                             yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
                         }
                     }
@@ -775,6 +788,20 @@ namespace ns
                 long i{ 0 }; for (auto it = Novels::info.begin(); it != Novels::info.end(); ++it) { if (it == novelSelected) break; else ++i; }
                 int yyHeight = (novelButtons.shape.getLocalBounds().height/gs::scaley + 10);
                 yyNovels = -yyHeight * i + yyHeight*((float)gs::relativeHeight/(yyHeight*2) - 0.5);
+                if (gs::buttonHovering)
+                {
+                    sf::Event moveEvent; moveEvent.type = sf::Event::MouseMoved;
+                    moveEvent.mouseMove.x = sf::Mouse::getPosition(*gs::window).x;
+                    moveEvent.mouseMove.y = sf::Mouse::getPosition(*gs::window).y;
+                    float yy = yyNovels*gs::scaley; long i = 0;
+                    for (auto it = Novels::info.begin(); it != Novels::info.end() && active; ++it)
+                    {
+                        novelButtons.index = i;
+                        novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
+                        novelButtons.PollEvent(moveEvent);
+                        yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
+                    }
+                }
             }
         }
         void MainMenu::UnselectNovel()

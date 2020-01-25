@@ -22,7 +22,7 @@
 #include "../../Essentials/Base.hpp"
 #include "../../Engine/EntitySystem.hpp"
 #include "../../Engine/Settings.hpp"
-#include "../../Engine/GUIInterface.hpp"
+#include "../../Engine/GUI/Button/SomeButtons.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 
 #include "NovelsLibrary.hpp"
