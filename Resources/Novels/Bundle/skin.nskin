@@ -383,9 +383,9 @@ gui dialogue
     {
         alpha: .66
 
-        left: 30
-        right: 30
-        bottom: 10
+        left: 0
+        right: 0
+        bottom: 0
         height: .height/4.6
 
         @dialogue

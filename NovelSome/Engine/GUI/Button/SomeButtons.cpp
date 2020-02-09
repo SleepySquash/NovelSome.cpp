@@ -411,18 +411,20 @@ namespace ns
         RectangleButton::RectangleButton()
         {
             text.setFillColor(sf::Color(normalColor.r, normalColor.g, normalColor.b, alpha));
-            shape.setFillColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, ralpha));
+            text.setOutlineColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, alpha));
+            shape.setFillColor(sf::Color(snormalColor.r, snormalColor.g, snormalColor.b, ralpha));
+            shape.setOutlineColor(sf::Color(sonormalColor.r, sonormalColor.g, sonormalColor.b, ralpha));
         }
-        void RectangleButton::Draw(sf::RenderTarget* window) { if (loaded && visible) { window->draw(shape); window->draw(text); } }
+        void RectangleButton::Draw(sf::RenderTarget* window) { if (loaded && visible) { if (drawShape) window->draw(shape); window->draw(text); } }
         void RectangleButton::Resize(unsigned int width, unsigned int height)
         {
             if (characterScale)
             {
                 text.setCharacterSize(characterSize * gs::scScale);
-                text.setOutlineThickness(thickness * gs::scScale);
+                if (drawOutline) text.setOutlineThickness(thickness * gs::scScale);
             } else {
                 text.setCharacterSize(characterSize * gs::scale);
-                text.setOutlineThickness(thickness * gs::scale);
+                if (drawOutline) text.setOutlineThickness(thickness * gs::scale);
             }
             text.setScale(1, 1);
             if (shape.getSize().x < text.getGlobalBounds().width)
@@ -439,7 +441,9 @@ namespace ns
                 if (wasPressed || ignoreWasPressed)
                 {
                     text.setFillColor(sf::Color(normalColor.r, normalColor.g, normalColor.b, alpha));
-                    shape.setFillColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, ralpha));
+                    if (drawOutline) text.setOutlineColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, alpha));
+                    if (drawShape) shape.setFillColor(sf::Color(snormalColor.r, snormalColor.g, snormalColor.b, ralpha));
+                    if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(sonormalColor.r, sonormalColor.g, sonormalColor.b, ralpha));
                     bool constains = shape.getGlobalBounds().contains(dot.x, dot.y);
                     if (constains) event = sf::Event(); // So that no button will be clicked being the underlaying.
                     
@@ -455,15 +459,21 @@ namespace ns
                 wasPressed = shape.getGlobalBounds().contains(dot.x, dot.y);
                 if (onPress) return wasPressed;
                 if (wasPressed) { text.setFillColor(sf::Color(pressColor.r, pressColor.g, pressColor.b, alpha));
-                                  shape.setFillColor(sf::Color(opressColor.r, opressColor.g, opressColor.b, ralpha)); }
+                                  if (drawOutline) text.setOutlineColor(sf::Color(opressColor.r, opressColor.g, opressColor.b, alpha));
+                                  if (drawShape) shape.setFillColor(sf::Color(spressColor.r, spressColor.g, spressColor.b, ralpha));
+                                  if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(sopressColor.r, sopressColor.g, sopressColor.b, ralpha)); }
             }
             else if (gs::buttonHovering && event.type == sf::Event::MouseMoved && !wasPressed && !noColorChanging)
             {
                 if (shape.getGlobalBounds().contains(event.mouseMove.x, event.mouseMove.y)) {
                     if (!wasHovered) { text.setFillColor(sf::Color(hoverColor.r, hoverColor.g, hoverColor.b, alpha));
-                                       shape.setFillColor(sf::Color(ohoverColor.r, ohoverColor.g, ohoverColor.b, ralpha)); wasHovered = true; } }
+                                       if (drawOutline) text.setOutlineColor(sf::Color(ohoverColor.r, ohoverColor.g, ohoverColor.b, alpha));
+                                       if (drawShape) shape.setFillColor(sf::Color(shoverColor.r, shoverColor.g, shoverColor.b, ralpha));
+                                       if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(sohoverColor.r, sohoverColor.g, sohoverColor.b, ralpha)); wasHovered = true; } }
                 else if (wasHovered) { text.setFillColor(sf::Color(normalColor.r, normalColor.g, normalColor.b, alpha));
-                                       shape.setFillColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, ralpha)); wasHovered = false; }
+                                       if (drawOutline) text.setOutlineColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, alpha));
+                                       if (drawShape) shape.setFillColor(sf::Color(snormalColor.r, snormalColor.g, snormalColor.b, ralpha));
+                                       if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(sonormalColor.r, sonormalColor.g, sonormalColor.b, ralpha)); wasHovered = false; }
             }
             return false;
         }
@@ -471,10 +481,11 @@ namespace ns
         void RectangleButton::setAlpha(const sf::Uint8& alpha)
         {
             this->alpha = sf::Uint8(alpha * ((float)maxAlpha/255));
+            this->ralpha = sf::Uint8(alpha * ((float)ralpha/255));
             text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, this->alpha));
-            text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, this->alpha));
-            shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, this->alpha));
-            shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, this->alpha));
+            if (drawOutline) text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, this->alpha));
+            if (drawShape) shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, this->ralpha));
+            if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, this->ralpha));
         }
         void RectangleButton::setAlphaEx(const sf::Uint8 &alpha, const sf::Uint8 &ralpha)
         {
@@ -483,9 +494,9 @@ namespace ns
                 this->alpha = sf::Uint8((unsigned char)alpha * ((float)maxAlpha/255));
                 this->ralpha = sf::Uint8((unsigned char)ralpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, this->alpha));
-                text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, this->alpha));
-                shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, this->ralpha));
-                shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, this->ralpha));
+                if (drawOutline) text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, this->alpha));
+                if (drawShape) shape.setFillColor(sf::Color(shape.getFillColor().r, shape.getFillColor().g, shape.getFillColor().b, this->ralpha));
+                if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(shape.getOutlineColor().r, shape.getOutlineColor().g, shape.getOutlineColor().b, this->ralpha));
             }
         }
         sf::Uint8 RectangleButton::getAlpha() { return text.getOutlineColor().a; }
@@ -526,7 +537,11 @@ namespace ns
             text.setCharacterSize(size * gs::scale);
         }
         void RectangleButton::setColor(const sf::Color& fillColour) { normalColor = fillColour; text.setFillColor(sf::Color(fillColour.r, fillColour.g, fillColour.b, text.getFillColor().a)); }
-        void RectangleButton::updateColor() { text.setFillColor(sf::Color(normalColor.r, normalColor.g, normalColor.b, text.getFillColor().a)); shape.setFillColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, text.getFillColor().a)); }
+        void RectangleButton::updateColor() {
+            text.setFillColor(sf::Color(normalColor.r, normalColor.g, normalColor.b, text.getFillColor().a));
+            if (drawOutline) text.setOutlineColor(sf::Color(onormalColor.r, onormalColor.g, onormalColor.b, text.getOutlineColor().a));
+            if (drawShape) shape.setFillColor(sf::Color(snormalColor.r, snormalColor.g, snormalColor.b, shape.getFillColor().a));
+            if (drawShape && drawOutlineShape) shape.setOutlineColor(sf::Color(sonormalColor.r, sonormalColor.g, sonormalColor.b, shape.getOutlineColor().a)); }
         
         
         

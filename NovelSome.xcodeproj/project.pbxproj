@@ -17,6 +17,10 @@
 		DD12BE3E22A48AA900F542D4 /* LanguageLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD12BE3B22A48AA900F542D4 /* LanguageLibrary.cpp */; };
 		DD12BE4122A50A4D00F542D4 /* Popup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD12BE3F22A50A4D00F542D4 /* Popup.cpp */; };
 		DD12BE4222A50A4D00F542D4 /* Popup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD12BE3F22A50A4D00F542D4 /* Popup.cpp */; };
+		DD1899FB23F093DE00D81302 /* Modes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD1899F923F093DE00D81302 /* Modes.cpp */; };
+		DD1899FC23F093DE00D81302 /* Modes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD1899F923F093DE00D81302 /* Modes.cpp */; };
+		DD1899FF23F099E300D81302 /* Blur.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD1899FD23F099E300D81302 /* Blur.cpp */; };
+		DD189A0023F099E300D81302 /* Blur.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD1899FD23F099E300D81302 /* Blur.cpp */; };
 		DD265515216020CB008F1545 /* ResourcePath.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD8F82B0215E5A9A000CB7BB /* ResourcePath.mm */; };
 		DD2DCBAE2160F53C00467D32 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DDAB7496215D88450062F8B6 /* Assets.xcassets */; };
 		DD2FC3CE2269E93500A039B8 /* Savable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD2FC3CD2269E93500A039B8 /* Savable.cpp */; };
@@ -59,6 +63,10 @@
 		DD5B6B73223E513B00997FFF /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5B6B70223E513B00997FFF /* Sound.cpp */; };
 		DD5B6B76223E514200997FFF /* Font.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5B6B74223E514200997FFF /* Font.cpp */; };
 		DD5B6B77223E514200997FFF /* Font.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5B6B74223E514200997FFF /* Font.cpp */; };
+		DD5FC2C623E6F4060018D336 /* TexturedRectangleButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5FC2C423E6F4060018D336 /* TexturedRectangleButton.cpp */; };
+		DD5FC2C723E6F4060018D336 /* TexturedRectangleButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5FC2C423E6F4060018D336 /* TexturedRectangleButton.cpp */; };
+		DD5FC2CA23E6F4290018D336 /* RoundedRectangleButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5FC2C823E6F4290018D336 /* RoundedRectangleButton.cpp */; };
+		DD5FC2CB23E6F4290018D336 /* RoundedRectangleButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD5FC2C823E6F4290018D336 /* RoundedRectangleButton.cpp */; };
 		DD65CFDA2200CB3500CBEF72 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */; };
 		DD756629229FC489000FF9D5 /* SettingsUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD756627229FC489000FF9D5 /* SettingsUI.cpp */; };
 		DD75662A229FC489000FF9D5 /* SettingsUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD756627229FC489000FF9D5 /* SettingsUI.cpp */; };
@@ -140,6 +148,10 @@
 		DD12BE3C22A48AA900F542D4 /* LanguageLibrary.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LanguageLibrary.hpp; sourceTree = "<group>"; };
 		DD12BE3F22A50A4D00F542D4 /* Popup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Popup.cpp; sourceTree = "<group>"; };
 		DD12BE4022A50A4D00F542D4 /* Popup.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Popup.hpp; sourceTree = "<group>"; };
+		DD1899F923F093DE00D81302 /* Modes.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Modes.cpp; sourceTree = "<group>"; };
+		DD1899FA23F093DE00D81302 /* Modes.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Modes.hpp; sourceTree = "<group>"; };
+		DD1899FD23F099E300D81302 /* Blur.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Blur.cpp; sourceTree = "<group>"; };
+		DD1899FE23F099E300D81302 /* Blur.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Blur.hpp; sourceTree = "<group>"; };
 		DD2FC3CD2269E93500A039B8 /* Savable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Savable.cpp; sourceTree = "<group>"; };
 		DD31534A22CA172E00E9DAB6 /* Initialization.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Initialization.cpp; sourceTree = "<group>"; };
 		DD31534B22CA172E00E9DAB6 /* Initialization.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Initialization.hpp; sourceTree = "<group>"; };
@@ -185,6 +197,10 @@
 		DD5B6B71223E513B00997FFF /* Sound.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Sound.hpp; sourceTree = "<group>"; };
 		DD5B6B74223E514200997FFF /* Font.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Font.cpp; sourceTree = "<group>"; };
 		DD5B6B75223E514200997FFF /* Font.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Font.hpp; sourceTree = "<group>"; };
+		DD5FC2C423E6F4060018D336 /* TexturedRectangleButton.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TexturedRectangleButton.cpp; sourceTree = "<group>"; };
+		DD5FC2C523E6F4060018D336 /* TexturedRectangleButton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TexturedRectangleButton.hpp; sourceTree = "<group>"; };
+		DD5FC2C823E6F4290018D336 /* RoundedRectangleButton.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RoundedRectangleButton.cpp; sourceTree = "<group>"; };
+		DD5FC2C923E6F4290018D336 /* RoundedRectangleButton.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = RoundedRectangleButton.hpp; sourceTree = "<group>"; };
 		DD65CFD92200CB3500CBEF72 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DD756627229FC489000FF9D5 /* SettingsUI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SettingsUI.cpp; sourceTree = "<group>"; };
 		DD756628229FC489000FF9D5 /* SettingsUI.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SettingsUI.hpp; sourceTree = "<group>"; };
@@ -314,6 +330,8 @@
 				DD3C9B1B23DB35FE00DA63FA /* RoundedRectangleShape.hpp */,
 				DD3C9B2623DB370100DA63FA /* TextField.cpp */,
 				DD3C9B2723DB370100DA63FA /* TextField.hpp */,
+				DD1899FD23F099E300D81302 /* Blur.cpp */,
+				DD1899FE23F099E300D81302 /* Blur.hpp */,
 			);
 			path = GUI;
 			sourceTree = "<group>";
@@ -325,6 +343,10 @@
 				DD3C9B1F23DB361B00DA63FA /* Button.hpp */,
 				DD3C9B2223DB36C200DA63FA /* SomeButtons.cpp */,
 				DD3C9B2323DB36C200DA63FA /* SomeButtons.hpp */,
+				DD5FC2C423E6F4060018D336 /* TexturedRectangleButton.cpp */,
+				DD5FC2C523E6F4060018D336 /* TexturedRectangleButton.hpp */,
+				DD5FC2C823E6F4290018D336 /* RoundedRectangleButton.cpp */,
+				DD5FC2C923E6F4290018D336 /* RoundedRectangleButton.hpp */,
 			);
 			path = Button;
 			sourceTree = "<group>";
@@ -391,6 +413,8 @@
 				DD7A07FE225DDBA900B770F7 /* Savable.hpp */,
 				DD7A0801225DDDDE00B770F7 /* SavingMechanism.cpp */,
 				DD7A0802225DDDDE00B770F7 /* SavingMechanism.hpp */,
+				DD1899F923F093DE00D81302 /* Modes.cpp */,
+				DD1899FA23F093DE00D81302 /* Modes.hpp */,
 			);
 			path = Abstract;
 			sourceTree = "<group>";
@@ -729,7 +753,9 @@
 				DD8F82B7215E5A9A000CB7BB /* ResourcePath.cpp in Sources */,
 				DD12BE4122A50A4D00F542D4 /* Popup.cpp in Sources */,
 				DDBB6181215E9D0B0062CC3D /* Dialogue.cpp in Sources */,
+				DD5FC2C623E6F4060018D336 /* TexturedRectangleButton.cpp in Sources */,
 				DDBB616E215E9C1A0062CC3D /* Novel.cpp in Sources */,
+				DD1899FF23F099E300D81302 /* Blur.cpp in Sources */,
 				DDAB7472215D88050062F8B6 /* main.cpp in Sources */,
 				DD75662D229FC4F1000FF9D5 /* Client.cpp in Sources */,
 				DDBB6177215E9CDD0062CC3D /* Audio.cpp in Sources */,
@@ -737,7 +763,9 @@
 				DDD9549E229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
 				DDBB6184215E9D200062CC3D /* GUISystem.cpp in Sources */,
 				DD3C9B2023DB361B00DA63FA /* Button.cpp in Sources */,
+				DD5FC2CA23E6F4290018D336 /* RoundedRectangleButton.cpp in Sources */,
 				DD5B6B76223E514200997FFF /* Font.cpp in Sources */,
+				DD1899FB23F093DE00D81302 /* Modes.cpp in Sources */,
 				DD5B6B6E223E510900997FFF /* Image.cpp in Sources */,
 				DD31534C22CA172E00E9DAB6 /* Initialization.cpp in Sources */,
 				DDBB617A215E9CEC0062CC3D /* Background.cpp in Sources */,
@@ -758,9 +786,11 @@
 			files = (
 				DD095053223EE698002887EA /* etc.cpp in Sources */,
 				DD8F82C2215E5C73000CB7BB /* EntitySystem.cpp in Sources */,
+				DD5FC2C723E6F4060018D336 /* TexturedRectangleButton.cpp in Sources */,
 				DD3C9B1D23DB35FE00DA63FA /* RoundedRectangleShape.cpp in Sources */,
 				DD8F82C3215E5C73000CB7BB /* Settings.cpp in Sources */,
 				DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */,
+				DD189A0023F099E300D81302 /* Blur.cpp in Sources */,
 				DD5648622256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
 				DD3AC0412231282000012A86 /* CharacterLibrary.cpp in Sources */,
 				DD3AC04922318F9400012A86 /* Interface.cpp in Sources */,
@@ -773,8 +803,10 @@
 				DD3C9B2123DB361B00DA63FA /* Button.cpp in Sources */,
 				DD75662E229FC4F1000FF9D5 /* Client.cpp in Sources */,
 				DDD9549F229E7AEF00DC9E80 /* ClientImpl.cpp in Sources */,
+				DD1899FC23F093DE00D81302 /* Modes.cpp in Sources */,
 				DD3AC04522318F3000012A86 /* Skin.cpp in Sources */,
 				DD5B6B73223E513B00997FFF /* Sound.cpp in Sources */,
+				DD5FC2CB23E6F4290018D336 /* RoundedRectangleButton.cpp in Sources */,
 				DDBB618C215E9D550062CC3D /* EssentialComponents.cpp in Sources */,
 				DD3FBA212212111400E66342 /* MainMenu.cpp in Sources */,
 				DD31534D22CA172E00E9DAB6 /* Initialization.cpp in Sources */,

@@ -56,7 +56,7 @@ namespace ns
             
             bool visible{ true }, wasPressed{ false };
             bool drawCharacterName{ false }, fontLoaded{ false }, noguiSystem{ false };
-            sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
+            sf::Uint8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, waitingTime{ 2.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             
             enum modeEnum {appearing, waiting, waitingForTime, waitingForInput, waitingForChoose, disappearing, deprecated};
@@ -115,7 +115,7 @@ namespace ns
             vector<int> choiceStart;
             
             bool fontLoaded{ false };
-            sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
+            sf::Uint8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             bool visible{ true };
             

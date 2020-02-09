@@ -41,6 +41,8 @@
 #include "Abstract/GamePause.hpp"
 #include "Abstract/Savable.hpp"
 #include "Abstract/SavingMechanism.hpp"
+#include "Abstract/Modes.hpp"
+
 #include "Audio.hpp"
 #include "Background.hpp"
 #include "Character.hpp"
@@ -86,7 +88,8 @@ namespace ns
             int preloadLinesAmount{ 12 }, executeOnHold{ 0 }, executeHoldSize{ 0 };
             list<std::wstring>::iterator executePosInsert;
             
-            sf::Time timeReading; float nextAutosave{ gs::autosaveDeltaTime };
+            sf::Time timeReading;
+            float nextAutosave{ gs::autosaveDeltaTime };
             
             bool eof{ false }, fileOpened{ false }, noDestroyMessage{ false };
             list<NovelObject*> onHold, onExecute;

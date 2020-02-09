@@ -1483,8 +1483,8 @@ namespace ns
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha; SetAlpha(alpha);
             bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
             
@@ -1587,7 +1587,7 @@ namespace ns
             }
             void Text::SetAlpha(sf::Uint8 alpha)
             {
-                sf::Uint8 realAlpha = sf::Int8(alpha * ((float)maxAlpha/255));
+                sf::Uint8 realAlpha = sf::Uint8(alpha * ((float)maxAlpha/255));
                 text.setFillColor(sf::Color(text.getFillColor().r, text.getFillColor().g, text.getFillColor().b, realAlpha));
                 text.setOutlineColor(sf::Color(text.getOutlineColor().r, text.getOutlineColor().g, text.getOutlineColor().b, realAlpha));
             }

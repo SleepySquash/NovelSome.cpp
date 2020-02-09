@@ -65,7 +65,7 @@ namespace ns
                         mode = afterAppearSwitchTo;
                         if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     UpdateAlpha(true);
                     break;
                     
@@ -76,7 +76,7 @@ namespace ns
                         alpha = 0; currentTime = 0.f; mode = deprecated;
                         if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    else alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     UpdateAlpha();
                     break;
                 case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
@@ -420,8 +420,8 @@ namespace ns
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha; UpdateAlpha();
             bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 4)) };
             
@@ -459,7 +459,7 @@ namespace ns
                     if (currentTime >= appearTime) {
                         alpha = maxAlpha; currentTime = 0.f; mode = waitingForInput;
                         if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
-                    } else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    } else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     button.setAlpha(alpha);
                     break;
                     
@@ -468,7 +468,7 @@ namespace ns
                     if (currentTime >= disappearTime) {
                         alpha = 0; currentTime = 0.f; mode = deprecated;
                         if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
-                    } else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    } else alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     button.setAlpha(alpha);
                     break;
 
@@ -633,8 +633,8 @@ namespace ns
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha; button.setAlpha(alpha);
             bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
             

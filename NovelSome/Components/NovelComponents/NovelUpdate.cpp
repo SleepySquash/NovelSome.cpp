@@ -367,13 +367,13 @@ namespace ns
                                     if (sendMessageBack != noMessage) OnHold(b);
                                     switch (sendMessageBack)
                                     {
-                                        case atDeprecated: b->sendMessageBack = b->atDeprecated; break;
-                                        case atDisappearing: b->sendMessageBack = b->atDisappearing; break;
-                                        case noMessage: b->sendMessageBack = b->noMessage; break;
-                                        default: b->sendMessageBack = b->atDeprecated; break;
+                                        case atDeprecated: b->messageBack = MessageBack::AtDeprecated; break;
+                                        case atDisappearing: b->messageBack = MessageBack::AtDisappearance; break;
+                                        case noMessage: b->messageBack = MessageBack::No; break;
+                                        default: b->messageBack = MessageBack::AtDeprecated; break;
                                     }
-                                    b->SetStateMode(b->disappearing);
                                     if (disappearTime >= 0) b->disappearTime = disappearTime;
+                                    b->SetStateMode(Mode::Disapper);
                                     b->hideAfter = nullptr;
                                 }
                             if (characterGroup.size())
@@ -496,13 +496,13 @@ namespace ns
                                 if (sendMessageBack != noMessage) OnHold(b);
                                 switch (sendMessageBack)
                                 {
-                                    case atDeprecated: b->sendMessageBack = b->atDeprecated; break;
-                                    case atDisappearing: b->sendMessageBack = b->atDisappearing; break;
-                                    case noMessage: b->sendMessageBack = b->noMessage; break;
-                                    default: b->sendMessageBack = b->atDeprecated; break;
+                                    case atDeprecated: b->messageBack = MessageBack::AtDeprecated; break;
+                                    case atDisappearing: b->messageBack = MessageBack::AtDisappearance; break;
+                                    case noMessage: b->messageBack = MessageBack::No; break;
+                                    default: b->messageBack = MessageBack::AtDeprecated; break;
                                 }
-                                b->SetStateMode(b->disappearing);
                                 if (disappearTime >= 0) b->disappearTime = disappearTime;
+                                b->SetStateMode(Mode::Disapper);
                                 b->hideAfter = nullptr;
                             }
                         }
@@ -515,7 +515,7 @@ namespace ns
                         if (!backgroundAddingMode && backgroundGroup.size() != 0)
                             for (auto b : backgroundGroup)
                             {
-                                b->sendMessageBack = b->noMessage;
+                                b->messageBack = MessageBack::No;
                                 b->hideAfter = component;
                                 // b->SetStateMode(b->disappearing);
                             }
@@ -528,7 +528,7 @@ namespace ns
                             component->doParallax = Skin::self->background.doParallax;
                             component->parallaxPower = Skin::self->background.parallaxPower; }
                         component->fitMode = component->fillCentre;
-                        if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
+                        if (command.ExplicitNoMessage()) component->messageBack = MessageBack::No;
                         
                         vector<std::wstring> arguments;
                         nss::ParseArguments(command, arguments);
@@ -569,13 +569,13 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"parallax:"))
                             {
@@ -597,7 +597,7 @@ namespace ns
                                 layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         
                         backgroundGroup.insert(backgroundGroup.begin(), component);
                         component->LoadImage(filePath);

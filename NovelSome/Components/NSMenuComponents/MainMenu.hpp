@@ -30,6 +30,7 @@
 #include "../../Engine/Settings.hpp"
 #include "../../Engine/GUI/Button/SomeButtons.hpp"
 #include "../../Engine/GUI/TextField.hpp"
+#include "../../Engine/GUI/Button/RoundedRectangleButton.hpp"
 #include "../../Engine/NovelSomeScript.hpp"
 #include "../../Engine/Client.hpp"
 #include "../../Engine/Language.hpp"
@@ -68,19 +69,13 @@ namespace ns
             
             sf::Text welcomeToNovelSome;
             bool fontLoaded{ false };
-            GUI::TextButton novelsButton;
-            GUI::TextButton editorButton;
-            GUI::TextButton settingsButton;
-            GUI::TextButton exitButton;
-            GUI::TextButton accountButton;
-            GUI::TextButton languageButton;
-            GUI::TextButton backButton;
+            GUI::TextButton novelsButton, editorButton, settingsButton, exitButton, accountButton, languageButton, backButton;
             
             long yyNovels{ 0 }, yyNovels_from{ 0 }, yyNovels_to{ 0 };
             bool isNovelSelected{ false };
             list<NovelInfo>::iterator novelSelected;
             unsigned long novelsLoaded{ 0 };
-            GUI::RectangleButtons novelButtons;
+            GUI::RoundedRectangleButton novelButtons;
             sf::RectangleShape novelBackShape;
             GUI::TextButton novelStartButton, novelLoadButton;
             sf::Text novelText; float yyNovelText{ 0 };

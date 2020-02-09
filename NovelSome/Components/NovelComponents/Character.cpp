@@ -182,7 +182,7 @@ namespace ns
                         mode = afterAppearSwitchTo;
                         if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
@@ -195,7 +195,7 @@ namespace ns
                         if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
                     }
                     else
-                        alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                        alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                 case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
@@ -323,8 +323,8 @@ namespace ns
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha;
             if (spriteLoaded) sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
             bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };

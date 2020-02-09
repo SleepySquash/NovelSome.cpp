@@ -81,6 +81,7 @@ namespace ns
             novelButtons.setCharacterSize(52);
             novelButtons.thickness = 2.f;
             novelButtons.ralpha = 170;
+            novelButtons.radius = 30.f;
             novelButtons.updateColor();
             
             novelBackShape.setFillColor(sf::Color(0,0,0, 170));

@@ -17,15 +17,16 @@ namespace ns
         {
             imageName = path;
             sf::Texture* texture = ic::RequestHigherTexture(folderPath + path, /*novelSystem*/ic::globalRequestSender, 1);
-            if ((spriteLoaded = texture))
+            if ((loaded = texture))
             {
                 imagePath = folderPath + path;
                 sprite.setTexture(*texture); Resize(gs::width, gs::height);
             }
             
-            if (!spriteLoaded)
+            if (!loaded)
             {
-                if (sendMessageBack != noMessage) novelSystem->SendMessage({"UnHold", this});
+                if (messageBack != MessageBack::No)
+                    novelSystem->SendMessage({"UnHold", this});
                 novelSystem->PopComponent(this);
             }
         }
@@ -39,40 +40,40 @@ namespace ns
         {
             switch (mode)
             {
-                case appearing: gs::requestWindowRefresh = true;
+                case Mode::Appear: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
                     {
-                        alpha = maxAlpha; currentTime = 0.f;
-                        mode = afterAppearSwitchTo;
+                        alpha = maxAlpha; currentTime = disappearTime; mode = switchTo;
                         novelSystem->SendMessage({"Background :: Appeared", this});
-                        if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                        if (messageBack == MessageBack::AtAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
-                    else alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
+                    else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
                     
-                case disappearing: gs::requestWindowRefresh = true;
-                    if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
-                    if (currentTime >= disappearTime)
+                case Mode::Disapper: gs::requestWindowRefresh = true;
+                    if (currentTime > 0) currentTime -= elapsedTime.asSeconds();
+                    if (currentTime <= 0)
                     {
                         alpha = 0; currentTime = 0.f;
-                        mode = deprecated;
-                        if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                        mode = Mode::Deprecate;
+                        if (messageBack == MessageBack::AtDeprecated)
+                            novelSystem->SendMessage({"UnHold", this});
                     }
-                    else alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+                    else alpha = (sf::Uint8)(maxAlpha * (currentTime / disappearTime));
                     sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
                     break;
 
-                case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
+                case Mode::Deprecate: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
                 default: break;
             }
         }
-        void Background::Draw(sf::RenderWindow* window) { if (spriteLoaded && visible) window->draw(sprite); }
+        void Background::Draw(sf::RenderWindow* window) { if (loaded && visible) window->draw(sprite); }
         void Background::Destroy() { if (imagePath.length() != 0) ic::DeleteImage(imagePath); novelSystem->SendMessage({"Destroy", this}); }
         void Background::PollEvent(sf::Event& event)
         {
-            if (event.type == sf::Event::MouseMoved && mode != deprecated && visible && doParallax && parallaxPower > 0)
+            if (event.type == sf::Event::MouseMoved && visible && doParallax && parallaxPower > 0)
                 CalculateParallax(event.mouseMove.x, event.mouseMove.y);
         }
         void Background::ReceiveMessage(MessageHolder &message)
@@ -85,8 +86,7 @@ namespace ns
                         CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
                 }
             }
-            else if (message.address == hideAfter && message.info == "Background :: Appeared")
-                { sendMessageBack = noMessage; mode = disappearing; }
+            else if (message.address == hideAfter && message.info == "Background :: Appeared") { messageBack = MessageBack::No; mode = Mode::Disapper; }
         }
         void Background::CalculateParallax(int mouseX, int mouseY)
         {
@@ -99,7 +99,7 @@ namespace ns
         }
         void Background::CalculateScale(unsigned int width, unsigned int height)
         {
-            if (spriteLoaded)
+            if (loaded)
             {
                 float scaleFactorX, scaleFactorY, scaleFactor;
                 scaleFactorX = (float)width / (sprite.getTexture()->getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
@@ -122,36 +122,39 @@ namespace ns
                 }
             }
         }
-        void Background::SetStateMode(modeEnum newMode)
+        void Background::SetStateMode(const Mode& newMode)
         {
-            if (mode != newMode && mode != deprecated)
+            if (mode != newMode)
             {
-                currentTime = 0.f; mode = newMode;
-                if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                if (mode == Mode::Exist && newMode == Mode::Disapper) currentTime = disappearTime;
+                mode = newMode;
+                if ((newMode == Mode::Disapper && messageBack == MessageBack::AtDisappearance) ||
+                    (newMode == Mode::Deprecate && messageBack == MessageBack::AtDeprecated))
+                    novelSystem->SendMessage({"UnHold", this});
             }
         }
         void Background::Save(std::wofstream& wof)
         {
-            if (spriteLoaded)
+            if (loaded)
             {
                 wof << L"path: " << imageName << endl;
                 if (!visible) wof << L"visible: " << visible << endl;
                 if (parallaxPower != gs::defaultParallaxBackground) wof << L"parallaxPower: " << parallaxPower << endl;
                 if ((Skin::self && maxAlpha != Skin::self->background.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
                 
-                if (mode != existing)
+                if (mode != Mode::Exist)
                 {
-                    wof << L"mode: " << mode << endl;
-                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
-                    if (mode == appearing && ((Skin::self && appearTime != Skin::self->background.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
+                    wof << L"mode: " << (int)mode << endl;
+                    if (mode == Mode::Appear || mode == Mode::Disapper) wof << L"currentTime: " << currentTime << endl;
+                    if (mode == Mode::Appear && ((Skin::self && appearTime != Skin::self->background.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
                 }
                 if ((Skin::self && disappearTime != Skin::self->background.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
-                if (sendMessageBack != atAppearance) wof << L"send: " << sendMessageBack << endl;
+                if (messageBack != MessageBack::AtAppearance) wof << L"send: " << (int)messageBack << endl;
             }
         }
         std::pair<std::wstring, bool> Background::Load(std::wifstream& wif)
         {
-            mode = existing; std::wstring line; nss::CommandSettings command; bool done{ false };
+            mode = Mode::Exist; std::wstring line; nss::CommandSettings command; bool done{ false };
             while (!done)
             {
                 std::getline(wif, line); command.Command(line);
@@ -162,10 +165,10 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: mode = modeEnum::appearing; break;
-                        case 2: mode = modeEnum::disappearing; break;
-                        case 3: mode = modeEnum::deprecated; break;
-                        default: mode = modeEnum::existing; break;
+                        case 0: mode = Mode::Appear; break;
+                        case 2: mode = Mode::Disapper; break;
+                        case 3: mode = Mode::Deprecate; break;
+                        default: mode = Mode::Exist; break;
                     }
                 }
                 else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
@@ -179,20 +182,20 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
-                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
-                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
-                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                        case 0: messageBack = MessageBack::No; break;
+                        case 2: messageBack = MessageBack::AtDisappearance; break;
+                        case 3: messageBack = MessageBack::AtDeprecated; break;
+                        default: messageBack = MessageBack::AtAppearance; break;
                     }
                 }
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Int8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Int8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == Mode::Appear) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == Mode::Disapper) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha;
-            if (spriteLoaded) sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
-            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            if (loaded) sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (int)mode > 0) || (messageBack == MessageBack::AtDisappearance && (int)mode > 1)) };
             
             return { line, onHold };
         }

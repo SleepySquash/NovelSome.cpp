@@ -127,13 +127,20 @@ namespace ns
             
             sf::RectangleShape shape;
             sf::Text text;
-            sf::String string;
             unsigned int characterSize{ 20 };
             float thickness{ 1.f };
             
+            bool drawOutline{ true }, drawShape{ true };
             sf::Color onormalColor{ sf::Color::Black },
                       ohoverColor{ 140, 140, 140 },
                       opressColor{ sf::Color::Black };
+            sf::Color snormalColor{ sf::Color::Black },
+                      shoverColor{ 225, 225, 225 },
+                      spressColor{ 200, 200, 200 };
+            bool drawOutlineShape{ true };
+            sf::Color sonormalColor{ sf::Color::White },
+                      sohoverColor{ 40, 40, 40 },
+                      sopressColor{ sf::Color::White };
             sf::Uint8 ralpha{ 255 };
             
             RectangleButton();

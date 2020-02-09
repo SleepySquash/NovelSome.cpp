@@ -18,8 +18,6 @@
 #include <SFML/Graphics.hpp>
 
 #include "../../Essentials/Base.hpp"
-#include "../../Engine/List.hpp"
-#include "../../Engine/EntitySystem.hpp"
 #include "../../Engine/NovelSystem.hpp"
 #include "../../Engine/Settings.hpp"
 #include "../../Engine/Collectors/Image.hpp"
@@ -28,6 +26,7 @@
 
 #include "Abstract/Skin.hpp"
 #include "Abstract/Savable.hpp"
+#include "Abstract/Modes.hpp"
 
 using std::cin;
 using std::cout;
@@ -44,22 +43,19 @@ namespace ns
             sf::Sprite sprite;
             std::wstring imagePath{ L"" }, imageName{ L"" }, folderPath{ L"" };
             
-            bool visible{ true };
-            bool spriteLoaded{ false };
-            sf::Int8 alpha{ 0 }; int maxAlpha{ 255 };
+            bool visible{ true }, loaded{ false };
+            sf::Uint8 alpha{ 0 }, maxAlpha{ 255 };
             float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
-            Background* hideAfter{ nullptr };
             
             float scaleX{ 1.f }, scaleY{ 1.f };
             float defaultPositionX{ 0.f }, defaultPositionY{ 0.f };
             enum fitModeEnum { noFit, defaultFit, fillCentre, stretch };
             fitModeEnum fitMode { fillCentre };
             
-            enum modeEnum { appearing, existing, disappearing, deprecated };
-            modeEnum mode{ appearing };
-            enum sendMessageBackEnum { noMessage, atAppearance, atDisappearing, atDeprecated };
-            sendMessageBackEnum sendMessageBack{ atAppearance };
-            modeEnum afterAppearSwitchTo{ existing };
+            Mode mode{ Mode::Appear }, switchTo{ Mode::Exist };
+            MessageBack messageBack{ MessageBack::AtAppearance };
+            
+            Background* hideAfter{ nullptr };
             
             bool doParallax{ gs::isParallaxEnabled };
             float parallaxPower { gs::defaultParallaxBackground };
@@ -74,7 +70,7 @@ namespace ns
             void ReceiveMessage(MessageHolder& message) override;
             void CalculateScale(unsigned int width, unsigned int height);
             void CalculateParallax(int mouseX, int mouseY);
-            void SetStateMode(modeEnum newMode);
+            void SetStateMode(const Mode& newMode);
             
             void Save(std::wofstream& wof) override;
             std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
