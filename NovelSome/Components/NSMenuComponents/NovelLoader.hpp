@@ -11,7 +11,8 @@
 
 #include <iostream>
 
-#include "../../Engine/EntitySystem.hpp"
+#include <minEH/Engine/EntitySystem.hpp>
+
 #include "../NovelComponents/Novel.hpp"
 
 namespace ns

@@ -23,13 +23,12 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../../Essentials/Base.hpp"
-#include "../../../Engine/List.hpp"
-#include "../../../Engine/EntitySystem.hpp"
-#include "../../../Engine/NovelSystem.hpp"
-#include "../../../Engine/Settings.hpp"
-#include "../../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../../Engine/NovelSomeScript.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/List.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/NovelSystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
 
 using std::cin;
 using std::cout;
@@ -44,7 +43,7 @@ namespace ns
     {
         struct CharacterData
         {
-            std::wstring name{ L"" }, display{ L"" }, filePath{ L"" };
+            std::wstring name, display, filePath;
             sf::Color fillColor{ sf::Color::White };
             sf::Color outlineColor{ sf::Color::Black };
             float outlineThickness{ 0.f }; bool thicknessSet{ false };

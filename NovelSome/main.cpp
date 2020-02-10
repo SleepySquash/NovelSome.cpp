@@ -147,13 +147,8 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "Essentials/ResourcePath.hpp"
-#include "Engine/EntitySystem.hpp"
-#include "Engine/Settings.hpp"
-#include "Engine/Initialization.hpp"
+#include <minEH/minEH.hpp>
 
-#include "Components/Helpers/EssentialComponents.hpp"
-#include "Components/Helpers/LanguageLibrary.hpp"
 #include "Components/NSMenuComponents/MainMenu.hpp"
 #include "Components/NSMenuComponents/NovelLoader.hpp"
 #include "Components/NovelComponents/Novel.hpp"
@@ -183,6 +178,7 @@ int main()
 #else
     sf::RenderWindow window(sf::VideoMode(sf::VideoMode::getDesktopMode().width >= 1280 ? 1280 : sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height >= 880 ? 800 : sf::VideoMode::getDesktopMode().height - 80), "NovelSome");
 #endif
+    GameDocumentsPath::path = "/Melancholy Hill/NovelSome/";
     gs::window = &window;
     gs::width = window.getSize().x;
     gs::height = window.getSize().y;

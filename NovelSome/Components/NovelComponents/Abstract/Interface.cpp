@@ -91,6 +91,7 @@ namespace ns
                 menuButton->text->setFont(L"Pacifica.ttf");
                 menuButton->text->setCharacterSize(56);
                 menuButton->text->setString(lang::get("Exit"));
+                menuButton->text->correctBoundaries = true;
                 menuButton->actions.push_back(L"menu");
                 menuButton->constrains.posXS = L".width/2";
                 menuButton->constrains.posYS = L".height - .height/5";
@@ -100,6 +101,7 @@ namespace ns
                 saveButton->text->setFont(L"Pacifica.ttf");
                 saveButton->text->setCharacterSize(56);
                 saveButton->text->setString(lang::get("Save"));
+                saveButton->text->correctBoundaries = true;
                 saveButton->actions.push_back(L"save");
                 saveButton->constrains.posXS = L".width/2";
                 saveButton->constrains.posYS = L".height/2 - 32";
@@ -109,6 +111,7 @@ namespace ns
                 loadButton->text->setFont(L"Pacifica.ttf");
                 loadButton->text->setCharacterSize(56);
                 loadButton->text->setString(lang::get("Load"));
+                loadButton->text->correctBoundaries = true;
                 loadButton->actions.push_back(L"load");
                 loadButton->constrains.posXS = L".width/2";
                 loadButton->constrains.posYS = L".height/2 + 32";

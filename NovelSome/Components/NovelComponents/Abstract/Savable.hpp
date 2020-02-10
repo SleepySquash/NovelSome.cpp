@@ -12,8 +12,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "../../../Essentials/Base.hpp"
-#include "../../../Engine/Settings.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/Settings.hpp>
 
 using std::cin;
 using std::cout;

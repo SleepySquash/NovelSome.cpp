@@ -12,6 +12,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <optional>
 
 //NovelComponent
 #include <locale>
@@ -25,14 +26,13 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/List.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/NovelSystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
-#include "../NSMenuComponents/NovelsLibrary.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/List.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/NovelSystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/GUI/Button/SomeButtons.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
 
 #include "Abstract/VariableSystem.hpp"
 #include "Abstract/CharacterLibrary.hpp"
@@ -42,6 +42,7 @@
 #include "Abstract/Savable.hpp"
 #include "Abstract/SavingMechanism.hpp"
 #include "Abstract/Modes.hpp"
+#include "Abstract/NovelInfo.hpp"
 
 #include "Audio.hpp"
 #include "Background.hpp"
@@ -116,10 +117,10 @@ namespace ns
             ~Novel();
             void Init() override;
             void Update(const sf::Time& elapsedTime) override;
-            void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
-            void Draw(sf::RenderWindow* window) override;
-            void Resize(const unsigned int& width, const unsigned int& height) override;
             void PollEvent(sf::Event& event) override;
+            void ResourcesPreloading(list<std::wstring>& lines, std::wstring& line);
+            void Resize(const unsigned int& width, const unsigned int& height) override;
+            void Draw(sf::RenderWindow* window) override;
             void Save(std::wofstream& wof);
             void ForwardMessage(MessageHolder& message);
             void ReceiveMessage(MessageHolder& message) override;

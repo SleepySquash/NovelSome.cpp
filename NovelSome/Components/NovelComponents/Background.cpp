@@ -12,18 +12,16 @@ namespace ns
 {
     namespace NovelComponents
     {
-        Background::Background(const std::wstring& folderPath) : folderPath(folderPath), Savable(L"Background") { }
+        Background::Background(const std::wstring& folderPath) : folder(folderPath), Savable(L"Background") { }
         void Background::LoadImage(const std::wstring& path)
         {
-            imageName = path;
-            sf::Texture* texture = ic::RequestHigherTexture(folderPath + path, /*novelSystem*/ic::globalRequestSender, 1);
+            sf::Texture* texture = ic::RequestHigherTexture(folder + path, /*novelSystem*/ic::globalRequestSender, 1);
             if ((loaded = texture))
             {
-                imagePath = folderPath + path;
+                this->path = folder + path; image = path;
                 sprite.setTexture(*texture); Resize(gs::width, gs::height);
             }
-            
-            if (!loaded)
+            else
             {
                 if (messageBack != MessageBack::No)
                     novelSystem->SendMessage({"UnHold", this});
@@ -70,7 +68,7 @@ namespace ns
             }
         }
         void Background::Draw(sf::RenderWindow* window) { if (loaded && visible) window->draw(sprite); }
-        void Background::Destroy() { if (imagePath.length() != 0) ic::DeleteImage(imagePath); novelSystem->SendMessage({"Destroy", this}); }
+        void Background::Destroy() { if (path.length() != 0) ic::DeleteImage(path); novelSystem->SendMessage({"Destroy", this}); }
         void Background::PollEvent(sf::Event& event)
         {
             if (event.type == sf::Event::MouseMoved && visible && doParallax && parallaxPower > 0)
@@ -78,9 +76,9 @@ namespace ns
         }
         void Background::ReceiveMessage(MessageHolder &message)
         {
-            if (nss::Command(message.info, "Request") && message.additional == imagePath)
+            if (nss::Command(message.info, "Request") && message.additional == path)
             {
-                sf::Texture* texture = ic::LoadTexture(imagePath);
+                sf::Texture* texture = ic::LoadTexture(path);
                 if (texture) { sprite.setTexture(*texture, true); CalculateScale(gs::width, gs::height);
                     if (doParallax && !(gs::isPauseEnabled && gs::isPause))
                         CalculateParallax(sf::Mouse::getPosition(*gs::window).x, sf::Mouse::getPosition(*gs::window).y);
@@ -102,8 +100,8 @@ namespace ns
             if (loaded)
             {
                 float scaleFactorX, scaleFactorY, scaleFactor;
-                scaleFactorX = (float)width / (sprite.getTexture()->getSize().x) * (doParallax? 1 + parallaxPower : 1) * scaleX;
-                scaleFactorY = (float)height / (sprite.getTexture()->getSize().y) * (doParallax? 1 + parallaxPower : 1) * scaleY;
+                scaleFactorX = (float)width / (sprite.getLocalBounds().width) * (doParallax? 1 + parallaxPower : 1) * scaleX;
+                scaleFactorY = (float)height / (sprite.getLocalBounds().height) * (doParallax? 1 + parallaxPower : 1) * scaleY;
                 switch (fitMode)
                 {
                     case defaultFit:
@@ -126,18 +124,18 @@ namespace ns
         {
             if (mode != newMode)
             {
-                if (mode == Mode::Exist && newMode == Mode::Disapper) currentTime = disappearTime;
-                mode = newMode;
+                if (newMode == Mode::Disapper) currentTime = disappearTime; else currentTime = 0.f; mode = newMode;
                 if ((newMode == Mode::Disapper && messageBack == MessageBack::AtDisappearance) ||
                     (newMode == Mode::Deprecate && messageBack == MessageBack::AtDeprecated))
                     novelSystem->SendMessage({"UnHold", this});
             }
         }
+    
         void Background::Save(std::wofstream& wof)
         {
             if (loaded)
             {
-                wof << L"path: " << imageName << endl;
+                wof << L"path: " << image << endl;
                 if (!visible) wof << L"visible: " << visible << endl;
                 if (parallaxPower != gs::defaultParallaxBackground) wof << L"parallaxPower: " << parallaxPower << endl;
                 if ((Skin::self && maxAlpha != Skin::self->background.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;

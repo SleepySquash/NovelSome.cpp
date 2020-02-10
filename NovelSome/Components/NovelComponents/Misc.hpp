@@ -14,7 +14,8 @@
 #include <vector>
 
 #include <SFML/Main.hpp>
-#include "../../Engine/NovelSystem.hpp"
+#include <minEH/Engine/NovelSystem.hpp>
+
 #include "Abstract/Savable.hpp"
 
 using std::cin;

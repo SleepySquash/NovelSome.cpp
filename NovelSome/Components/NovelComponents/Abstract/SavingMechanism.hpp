@@ -17,10 +17,10 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../../Essentials/Base.hpp"
-#include "../../../Engine/NovelSystem.hpp"
-#include "../../../Engine/Settings.hpp"
-#include "../../../Engine/NovelSomeScript.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/NovelSystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
 
 #include "Savable.hpp"
 

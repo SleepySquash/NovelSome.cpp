@@ -111,13 +111,13 @@ namespace ns
         if (!active || gs::ignoreDraw) return;
         
         window->draw(blackScreenShape);
-        backButton.Draw(window);
-        customizationButton.Draw(window);
-        graphicsButton.Draw(window);
-        soundButton.Draw(window);
-        networkButton.Draw(window);
+        backButton.draw(window);
+        customizationButton.draw(window);
+        graphicsButton.draw(window);
+        soundButton.draw(window);
+        networkButton.draw(window);
         
-        tempButton.Draw(window);
+        tempButton.draw(window);
     }
     void SettingsUI::ReceiveMessage(MessageHolder& message)
     {

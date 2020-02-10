@@ -15,11 +15,11 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/List.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/Collectors.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/List.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/Collectors.hpp>
 
 namespace nekoui
 {

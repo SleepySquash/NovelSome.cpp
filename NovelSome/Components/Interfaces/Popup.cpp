@@ -68,6 +68,6 @@ namespace NekoNinja
         window->draw(line);
         window->draw(caption);
         window->draw(info);
-        button.Draw(window);
+        button.draw(window);
     }
 }

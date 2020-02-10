@@ -82,8 +82,8 @@ namespace ns
         
         window->draw(blackScreenShape);
         window->draw(captionText);
-        backButton.Draw(window);
-        saveloadButton.Draw(window);
+        backButton.draw(window);
+        saveloadButton.draw(window);
     }
     void SaveLoadUI::ReceiveMessage(MessageHolder& message)
     {

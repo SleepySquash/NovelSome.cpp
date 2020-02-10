@@ -532,21 +532,21 @@ namespace ns
             {
                 case Page::Main:
                     window->draw(welcomeToNovelSome);
-                    novelsButton.Draw(window);
-                    editorButton.Draw(window);
-                    settingsButton.Draw(window);
+                    novelsButton.draw(window);
+                    editorButton.draw(window);
+                    settingsButton.draw(window);
 #if !defined(SFML_SYSTEM_IOS) && !defined(SFML_SYSTEM_ANDROID)
-                    exitButton.Draw(window);
+                    exitButton.draw(window);
 #endif
-                    accountButton.Draw(window);
-                    languageButton.Draw(window);
+                    accountButton.draw(window);
+                    languageButton.draw(window);
                     break;
                 case Page::Novels:
                     if (isNovelSelected)
                     {
                         window->draw(novelBackShape);
-                        if (hasMenu) novelMenuButton.Draw(window);
-                        else { novelStartButton.Draw(window); novelLoadButton.Draw(window); }
+                        if (hasMenu) novelMenuButton.draw(window);
+                        else { novelStartButton.draw(window); novelLoadButton.draw(window); }
                         
                         yy = yyNovelText;
                         novelText.setCharacterSize(70 * gs::scScale);
@@ -575,14 +575,14 @@ namespace ns
                             novelButtons.setString((*it).name);
                             novelButtons.setPosition(novelButtons.shape.getPosition().x, yy);
                             if (isNovelSelected && novelSelected == it) { novelButtons.shape.setFillColor({200, 200, 200, 170}); }
-                            novelButtons.Draw(window);
+                            novelButtons.draw(window);
                             if (isNovelSelected && novelSelected == it) { novelButtons.shape.setFillColor({novelButtons.snormalColor.r, novelButtons.snormalColor.g, novelButtons.snormalColor.b, 170}); }
                             yy += novelButtons.shape.getGlobalBounds().height + 10*gs::scaley; ++i;
                         }
                     }
-                    backButton.Draw(window);
+                    backButton.draw(window);
                     break;
-                case Page::Editor: backButton.Draw(window); break;
+                case Page::Editor: backButton.draw(window); break;
                 case Page::Settings: /*backButton.Draw(window); tempButton.Draw(window);*/ break;
                 case Page::Language:
                     yy = 100*gs::scale; i = 0;
@@ -593,18 +593,18 @@ namespace ns
                         languageButtons.shape.setSize({(float)gs::width, 50.f});
                         languageButtons.setPosition(0, yy);
                         languageButtons.index = i++;
-                        languageButtons.Draw(window);
+                        languageButtons.draw(window);
                         yy += languageButtons.text.getGlobalBounds().height;
                     }
-                    backButton.Draw(window); break;
+                    backButton.draw(window); break;
                 case Page::Account:
                     usernameField.Draw(window);
                     passwordField.Draw(window);
                     window->draw(fieldTextUsername);
                     window->draw(fieldTextPassword);
-                    loginButton.Draw(window);
-                    registerButton.Draw(window);
-                    backButton.Draw(window); break;
+                    loginButton.draw(window);
+                    registerButton.draw(window);
+                    backButton.draw(window); break;
                 default: break;
             }
             

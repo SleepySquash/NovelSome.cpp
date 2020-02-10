@@ -13,6 +13,7 @@ namespace ns
 {
     enum class Mode { Appear, Disapper, Exist, Deprecate };
     enum class MessageBack { No, AtAppearance, AtDisappearance, AtDeprecated };
+    enum class Position { Custom, Left, CLeft, Center, CRight, Right };
 }
 
 #endif /* VNComponentsModes_hpp */

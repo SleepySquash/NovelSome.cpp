@@ -1870,7 +1870,7 @@ namespace ns
                     constrains.globalBounds.width = sprite->sprite.getGlobalBounds().width;
                     constrains.globalBounds.height = sprite->sprite.getGlobalBounds().height; }
             }
-            void Button::Draw(sf::RenderWindow* window) { button->Draw(window); }
+            void Button::Draw(sf::RenderWindow* window) { button->draw(window); }
             void Button::ReceiveMessage(MessageHolder& message)
             {
                 if (message.info == "FinishedExecute" && eventPolling) { eventPolling = false; button->active = true; }

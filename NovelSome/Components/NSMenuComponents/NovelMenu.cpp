@@ -45,7 +45,7 @@ namespace ns
         {
             if (!active) return;
             guiSystem.Draw(window);
-            backToMenu.Draw(window);
+            backToMenu.draw(window);
         }
         void NovelMenu::ReceiveMessage(MessageHolder& message)
         {

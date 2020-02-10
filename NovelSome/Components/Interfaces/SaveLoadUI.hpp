@@ -15,14 +15,14 @@
 #include <SFML/Main.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/ResourcePath.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/Collectors/Font.hpp"
-#include "../../Engine/Collectors/Image.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/NovelSystem.hpp"
-#include "../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../Engine/Language.hpp"
+#include <minEH/Essentials/ResourcePath.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/Collectors/Font.hpp>
+#include <minEH/Engine/Collectors/Image.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/NovelSystem.hpp>
+#include <minEH/Engine/GUI/Button/SomeButtons.hpp>
+#include <minEH/Engine/Language.hpp>
 
 #include "../NovelComponents/Abstract/SavingMechanism.hpp"
 #include "../NSMenuComponents/NovelsLibrary.hpp"

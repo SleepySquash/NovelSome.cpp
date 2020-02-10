@@ -19,10 +19,12 @@
 #include <codecvt>
 #include <dirent.h>
 
-#include "../../Essentials/ResourcePath.hpp"
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
-#include "../../Engine/Language.hpp"
+#include <minEH/Essentials/ResourcePath.hpp>
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
+#include <minEH/Engine/Language.hpp>
+
+#include "../NovelComponents/Abstract/NovelInfo.hpp"
 
 using std::cin;
 using std::cout;
@@ -33,18 +35,6 @@ using std::unordered_map;
 
 namespace ns
 {
-    struct NovelDetailedInfo
-    {
-        std::wstring description{ L"" }, author{ L"" };
-        std::wstring backgroundPath{ L"" };
-    };
-
-    struct NovelInfo
-    {
-        std::wstring name, path;            // TODO: NovelHolder, содержащий нужную инфу о новелле для сохранения/загрузки.
-        NovelInfo(const std::wstring& path);
-    };
-
     struct Novels
     {
         static list<NovelInfo> info;

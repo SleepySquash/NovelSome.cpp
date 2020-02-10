@@ -17,12 +17,12 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/NovelSystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/Collectors/Image.hpp"
-#include "../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/NovelSystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/Collectors/Image.hpp>
+#include <minEH/Engine/GUI/Button/SomeButtons.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
 
 #include "Abstract/Skin.hpp"
 #include "Abstract/Savable.hpp"
@@ -41,14 +41,12 @@ namespace ns
         struct Background : NovelObject, Savable
         {
             sf::Sprite sprite;
-            std::wstring imagePath{ L"" }, imageName{ L"" }, folderPath{ L"" };
+            std::wstring path{ L"" }, image{ L"" }, folder{ L"" };
             
             bool visible{ true }, loaded{ false };
             sf::Uint8 alpha{ 0 }, maxAlpha{ 255 };
             float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             
-            float scaleX{ 1.f }, scaleY{ 1.f };
-            float defaultPositionX{ 0.f }, defaultPositionY{ 0.f };
             enum fitModeEnum { noFit, defaultFit, fillCentre, stretch };
             fitModeEnum fitMode { fillCentre };
             
@@ -59,6 +57,7 @@ namespace ns
             
             bool doParallax{ gs::isParallaxEnabled };
             float parallaxPower { gs::defaultParallaxBackground };
+            float scaleX{ 1.f }, scaleY{ 1.f }, defaultPositionX{ 0.f }, defaultPositionY{ 0.f };
             
             Background(const std::wstring& folderPath = L"");
             void LoadImage(const std::wstring&);

@@ -519,7 +519,7 @@ namespace ns
             {
                 button.setString(choices[i]);
                 button.setPosition(gs::width/2, yy);
-                button.Draw(window);
+                button.draw(window);
                 
                 yy += button.text.getGlobalBounds().height + 10*gs::scaley;
             }

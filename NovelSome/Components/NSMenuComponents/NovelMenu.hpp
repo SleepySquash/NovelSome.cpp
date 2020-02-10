@@ -19,11 +19,11 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/GUI/Button/SomeButtons.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
 
 #include "NovelsLibrary.hpp"
 #include "../NovelComponents/GUISystem.hpp"

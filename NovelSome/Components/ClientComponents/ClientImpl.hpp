@@ -15,10 +15,10 @@
 #include <SFML/Network.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/Collectors.hpp"
-#include "../../Engine/Client.hpp"
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/Collectors.hpp>
+#include <minEH/Engine/Client.hpp>
 
 using namespace ns;
 using std::endl;

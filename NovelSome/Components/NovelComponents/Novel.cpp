@@ -568,7 +568,7 @@ namespace ns
                                 component->maxAlpha = Skin::self->background.maxAlpha;
                                 component->doParallax = Skin::self->background.doParallax;
                                 component->parallaxPower = Skin::self->background.parallaxPower; }
-                            component->folderPath = novel->folderPath;
+                            component->folder = novel->folderPath;
                             std::pair<std::wstring, bool> pr = component->Load(wif);
                             line = pr.first; command.Command(line); if (pr.second) novel->OnHold(component);
                             novel->backgroundGroup.insert(novel->backgroundGroup.begin(), component);
@@ -589,7 +589,7 @@ namespace ns
                                 component->maxAlpha = Skin::self->character.maxAlpha;
                                 component->doParallax = Skin::self->character.doParallax;
                                 component->parallaxPower = Skin::self->character.parallaxNormal; }
-                            component->folderPath = novel->folderPath;
+                            component->folder = novel->folderPath;
                             std::pair<std::wstring, bool> pr = component->Load(wif);
                             line = pr.first; command.Command(line); if (pr.second) novel->OnHold(component);
                             novel->characterGroup.insert(novel->characterGroup.begin(), component);

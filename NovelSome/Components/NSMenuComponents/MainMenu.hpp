@@ -25,19 +25,19 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "../../Essentials/Base.hpp"
-#include "../../Engine/EntitySystem.hpp"
-#include "../../Engine/Settings.hpp"
-#include "../../Engine/GUI/Button/SomeButtons.hpp"
-#include "../../Engine/GUI/TextField.hpp"
-#include "../../Engine/GUI/Button/RoundedRectangleButton.hpp"
-#include "../../Engine/NovelSomeScript.hpp"
-#include "../../Engine/Client.hpp"
-#include "../../Engine/Language.hpp"
+#include <minEH/Essentials/Base.hpp>
+#include <minEH/Engine/EntitySystem.hpp>
+#include <minEH/Engine/Settings.hpp>
+#include <minEH/Engine/GUI/Button/SomeButtons.hpp>
+#include <minEH/Engine/GUI/TextField.hpp>
+#include <minEH/Engine/GUI/Button/RoundedRectangleButton.hpp>
+#include <minEH/Engine/NovelSomeScript.hpp>
+#include <minEH/Engine/Client.hpp>
+#include <minEH/Engine/Language.hpp>
+#include <minEH/Components/Helpers/LanguageLibrary.hpp>
 
 #include "NovelsLibrary.hpp"
 #include "NovelMenu.hpp"
-#include "../Helpers/LanguageLibrary.hpp"
 #include "../Interfaces/Popup.hpp"
 
 using std::cin;
