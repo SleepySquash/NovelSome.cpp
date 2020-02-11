@@ -267,7 +267,7 @@ namespace ns
             drawCharacterName = true;
             
             charText.setString(charString);
-            charText.setFont(*ns::FontCollector::GetFont(fontName));
+            charText.setFont(*fc::GetFont(fontName));
             fontLoaded = text.getFont();
             
             charText.setCharacterSize(characterSize);

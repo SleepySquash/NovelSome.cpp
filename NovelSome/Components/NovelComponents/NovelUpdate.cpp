@@ -437,7 +437,7 @@ namespace ns
                     else if (nss::Command(command, L"scenario ") || nss::Command(command, L"jump "))
                     {
                         nss::SkipSpaces(command);
-                        std::wstring fileName = nss::ParseAsMaybeQuoteString(command), filePath = folderPath + fileName;
+                        std::wstring fileName = nss::ParseAsMaybeQuoteString(command), filePath = folder + fileName;
                         if (!base::FileExists(filePath)) filePath = utf16(resourcePath()) + filePath;
                         if (!base::FileExists(filePath)) filePath = base::GetFolderPath(scenarioPath) + fileName;
                         if (base::FileExists(filePath))
@@ -518,7 +518,7 @@ namespace ns
                                 // b->SetStateMode(b->disappearing);
                             }
                         
-                        component->folder = folderPath;
+                        component->folder = folder;
                         if (Skin::self) {
                             component->appearTime = Skin::self->background.appearTime;
                             component->disappearTime = Skin::self->background.disappearTime;
@@ -612,7 +612,7 @@ namespace ns
                             if (CharacterLibrary::exists(possibleName))
                             {
                                 auto* component = layers.PrioritizeComponent<ns::NovelComponents::Character>(5000);
-                                component->folder = folderPath;
+                                component->folder = folder;
                                 if (Skin::self) {
                                     component->appearTime = Skin::self->character.appearTime;
                                     component->disappearTime = Skin::self->character.disappearTime;
@@ -873,11 +873,11 @@ namespace ns
                             std::wstring filename, scopename;
                             if (possibleStr2.length() != 0)
                             {
-                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
+                                if (base::FileExists(folder + possibleStr2) || base::FileExists(utf16(resourcePath()) + folder + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
                                 else { scopename = possibleStr2; filename = possibleStr1; }
                             } else { scopename = L""; filename = possibleStr1; }
                             if (scopename != L"dialogue" && scopename != L"choose") Skin::self->RestoreToDefaults(scopename);
-                            Skin::self->LoadFromFile(folderPath + filename, scopename);
+                            Skin::self->LoadFromFile(folder + filename, scopename);
                             if (scopename == L"") { Skin::self->changedDialogue = Skin::self->changedAmbient = Skin::self->changedBackground = Skin::self->changedCharacter = Skin::self->changedMusic = Skin::self->changedSound = Skin::self->changedChoose = true; Skin::self->defaultDialogue = Skin::self->defaultAmbient = Skin::self->defaultBackground = Skin::self->defaultCharacter = Skin::self->defaultMusic = Skin::self->defaultSound = Skin::self->defaultChoose = filename; }
                             else if (scopename == L"dialogue") { Skin::self->changedDialogue = true; Skin::self->defaultDialogue = filename; }
                             else if (scopename == L"choose") { Skin::self->changedChoose = true; Skin::self->defaultChoose = filename; }
@@ -899,7 +899,7 @@ namespace ns
                             if (possibleStr2.length() != 0)
                             {
                                 std::wstring filename, scopename;
-                                if (base::FileExists(folderPath + possibleStr2) || base::FileExists(utf16(resourcePath()) + folderPath + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
+                                if (base::FileExists(folder + possibleStr2) || base::FileExists(utf16(resourcePath()) + folder + possibleStr2)) { scopename = possibleStr1; filename = possibleStr2; }
                                 else { scopename = possibleStr2; filename = possibleStr1; }
                                 
                                 if (scopename == L"dialogue")
@@ -908,9 +908,9 @@ namespace ns
                                     interface.guiDialogue.clear();
                                     LocalVariables_Set(L"@name", std::wstring(L""));
                                     Skin::self->RestoreToDefaults(scopename);
-                                    Skin::self->LoadFromFile(folderPath + filename, scopename);
+                                    Skin::self->LoadFromFile(folder + filename, scopename);
                                     Skin::self->changedDialogue = false;
-                                    interface.guiDialogue.LoadFromFile(folderPath + filename, scopename);
+                                    interface.guiDialogue.LoadFromFile(folder + filename, scopename);
                                     interface.guiDialogue.ResetResize(); interface.guiDialogue.Resize(gs::width, gs::height);
                                     interface.guiDialogue.trueFileName = filename;
                                     interface.guiDialogue.SetAlpha(alpha);
@@ -932,7 +932,7 @@ namespace ns
                                 {
                                     sf::Uint8 alpha{ interface.guiPause.alpha };
                                     interface.guiPause.clear();
-                                    interface.guiPause.LoadFromFile(folderPath + filename, scopename);
+                                    interface.guiPause.LoadFromFile(folder + filename, scopename);
                                     interface.guiPause.ResetResize(); interface.guiPause.Resize(gs::width, gs::height);
                                     interface.guiPause.trueFileName = filename;
                                     interface.guiPause.SetAlpha(alpha);
@@ -983,7 +983,7 @@ namespace ns
                                     
                                     if (component->sendMessageBack != component->noMessage) OnHold(component);
                                     GUIGroup.insert(GUIGroup.begin(), component);
-                                    component->LoadFromFile(folderPath + filename, scopename); component->trueFileName = filename;
+                                    component->LoadFromFile(folder + filename, scopename); component->trueFileName = filename;
                                     component->SetAlpha(255); component->ResetResize(); component->Resize(gs::width, gs::height);
                                 }
                             }
@@ -1048,7 +1048,7 @@ namespace ns
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
-                        component->folderPath = folderPath;
+                        component->folderPath = folder;
                         if (Skin::self) {
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
@@ -1106,7 +1106,7 @@ namespace ns
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
-                        component->folderPath = folderPath; component->tag = L"Ambient"; component->ambient = true;
+                        component->folderPath = folder; component->tag = L"Ambient"; component->ambient = true;
                         if (Skin::self) {
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
@@ -1202,7 +1202,7 @@ namespace ns
                             component->appearTime = Skin::self->sound.appearTime;
                             component->disappearTime = Skin::self->sound.disappearTime;
                             component->maxVolume = Skin::self->sound.maxVolume; }
-                        component->folderPath = folderPath;
+                        component->folderPath = folder;
                         if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
                         
                         vector<std::wstring> arguments;

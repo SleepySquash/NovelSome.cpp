@@ -79,9 +79,14 @@ namespace ns
             void ReceiveMessage(MessageHolder& message) override;
             void Save(std::wofstream& wof) override;
         };
+        struct NovelSettings
+        {
+            bool noGamePause;
+            NovelSettings(const bool&);
+        };
         struct Novel : Component
         {
-            std::wstring nsdataPath{ L"" }, folderPath{ L"" }, scenarioPath{ L"" }, scenario{ L"" }, line;
+            std::wstring nsdata, folder, scenarioPath, scenario, line;
             std::wifstream wif;
             unsigned long position{ 0 };
             nss::CommandSettings command;
@@ -93,10 +98,12 @@ namespace ns
             float nextAutosave{ gs::autosaveDeltaTime };
             
             bool eof{ false }, fileOpened{ false }, noDestroyMessage{ false };
+            bool noGamePause{ false };
             list<NovelObject*> onHold, onExecute;
             
-            NovelInfo* nvl{ nullptr };
+            NovelInfo* nvl{ nullptr }; bool destroyNVL{ false };
             GamePause* gamePause{ nullptr };
+            NovelSettings* settings{ nullptr };
             
             NovelSystem layers;
             Interface interface;
@@ -110,8 +117,8 @@ namespace ns
             list<MusicPlayer*> ambientGroup;
             list<GUISystem*> GUIGroup;
             
-            Novel(const std::wstring& path, NovelInfo* nvl = nullptr);
-            Novel(NovelInfo* nvl);
+            Novel(const std::wstring& path, NovelInfo* nvl = nullptr, NovelSettings* settings = nullptr);
+            Novel(NovelInfo* nvl, NovelSettings* settings = nullptr);
             Novel(const Novel&) = delete;
             Novel(Novel&&) = delete;
             ~Novel();

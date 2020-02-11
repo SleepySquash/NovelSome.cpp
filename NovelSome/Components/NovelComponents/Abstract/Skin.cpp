@@ -138,9 +138,9 @@ namespace ns
                             std::wstring possibleValue = nss::ParseAsMaybeQuoteString(command);
                             if (possibleValue.length() != 0)
                             {
-                                if (scopeName == L"dialogue") dialogue.fontName = possibleValue;
-                                else if (scopeName == L"choose") choose.fontName = possibleValue;
-                                else defaultFontName = possibleValue, dialogue.fontName = possibleValue, choose.fontName = possibleValue;;
+                                if (scopeName == L"dialogue") dialogue.fontName = FindTheCorrectFont(possibleValue);
+                                else if (scopeName == L"choose") choose.fontName = FindTheCorrectFont(possibleValue);
+                                else defaultFontName = dialogue.fontName = choose.fontName = FindTheCorrectFont(possibleValue);;
                             }
                         }
                         
@@ -287,9 +287,9 @@ namespace ns
                                             std::wstring possibleValue = nss::ParseAsMaybeQuoteString(command);
                                             if (possibleValue.length() != 0)
                                             {
-                                                if (settingScope == L"dialogue") dialogue.fontName = possibleValue;
-                                                else if (settingScope == L"choose") choose.fontName = possibleValue;
-                                                else defaultFontName = possibleValue, dialogue.fontName = possibleValue;
+                                                if (settingScope == L"dialogue") dialogue.fontName = FindTheCorrectFont(possibleValue);
+                                                else if (settingScope == L"choose") choose.fontName = FindTheCorrectFont(possibleValue);
+                                                else defaultFontName = dialogue.fontName = FindTheCorrectFont(possibleValue);
                                             }
                                         }
                                         else if (nss::Command(command, L"onleft:") || nss::Command(command, L"onleft ") ||
@@ -418,6 +418,17 @@ namespace ns
                 }
             }
             wif.close();
+        }
+        std::wstring Skin::FindTheCorrectFont(const std::wstring& path)
+        {
+            if (fc::FontExistsAtPath(path)) return path;
+            else if (fc::FontExistsAtPath(folderScope + path)) return folderScope + path;
+            else if (fc::FontExistsAtPath(folderScope + L"Font/" + path)) return folderScope + L"Font/" + path;
+            else if (fc::FontExistsAtPath(folderScope + L"font/" + path)) return folderScope + L"font/" + path;
+            else if (fc::FontExistsAtPath(folderScope + L"Fonts/" + path)) return folderScope + L"Fonts/" + path;
+            else if (fc::FontExistsAtPath(folderScope + L"fonts/" + path)) return folderScope + L"fonts/" + path;
+            else if (fc::FontExistsAtPath(folderScope + L"GUI/" + path)) return folderScope + L"GUI/" + path;
+            else if (fc::FontExistsAtPath(folderScope + L"gui/" + path)) return folderScope + L"gui/" + path;
         }
         /*void Skin::LoadFromFile(const std::wstring& fileName, const std::string& scopeName)
         {

@@ -105,6 +105,7 @@ namespace ns
             Skin();
             void RestoreToDefaults(const std::wstring& scopeName = L"");
             void LoadFromFile(const std::wstring& fileName, const std::wstring& scopeName = L"");
+            std::wstring FindTheCorrectFont(const std::wstring& path);
         };
     }
 }
