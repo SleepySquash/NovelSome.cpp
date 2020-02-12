@@ -47,7 +47,7 @@ namespace ns
                         
                         if (dialogueGroup.size()) for (auto d : dialogueGroup) { ++d->priority; d->guiSystem = nullptr; }
                         auto* component = layers.PrioritizeComponent<Dialogue>(10000, &interface.guiDialogue);
-                        if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
+                        if (command.ExplicitNoMessage()) component->messageBack = MessageBack::No;
                         
                         vector<std::wstring> arguments;
                         nss::ParseArguments(command, arguments);
@@ -70,21 +70,21 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchby:"))
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"waitingforinput" || stringValue == L"input")
-                                    component->afterAppearSwitchTo = component->waitingForInput;
+                                    component->switchTo = Mode::WaitingForInput;
                                 else if (stringValue == L"waitingfortime" || stringValue == L"time")
-                                    component->afterAppearSwitchTo = component->waitingForTime;
+                                    component->switchTo = Mode::WaitingForTime;
                             }
                             else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
                                 component->waitingTime = nss::ArgumentAsFloat(argument);
@@ -92,7 +92,7 @@ namespace ns
                                 layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         
                         dialogueGroup.insert(dialogueGroup.begin(), component);
                         TemporarySettings::dialogue = &component->text;
@@ -135,7 +135,7 @@ namespace ns
                         
                         bool chooseEnded{ false }, explicitChoose{ false };
                         auto* component = layers.PrioritizeComponent<Choose>(10000, &interface.guiChoose);
-                        if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
+                        if (command.ExplicitNoMessage()) component->messageBack = MessageBack::No;
                         
                         std::wstring question = L"";
                         bool dialogueShouldBeStill{ false }; //TODO: Default to Skin
@@ -161,13 +161,13 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"still") || nss::Command(argument, L"dialogue"))
                                 dialogueShouldBeStill = true;
@@ -305,15 +305,15 @@ namespace ns
                         if (dialogueShouldBeStill && dialogueGroup.size() != 0)
                         {
                             for (auto d : dialogueGroup)
-                                if (d->mode != Dialogue::modeEnum::disappearing && d->mode != Dialogue::modeEnum::deprecated)
+                                if (d->mode != Mode::Disapper && d->mode != Mode::Deprecate)
                                 {
-                                    if (d->mode == Dialogue::modeEnum::appearing)
-                                        d->afterAppearSwitchTo = Dialogue::modeEnum::waitingForChoose;
-                                    else d->SetStateMode(Dialogue::modeEnum::waitingForChoose);
+                                    if (d->mode == Mode::Appear)
+                                        d->switchTo = Mode::WaitingForChoose;
+                                    else d->SetStateMode(Mode::WaitingForChoose);
                                 }
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         chooseGroup.insert(chooseGroup.begin(), component);
                         component->InitChoose();
                     }
@@ -339,9 +339,8 @@ namespace ns
                         nss::SkipSpaces(command);
                         float disappearTime{ 1.f };
                         
-                        enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
-                        sendMessageBackEnum sendMessageBack{ atDeprecated };
-                        if (command.ExplicitNoMessage()) sendMessageBack = noMessage;
+                        MessageBack messageBack{ MessageBack::AtDeprecated };
+                        if (command.ExplicitNoMessage()) messageBack = MessageBack::No;
                         if (nss::ContainsUsefulInformation(command)) disappearTime = ArgumentAsFloat(command);
                         
                         if (disappearTime >= 0.f)
@@ -355,20 +354,20 @@ namespace ns
                                 else if (nss::Command(argument, L"messageback:") || nss::Command(argument, L"message:"))
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
-                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing") sendMessageBack = atDisappearing;
-                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated") sendMessageBack = atDeprecated;
-                                    else if (stringValue == L"nomessage" || stringValue == L"no") sendMessageBack = noMessage;
+                                    if (stringValue == L"atdisappearing" || stringValue == L"disappearing") messageBack = MessageBack::AtDisappearance;
+                                    else if (stringValue == L"atdeprecated" || stringValue == L"deprecated") messageBack = MessageBack::AtDeprecated;
+                                    else if (stringValue == L"nomessage" || stringValue == L"no") messageBack = MessageBack::No;
                                 }
                             }
                             
                             if (backgroundGroup.size())
                                 for (auto b : backgroundGroup)
                                 {
-                                    if (sendMessageBack != noMessage) OnHold(b);
-                                    switch (sendMessageBack)
+                                    if (messageBack != MessageBack::No) OnHold(b);
+                                    switch (messageBack)
                                     {
-                                        case atDisappearing: b->messageBack = MessageBack::AtDisappearance; break;
-                                        case noMessage: b->messageBack = MessageBack::No; break;
+                                        case MessageBack::AtDisappearance: b->messageBack = MessageBack::AtDisappearance; break;
+                                        case MessageBack::No: b->messageBack = MessageBack::No; break;
                                         default: b->messageBack = MessageBack::AtDeprecated; break;
                                     }
                                     if (disappearTime >= 0) b->disappearTime = disappearTime;
@@ -378,11 +377,11 @@ namespace ns
                             if (characterGroup.size())
                                 for (auto c : characterGroup)
                                 {
-                                    if (sendMessageBack != noMessage) OnHold(c);
-                                    switch (sendMessageBack)
+                                    if (messageBack != MessageBack::No) OnHold(c);
+                                    switch (messageBack)
                                     {
-                                        case atDisappearing: c->messageBack = MessageBack::AtDisappearance; break;
-                                        case noMessage: c->messageBack = MessageBack::No; break;
+                                        case MessageBack::AtDisappearance: c->messageBack = MessageBack::AtDisappearance; break;
+                                        case MessageBack::No: c->messageBack = MessageBack::No; break;
                                         default: c->messageBack = MessageBack::AtDeprecated; break;
                                     }
                                     if (disappearTime >= 0) c->disappearTime = disappearTime;
@@ -391,44 +390,41 @@ namespace ns
                             if (musicGroup.size())
                                 for (auto m : musicGroup)
                                 {
-                                    if (sendMessageBack != noMessage) OnHold(m);
-                                    switch (sendMessageBack)
+                                    if (messageBack != MessageBack::No) OnHold(m);
+                                    switch (messageBack)
                                     {
-                                        case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
-                                        case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
-                                        case noMessage: m->sendMessageBack = m->noMessage; break;
-                                        default: m->sendMessageBack = m->atDeprecated; break;
+                                        case MessageBack::AtDisappearance: m->messageBack = MessageBack::AtDisappearance; break;
+                                        case MessageBack::No: m->messageBack = MessageBack::No; break;
+                                        default: m->messageBack = MessageBack::AtDeprecated; break;
                                     }
-                                    m->SetStateMode(m->disappearing);
                                     if (disappearTime >= 0) m->disappearTime = disappearTime;
+                                    m->SetStateMode(Mode::Disapper);
                                 }
                             if (ambientGroup.size())
                                 for (auto m : ambientGroup)
                                 {
-                                    if (sendMessageBack != noMessage) OnHold(m);
-                                    switch (sendMessageBack)
+                                    if (messageBack != MessageBack::No) OnHold(m);
+                                    switch (messageBack)
                                     {
-                                        case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
-                                        case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
-                                        case noMessage: m->sendMessageBack = m->noMessage; break;
-                                        default: m->sendMessageBack = m->atDeprecated; break;
+                                        case MessageBack::AtDisappearance: m->messageBack = MessageBack::AtDisappearance; break;
+                                        case MessageBack::No: m->messageBack = MessageBack::No; break;
+                                        default: m->messageBack = MessageBack::AtDeprecated; break;
                                     }
-                                    m->SetStateMode(m->disappearing);
                                     if (disappearTime >= 0) m->disappearTime = disappearTime;
+                                    m->SetStateMode(Mode::Disapper);
                                 }
                             if (soundGroup.size())
                                 for (auto m : soundGroup)
                                 {
-                                    if (sendMessageBack != noMessage) OnHold(m);
-                                    switch (sendMessageBack)
+                                    if (messageBack != MessageBack::No) OnHold(m);
+                                    switch (messageBack)
                                     {
-                                        case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
-                                        case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
-                                        case noMessage: m->sendMessageBack = m->noMessage; break;
-                                        default: m->sendMessageBack = m->atDeprecated; break;
+                                        case MessageBack::AtDisappearance: m->messageBack = MessageBack::AtDisappearance; break;
+                                        case MessageBack::No: m->messageBack = MessageBack::No; break;
+                                        default: m->messageBack = MessageBack::AtDeprecated; break;
                                     }
-                                    m->SetStateMode(m->disappearing);
                                     if (disappearTime >= 0) m->disappearTime = disappearTime;
+                                    m->SetStateMode(Mode::Disapper);
                                 }
                         }
                         else
@@ -997,9 +993,8 @@ namespace ns
                         if ((musicGroup.size() != 0 && !backgroundAddingMode) || (ambientGroup.size() != 0 && backgroundAddingMode))
                         {
                             float disappearTime{ -1.f };
-                            enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
-                            sendMessageBackEnum sendMessageBack{ atDeprecated };
-                            if (command.ExplicitNoMessage()) sendMessageBack = noMessage;
+                            MessageBack messageBack{ MessageBack::AtDeprecated };
+                            if (command.ExplicitNoMessage()) messageBack = MessageBack::No;
                             
                             vector<std::wstring> arguments;
                             nss::ParseArguments(command, arguments);
@@ -1011,11 +1006,11 @@ namespace ns
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
                                     if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        sendMessageBack = atDisappearing;
+                                        messageBack = MessageBack::AtDisappearance;
                                     else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        sendMessageBack = atDeprecated;
+                                        messageBack = MessageBack::AtDeprecated;
                                     else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        sendMessageBack = noMessage;
+                                        messageBack = MessageBack::No;
                                 }
                             }
                             
@@ -1023,16 +1018,15 @@ namespace ns
                             if (backgroundAddingMode) group = ambientGroup;
                             for (auto m : group)
                             {
-                                if (sendMessageBack != noMessage) OnHold(m);
-                                switch (sendMessageBack)
+                                if (messageBack != MessageBack::No) OnHold(m);
+                                switch (messageBack)
                                 {
-                                    case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
-                                    case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
-                                    case noMessage: m->sendMessageBack = m->noMessage; break;
-                                    default: m->sendMessageBack = m->atDeprecated; break;
+                                    case MessageBack::AtDisappearance: m->messageBack = MessageBack::AtDisappearance; break;
+                                    case MessageBack::No: m->messageBack = MessageBack::No; break;
+                                    default: m->messageBack = MessageBack::AtDeprecated; break;
                                 }
-                                m->SetStateMode(m->disappearing);
                                 if (disappearTime >= 0) m->disappearTime = disappearTime;
+                                m->SetStateMode(Mode::Disapper);
                             }
                         }
                     }
@@ -1043,8 +1037,8 @@ namespace ns
                         if (!backgroundAddingMode && musicGroup.size() != 0)
                             for (auto b : musicGroup)
                             {
-                                b->sendMessageBack = b->noMessage;
-                                b->SetStateMode(b->disappearing);
+                                b->messageBack = MessageBack::No;
+                                b->SetStateMode(Mode::Disapper);
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
@@ -1053,7 +1047,7 @@ namespace ns
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
                             component->maxVolume = Skin::self->music.maxVolume; }
-                        if (noMessage) component->sendMessageBack = component->noMessage;
+                        if (noMessage) component->messageBack = MessageBack::No;
                         
                         vector<std::wstring> arguments;
                         nss::ParseArguments(command, arguments);
@@ -1076,13 +1070,13 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
                                 component->loop = nss::ArgumentAsBool(argument);
@@ -1090,7 +1084,7 @@ namespace ns
                                 component->playingOffset = sf::seconds(nss::ArgumentAsFloat(argument));
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         musicGroup.insert(musicGroup.begin(), component);
                         component->LoadFromFile(filePath);
                     }
@@ -1101,8 +1095,8 @@ namespace ns
                         if (!backgroundAddingMode && musicGroup.size() != 0)
                             for (auto b : ambientGroup)
                             {
-                                b->sendMessageBack = b->noMessage;
-                                b->SetStateMode(b->disappearing);
+                                b->messageBack = MessageBack::No;
+                                b->SetStateMode(Mode::Disapper);
                             }
                         
                         auto* component = layers.PrioritizeComponent<ns::NovelComponents::MusicPlayer>(0);
@@ -1111,7 +1105,7 @@ namespace ns
                             component->appearTime = Skin::self->music.appearTime;
                             component->disappearTime = Skin::self->music.disappearTime;
                             component->maxVolume = Skin::self->music.maxVolume; }
-                        if (noMessage) component->sendMessageBack = component->noMessage;
+                        if (noMessage) component->messageBack = MessageBack::No;
                         
                         vector<std::wstring> arguments;
                         nss::ParseArguments(command, arguments);
@@ -1134,13 +1128,13 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
                                 component->loop = nss::ArgumentAsBool(argument);
@@ -1148,7 +1142,7 @@ namespace ns
                                 component->playingOffset = sf::seconds(nss::ArgumentAsFloat(argument));
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         ambientGroup.insert(ambientGroup.begin(), component);
                         component->LoadFromFile(filePath);
                     }
@@ -1157,9 +1151,8 @@ namespace ns
                         if (soundGroup.size() != 0)
                         {
                             float disappearTime{ -1.f };
-                            enum sendMessageBackEnum{ atDisappearing, atDeprecated, noMessage };
-                            sendMessageBackEnum sendMessageBack{ noMessage };
-                            if (command.ExplicitNoMessage()) sendMessageBack = noMessage;
+                            MessageBack messageBack{ MessageBack::No };
+                            if (command.ExplicitNoMessage()) messageBack = MessageBack::No;
                             
                             vector<std::wstring> arguments;
                             nss::ParseArguments(command, arguments);
@@ -1171,26 +1164,25 @@ namespace ns
                                 {
                                     std::wstring stringValue = nss::ArgumentAsString(argument);
                                     if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                        sendMessageBack = atDisappearing;
+                                        messageBack = MessageBack::AtDisappearance;
                                     else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                        sendMessageBack = atDeprecated;
+                                        messageBack = MessageBack::AtDeprecated;
                                     else if (stringValue == L"nomessage" || stringValue == L"no")
-                                        sendMessageBack = noMessage;
+                                        messageBack = MessageBack::No;
                                 }
                             }
                             
                             for (auto m : soundGroup)
                             {
-                                if (sendMessageBack != noMessage) OnHold(m);
-                                switch (sendMessageBack)
+                                if (messageBack != MessageBack::No) OnHold(m);
+                                switch (messageBack)
                                 {
-                                    case atDeprecated: m->sendMessageBack = m->atDeprecated; break;
-                                    case atDisappearing: m->sendMessageBack = m->atDisappearing; break;
-                                    case noMessage: m->sendMessageBack = m->noMessage; break;
-                                    default: m->sendMessageBack = m->atDeprecated; break;
+                                    case MessageBack::AtDisappearance: m->messageBack = MessageBack::AtDisappearance; break;
+                                    case MessageBack::No: m->messageBack = MessageBack::No; break;
+                                    default: m->messageBack = MessageBack::AtDeprecated; break;
                                 }
-                                m->SetStateMode(m->disappearing);
                                 if (disappearTime >= 0) m->disappearTime = disappearTime;
+                                m->SetStateMode(Mode::Disapper);
                             }
                         }
                     }
@@ -1203,7 +1195,7 @@ namespace ns
                             component->disappearTime = Skin::self->sound.disappearTime;
                             component->maxVolume = Skin::self->sound.maxVolume; }
                         component->folderPath = folder;
-                        if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
+                        if (command.ExplicitNoMessage()) component->messageBack = MessageBack::No;
                         
                         vector<std::wstring> arguments;
                         nss::ParseArguments(command, arguments);
@@ -1226,13 +1218,13 @@ namespace ns
                             {
                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                    component->sendMessageBack = component->atAppearance;
+                                    component->messageBack = MessageBack::AtAppearance;
                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                    component->sendMessageBack = component->atDisappearing;
+                                    component->messageBack = MessageBack::AtDisappearance;
                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                    component->sendMessageBack = component->atDeprecated;
+                                    component->messageBack = MessageBack::AtDeprecated;
                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                    component->sendMessageBack = component->noMessage;
+                                    component->messageBack = MessageBack::No;
                             }
                             else if (nss::Command(argument, L"loop:") || nss::Command(argument, L"isloop:"))
                                 component->loop = nss::ArgumentAsBool(argument);
@@ -1240,7 +1232,7 @@ namespace ns
                                 component->playingOffset = sf::seconds(nss::ArgumentAsFloat(argument));
                         }
                         
-                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                        if (component->messageBack != MessageBack::No) OnHold(component);
                         soundGroup.insert(soundGroup.begin(), component);
                         component->LoadFromFile(filePath);
                     }
@@ -1377,7 +1369,7 @@ namespace ns
                                         
                                         if (dialogueGroup.size()) for (auto d : dialogueGroup) { ++d->priority; d->guiSystem = nullptr; }
                                         auto* component = layers.PrioritizeComponent<Dialogue>(10000, &interface.guiDialogue);
-                                        if (command.ExplicitNoMessage()) component->sendMessageBack = component->noMessage;
+                                        if (command.ExplicitNoMessage()) component->messageBack = MessageBack::No;
                                         
                                         vector<std::wstring> arguments;
                                         nss::ParseArguments(command, arguments);
@@ -1400,21 +1392,21 @@ namespace ns
                                             {
                                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                                 if (stringValue == L"atappearance" || stringValue == L"appearance")
-                                                    component->sendMessageBack = component->atAppearance;
+                                                    component->messageBack = MessageBack::AtAppearance;
                                                 else if (stringValue == L"atdisappearing" || stringValue == L"disappearing")
-                                                    component->sendMessageBack = component->atDisappearing;
+                                                    component->messageBack = MessageBack::AtDisappearance;
                                                 else if (stringValue == L"atdeprecated" || stringValue == L"deprecated")
-                                                    component->sendMessageBack = component->atDeprecated;
+                                                    component->messageBack = MessageBack::AtDeprecated;
                                                 else if (stringValue == L"nomessage" || stringValue == L"no")
-                                                    component->sendMessageBack = component->noMessage;
+                                                    component->messageBack = MessageBack::No;
                                             }
                                             else if (nss::Command(argument, L"afterappearswitchto:") || nss::Command(argument, L"switchto:"))
                                             {
                                                 std::wstring stringValue = nss::ArgumentAsString(argument);
                                                 if (stringValue == L"waitingforinput" || stringValue == L"input")
-                                                    component->afterAppearSwitchTo = component->waitingForInput;
+                                                    component->switchTo = Mode::WaitingForInput;
                                                 else if (stringValue == L"waitingfortime" || stringValue == L"time")
-                                                    component->afterAppearSwitchTo = component->waitingForTime;
+                                                    component->switchTo = Mode::WaitingForTime;
                                             }
                                             else if (nss::Command(argument, L"waitingtime:") || nss::Command(argument, L"time:"))
                                                 component->waitingTime = nss::ArgumentAsFloat(argument);
@@ -1422,7 +1414,7 @@ namespace ns
                                                 layers.ChangePriorityOf(component, nss::ArgumentAsInt(argument));
                                         }
                                         
-                                        if (component->sendMessageBack != component->noMessage) OnHold(component);
+                                        if (component->messageBack != MessageBack::No) OnHold(component);
                                         
                                         dialogueGroup.insert(dialogueGroup.begin(), component);
                                         TemporarySettings::dialogue = &component->text;

@@ -164,7 +164,7 @@ namespace ns
                     switch (md)
                     {
                         case 0: mode = Mode::Appear; break;
-                        case 2: mode = Mode::Disapper; break;
+                        case 1: mode = Mode::Disapper; break;
                         case 3: mode = Mode::Deprecate; break;
                         default: mode = Mode::Exist; break;
                     }
@@ -193,7 +193,8 @@ namespace ns
             else if (mode == Mode::Disapper) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha;
             if (loaded) sprite.setColor(sf::Color(sprite.getColor().r, sprite.getColor().g, sprite.getColor().b, alpha));
-            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (int)mode > 0) || (messageBack == MessageBack::AtDisappearance && (int)mode > 1)) };
+            /// bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (int)mode > 0) || (messageBack == MessageBack::AtDisappearance && (int)mode > 1)) };
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (mode == Mode::Exist || mode == Mode::Disapper || mode == Mode::Deprecate)) || (messageBack == MessageBack::AtDisappearance && (mode == Mode::Disapper || mode == Mode::Deprecate))) };
             
             return { line, onHold };
         }

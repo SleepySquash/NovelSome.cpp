@@ -390,8 +390,8 @@ namespace ns
                 UnHold(reinterpret_cast<NovelObject*>(message.address));
                 if (dialogueGroup.size() != 0)
                     for (auto d : dialogueGroup)
-                        if (d->mode == Dialogue::modeEnum::waitingForChoose)
-                            d->SetStateMode(Dialogue::modeEnum::disappearing);
+                        if (d->mode == Mode::WaitingForChoose)
+                            d->SetStateMode(Mode::Disapper);
             }
             else if (message.info == "Save") entity->SendMessage({"SaveUI"});
             else if (message.info == "Load") entity->SendMessage({"LoadUI"});

@@ -19,33 +19,33 @@ namespace ns
             {
                 switch (mode)
                 {
-                    case appearing:
+                    case Mode::Appear:
                         if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                         if (currentTime >= appearTime) {
-                            volume = rmaxVolume; currentTime = 0.f; mode = playing;
-                            if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                            volume = rmaxVolume; currentTime = 0.f; mode = Mode::Exist;
+                            if (messageBack == MessageBack::AtAppearance) novelSystem->SendMessage({"UnHold", this});
                         } else volume = (rmaxVolume * (currentTime / appearTime));
                         sound.setVolume(volume);
                         break;
                         
-                    case playing:
+                    case Mode::Exist:
                         if (!loop && (sound.getPlayingOffset().asSeconds() >= timeToStartDisappearing || sound.getStatus() == sf::Sound::Status::Stopped))
                         {
-                            mode = disappearing;
-                            if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                            mode = Mode::Disapper;
+                            if (messageBack == MessageBack::AtDisappearance) novelSystem->SendMessage({"UnHold", this});
                         }
                         break;
                         
-                    case disappearing:
+                    case Mode::Disapper:
                         if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                         if (currentTime >= disappearTime) {
-                            volume = 0.f; currentTime = 0.f; mode = deprecated;
-                            if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                            volume = 0.f; currentTime = 0.f; mode = Mode::Deprecate;
+                            if (messageBack == MessageBack::AtDeprecated) novelSystem->SendMessage({"UnHold", this});
                         } else volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
                         sound.setVolume(volume);
                         break;
                         
-                    case deprecated: novelSystem->PopComponent(this); break;
+                    case Mode::Deprecate: novelSystem->PopComponent(this); break;
                     default: break;
                 }
             }
@@ -70,16 +70,17 @@ namespace ns
             }
             else
             {
-                if (sendMessageBack != noMessage) novelSystem->SendMessage({"UnHold", this});
+                if (messageBack != MessageBack::No) novelSystem->SendMessage({"UnHold", this});
                 novelSystem->PopComponent(this);
             }
         }
-        void SoundPlayer::SetStateMode(modeEnum newMode)
+        void SoundPlayer::SetStateMode(const Mode& newMode)
         {
             if (mode != newMode)
             {
                 currentTime = 0.f; mode = newMode;
-                if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                if (newMode == Mode::Disapper && messageBack == MessageBack::AtDisappearance)
+                    novelSystem->SendMessage({"UnHold", this});
             }
         }
         void SoundPlayer::ReceiveMessage(MessageHolder& message)
@@ -96,11 +97,11 @@ namespace ns
                 if (loop) wof << L"loop: " << loop << endl;
                 if ((!Skin::self && maxVolume != 100) || (Skin::self && maxVolume != Skin::self->sound.maxVolume)) wof << L"maxVolume: " << maxVolume << endl;
                 
-                if (mode != playing)
+                if (mode != Mode::Exist)
                 {
-                    wof << L"mode: " << mode << endl;
-                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
-                    if (mode == appearing && ((!Skin::self && appearTime != 1.f) || (Skin::self && appearTime != Skin::self->sound.appearTime))) wof << L"appearTime: " << appearTime << endl;
+                    wof << L"mode: " << (int)mode << endl;
+                    if (mode == Mode::Appear || mode == Mode::Disapper) wof << L"currentTime: " << currentTime << endl;
+                    if (mode == Mode::Appear && ((!Skin::self && appearTime != 1.f) || (Skin::self && appearTime != Skin::self->sound.appearTime))) wof << L"appearTime: " << appearTime << endl;
                 }
                 if ((!Skin::self && disappearTime != 1.f) || (Skin::self && disappearTime != Skin::self->sound.disappearTime )) wof << L"disappearTime: " << disappearTime << endl;
                 
@@ -108,7 +109,7 @@ namespace ns
         }
         std::pair<std::wstring, bool> SoundPlayer::Load(std::wifstream& wif)
         {
-            mode = playing; std::wstring line; nss::CommandSettings command; bool done{ false };
+            mode = Mode::Exist; std::wstring line; nss::CommandSettings command; bool done{ false };
             while (!done)
             {
                 std::getline(wif, line); command.Command(line);
@@ -119,10 +120,10 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: mode = modeEnum::appearing; break;
-                        case 2: mode = modeEnum::disappearing; break;
-                        case 3: mode = modeEnum::deprecated; break;
-                        default: mode = modeEnum::playing; break;
+                        case 0: mode = Mode::Appear; break;
+                        case 1: mode = Mode::Disapper; break;
+                        case 3: mode = Mode::Deprecate; break;
+                        default: mode = Mode::Exist; break;
                     }
                 }
                 else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
@@ -136,20 +137,20 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
-                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
-                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
-                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                        case 0: messageBack = MessageBack::No; break;
+                        case 2: messageBack = MessageBack::AtDisappearance; break;
+                        case 3: messageBack = MessageBack::AtDeprecated; break;
+                        default: messageBack = MessageBack::AtAppearance; break;
                     }
                 }
                 if (wif.eof()) done = true;
             }
             
             float c = currentTime; LoadFromFile(audioPath); currentTime = c;
-            if (mode == modeEnum::appearing) volume = (rmaxVolume * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
+            if (mode == Mode::Appear) volume = (rmaxVolume * (currentTime / appearTime));
+            else if (mode == Mode::Disapper) volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
             else volume = rmaxVolume; sound.setVolume(volume);
-            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (mode == Mode::Exist || mode == Mode::Disapper || mode == Mode::Deprecate)) || (messageBack == MessageBack::AtDisappearance && (mode == Mode::Disapper || mode == Mode::Deprecate))) };
             
             return { line, onHold };
         }
@@ -166,33 +167,31 @@ namespace ns
             if (!audioLoaded) return;
                 switch (mode)
                 {
-                    case appearing:
+                    case Mode::Appear:
                         if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                         if (currentTime >= appearTime) {
-                            volume = rmaxVolume;
-                            currentTime = 0.f;
-                            mode = playing;
-                            if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                            volume = rmaxVolume; currentTime = 0.f; mode = Mode::Exist;
+                            if (messageBack == MessageBack::AtAppearance) novelSystem->SendMessage({"UnHold", this});
                         }
                         else volume = (rmaxVolume * (currentTime / appearTime));
                         music.setVolume(volume);
                         break;
-                    case playing:
+                    case Mode::Exist:
                         if (!loop && (music.getPlayingOffset().asSeconds() >= timeToStartDisappearing || music.getStatus() == sf::Sound::Status::Stopped))
                         {
-                            mode = disappearing;
-                            if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                            mode = Mode::Disapper;
+                            if (messageBack == MessageBack::AtDisappearance) novelSystem->SendMessage({"UnHold", this});
                         }
                         break;
-                    case disappearing:
+                    case Mode::Disapper:
                         if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                         if (currentTime >= disappearTime) {
-                            volume = 0.f; currentTime = 0.f; mode = deprecated;
-                            if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                            volume = 0.f; currentTime = 0.f; mode = Mode::Deprecate;
+                            if (messageBack == MessageBack::AtDeprecated) novelSystem->SendMessage({"UnHold", this});
                         } else volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
                         music.setVolume(volume);
                         break;
-                    case deprecated: novelSystem->PopComponent(this); break;
+                    case Mode::Deprecate: novelSystem->PopComponent(this); break;
                     default: break;
                 }
         }
@@ -215,16 +214,17 @@ namespace ns
             }
             else
             {
-                if (sendMessageBack != noMessage) novelSystem->SendMessage({"UnHold", this});
+                if (messageBack != MessageBack::No)
+                    novelSystem->SendMessage({"UnHold", this});
                 novelSystem->PopComponent(this);
             }
         }
-        void MusicPlayer::SetStateMode(modeEnum newMode)
+        void MusicPlayer::SetStateMode(const Mode& newMode)
         {
             if (mode != newMode)
             {
                 currentTime = 0.f; mode = newMode;
-                if (newMode == disappearing && sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                if (newMode == Mode::Disapper && messageBack == MessageBack::AtDisappearance) novelSystem->SendMessage({"UnHold", this});
             }
         }
         void MusicPlayer::Save(std::wofstream& wof)
@@ -237,11 +237,11 @@ namespace ns
                 if (!loop) wof << L"loop: " << loop << endl;
                 if ((!Skin::self && maxVolume != 100) || (Skin::self && ((ambient && maxVolume != Skin::self->ambient.maxVolume) || (!ambient && maxVolume != Skin::self->music.maxVolume)))) wof << L"maxVolume: " << maxVolume << endl;
                 
-                if (mode != playing)
+                if (mode != Mode::Exist)
                 {
-                    wof << L"mode: " << mode << endl;
-                    if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
-                    if (mode == appearing && ((!Skin::self && appearTime != 1.f) || (Skin::self && ( (!ambient && appearTime != Skin::self->music.appearTime) || (ambient && appearTime != Skin::self->ambient.appearTime) ) )) ) wof << L"appearTime: " << appearTime << endl;
+                    wof << L"mode: " << (int)mode << endl;
+                    if (mode == Mode::Appear || mode == Mode::Disapper) wof << L"currentTime: " << currentTime << endl;
+                    if (mode == Mode::Appear && ((!Skin::self && appearTime != 1.f) || (Skin::self && ( (!ambient && appearTime != Skin::self->music.appearTime) || (ambient && appearTime != Skin::self->ambient.appearTime) ) )) ) wof << L"appearTime: " << appearTime << endl;
                 }
                 if ((!Skin::self && disappearTime != 1.f) || (Skin::self && ( (!ambient && disappearTime != Skin::self->music.disappearTime) || (ambient && disappearTime != Skin::self->ambient.disappearTime) ) )) wof << L"disappearTime: " << disappearTime << endl;
                     
@@ -249,7 +249,7 @@ namespace ns
         }
         std::pair<std::wstring, bool> MusicPlayer::Load(std::wifstream& wif)
         {
-            mode = playing; std::wstring line; nss::CommandSettings command; bool done{ false };
+            mode = Mode::Exist; std::wstring line; nss::CommandSettings command; bool done{ false };
             while (!done)
             {
                 std::getline(wif, line); command.Command(line);
@@ -260,10 +260,10 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: mode = modeEnum::appearing; break;
-                        case 2: mode = modeEnum::disappearing; break;
-                        case 3: mode = modeEnum::deprecated; break;
-                        default: mode = modeEnum::playing; break;
+                        case 0: mode = Mode::Appear; break;
+                        case 1: mode = Mode::Disapper; break;
+                        case 3: mode = Mode::Deprecate; break;
+                        default: mode = Mode::Exist; break;
                     }
                 }
                 else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
@@ -277,20 +277,21 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
-                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
-                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
-                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                        case 0: messageBack = MessageBack::No; break;
+                        case 2: messageBack = MessageBack::AtDisappearance; break;
+                        case 3: messageBack = MessageBack::AtDeprecated; break;
+                        default: messageBack = MessageBack::AtAppearance; break;
                     }
                 }
                 if (wif.eof()) done = true;
             }
             
             float c = currentTime; LoadFromFile(audioPath); currentTime = c;
-            if (mode == modeEnum::appearing) volume = (rmaxVolume * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
+            if (mode == Mode::Appear) volume = (rmaxVolume * (currentTime / appearTime));
+            else if (mode == Mode::Disapper) volume = (rmaxVolume - (rmaxVolume * (currentTime / disappearTime)));
             else volume = rmaxVolume; music.setVolume(volume);
-            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            /// bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (mode == Mode::Exist || mode == Mode::Disapper || mode == Mode::Deprecate)) || (messageBack == MessageBack::AtDisappearance && (mode == Mode::Disapper || mode == Mode::Deprecate))) };
             
             return { line, onHold };
         }

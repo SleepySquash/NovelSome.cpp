@@ -30,6 +30,7 @@
 #include "Abstract/CharacterLibrary.hpp"
 #include "GUISystem.hpp"
 #include "Abstract/Savable.hpp"
+#include "Abstract/Modes.hpp"
 
 using std::cin;
 using std::cout;
@@ -59,11 +60,8 @@ namespace ns
             sf::Uint8 alpha{ 0 }; int maxAlpha{ 255 };
             float currentTime{ 0.f }, waitingTime{ 2.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             
-            enum modeEnum {appearing, waiting, waitingForTime, waitingForInput, waitingForChoose, disappearing, deprecated};
-            modeEnum mode{ appearing };
-            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
-            sendMessageBackEnum sendMessageBack{ atDisappearing };
-            modeEnum afterAppearSwitchTo{ waitingForInput };
+            Mode mode{ Mode::Appear }, switchTo{ Mode::WaitingForInput };
+            MessageBack messageBack{ MessageBack::AtDisappearance };
             
             unsigned int textAppearPos{ 0 }, textAppearMax{ 0 }, textAppearI{ 0 };
             float characterInSecond{ 0.04f }, elapsedCharacterSum{ 0 };
@@ -89,7 +87,7 @@ namespace ns
             void SetCharacter(CharacterData* character);
             void SetCharacterName(const sf::String& characterName);
             void SetDialogue(const sf::String& dialogue);
-            void SetStateMode(modeEnum newMode);
+            void SetStateMode(const Mode& newMode);
             void ReceiveMessage(MessageHolder &message) override;
             void UpdateAlpha(bool mode = false);
             
@@ -119,10 +117,8 @@ namespace ns
             float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
             bool visible{ true };
             
-            enum modeEnum {appearing, waitingForInput, disappearing, deprecated};
-            modeEnum mode{ appearing };
-            enum sendMessageBackEnum {noMessage, atAppearance, atDisappearing, atDeprecated};
-            sendMessageBackEnum sendMessageBack{ atDisappearing };
+            Mode mode{ Mode::Appear };
+            MessageBack messageBack{ MessageBack::AtDisappearance };
             
             std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
             unsigned int characterSize{ 42 };
@@ -134,7 +130,7 @@ namespace ns
             void Draw(sf::RenderWindow* window) override;
             void Destroy() override;
             void Resize(const unsigned int& width, const unsigned int& height) override;
-            void SetStateMode(modeEnum newMode);
+            void SetStateMode(const Mode& newMode);
             void AddChoice(const std::wstring& line);
             void AddAction(const std::wstring& line);
             void InitChoose();

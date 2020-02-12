@@ -41,7 +41,7 @@ namespace ns
         void Dialogue::Update(const sf::Time& elapsedTime)
         {
             if (guiSystem) guiSystem->Update(elapsedTime);
-            if (mode != deprecated && visible && textAppearMode == textAppearModeEnum::printing && textAppearPos < textAppearMax)
+            if (mode != Mode::Deprecate && visible && textAppearMode == textAppearModeEnum::printing && textAppearPos < textAppearMax)
             {
                 elapsedCharacterSum += elapsedTime.asSeconds();
                 while (elapsedCharacterSum > characterInSecond && textAppearPos < textAppearMax)
@@ -57,49 +57,48 @@ namespace ns
             }
             switch (mode)
             {
-                case appearing: gs::requestWindowRefresh = true;
+                case Mode::Appear: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime)
                     {
-                        alpha = maxAlpha; currentTime = 0.f;
-                        mode = afterAppearSwitchTo;
-                        if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                        alpha = maxAlpha; currentTime = 0.f; mode = switchTo;
+                        if (messageBack == MessageBack::AtAppearance) novelSystem->SendMessage({"UnHold", this});
                     }
                     else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     UpdateAlpha(true);
                     break;
                     
-                case disappearing: gs::requestWindowRefresh = true;
+                case Mode::Disapper: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= disappearTime)
                     {
-                        alpha = 0; currentTime = 0.f; mode = deprecated;
-                        if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                        alpha = 0; currentTime = 0.f; mode = Mode::Deprecate;
+                        if (messageBack == MessageBack::AtDeprecated) novelSystem->SendMessage({"UnHold", this});
                     }
                     else alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     UpdateAlpha();
                     break;
-                case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
-                case waitingForTime:
+                case Mode::Deprecate: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
+                case Mode::WaitingForTime:
                     if (currentTime < waitingTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= waitingTime)
                     {
-                        currentTime = 0.f; mode = disappearing;
-                        if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                        currentTime = 0.f; mode = Mode::Disapper;
+                        if (messageBack == MessageBack::AtDisappearance) novelSystem->SendMessage({"UnHold", this});
                     }
                     break;
-                case waitingForChoose: /*if (novel == nullptr || novel->chooseGroup.size() == 0) mode = disappearing;*/ break;
+                case Mode::WaitingForChoose: /*if (novel == nullptr || novel->chooseGroup.size() == 0) mode = disappearing;*/ break;
                 default: break;
             }
         }
         void Dialogue::PollEvent(sf::Event& event)
         {
-            if (mode == waitingForChoose || mode == waitingForInput)
+            if (mode == Mode::WaitingForChoose || mode == Mode::WaitingForInput)
             {
                 if (guiSystem && visible) guiSystem->PollEvent(event);
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) visible = !visible;
             }
-            if (mode == waitingForInput && visible)
+            if (mode == Mode::WaitingForInput && visible)
             {
                 if (wasPressed && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded))
                 {
@@ -113,15 +112,16 @@ namespace ns
                         event = sf::Event();
                         if (fadeAway)
                         {
-                            mode = disappearing;
-                            if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"UnHold", this});
+                            mode = Mode::Disapper;
+                            if (messageBack == MessageBack::AtDisappearance)
+                                novelSystem->SendMessage({"UnHold", this});
                         }
                     }
                 }
                 else if (event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::TouchBegan)
                     wasPressed = workingArea.contains(gs::lastMousePos.first, gs::lastMousePos.second);
             }
-            else if (mode == waitingForChoose)
+            else if (mode == Mode::WaitingForChoose)
             {
                 if (visible && (event.type == sf::Event::MouseButtonReleased || event.type == sf::Event::TouchEnded) && textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax)
                 {
@@ -310,7 +310,7 @@ namespace ns
             
             Resize(gs::width, gs::height);
         }
-        void Dialogue::SetStateMode(modeEnum newMode)
+        void Dialogue::SetStateMode(const Mode& newMode)
         {
             gs::requestWindowRefresh = true;
             if (mode != newMode) { currentTime = 0.f; mode = newMode; }
@@ -345,23 +345,23 @@ namespace ns
                 else wof << L"cstr: " << charString << endl;
             }
             
-            if (mode != waitingForInput)
+            if (mode != Mode::WaitingForInput)
             {
-                wof << L"mode: " << mode << endl;
-                if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
-                if (waitingTime != 2.f && mode == waitingForTime) wof << L"waitingTime: " << waitingTime << endl;
-                if (mode == appearing && ((Skin::self && appearTime != Skin::self->dialogue.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
+                wof << L"mode: " << (int)mode << endl;
+                if (mode == Mode::Appear || mode == Mode::Disapper) wof << L"currentTime: " << currentTime << endl;
+                if (waitingTime != 2.f && mode == Mode::WaitingForTime) wof << L"waitingTime: " << waitingTime << endl;
+                if (mode == Mode::Appear && ((Skin::self && appearTime != Skin::self->dialogue.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
             }
             if ((Skin::self && disappearTime != Skin::self->dialogue.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
             if ((Skin::self && maxAlpha != Skin::self->dialogue.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
             if (textAppearMode != textAppearModeEnum::printing) wof << L"tmode: " << (int)textAppearMode << endl;
             if (textAppearMode == textAppearModeEnum::printing && textAppearPos != textAppearMax) wof << L"tpos: " << textAppearPos << endl;
-            if (sendMessageBack != atDisappearing) wof << L"send: " << sendMessageBack << endl;
+            if (messageBack != MessageBack::AtDisappearance) wof << L"send: " << (int)messageBack << endl;
             if (!guiSystem) wof << L"ng" << endl;
         }
         std::pair<std::wstring, bool> Dialogue::Load(std::wifstream& wif)
         {
-            mode = waitingForInput; bool setTextPosToMax{ true };
+            mode = Mode::WaitingForInput; bool setTextPosToMax{ true };
             std::wstring line; nss::CommandSettings command; bool done{ false };
             while (!done)
             {
@@ -380,13 +380,13 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: mode = modeEnum::appearing; break;
-                        case 1: mode = modeEnum::waiting; break;
-                        case 2: mode = modeEnum::waitingForTime; break;
-                        case 4: mode = modeEnum::waitingForChoose; break;
-                        case 5: mode = modeEnum::disappearing; break;
-                        case 6: mode = modeEnum::deprecated; break;
-                        default: mode = modeEnum::waitingForInput; break;
+                        case 0: mode = Mode::Appear; break;
+                        case 1: mode = Mode::Disapper; break;
+                        case 2: mode = Mode::Exist; break;
+                        case 3: mode = Mode::Deprecate; break;
+                        case 4: mode = Mode::WaitingForTime; break;
+                        case 6: mode = Mode::WaitingForChoose; break;
+                        default: mode = Mode::WaitingForInput; break;
                     }
                 }
                 else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
@@ -410,20 +410,22 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
-                        case 2: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
-                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
-                        default: sendMessageBack = sendMessageBackEnum::atAppearance; break;
+                        case 0: messageBack = MessageBack::No; break;
+                        case 2: messageBack = MessageBack::AtDisappearance; break;
+                        case 3: messageBack = MessageBack::AtDeprecated; break;
+                        default: messageBack = MessageBack::AtAppearance; break;
                     }
                 }
                 else if (nss::Command(command, L"ng")) noguiSystem = true;
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == Mode::Appear) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == Mode::Disapper) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha; UpdateAlpha();
-            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 4)) };
+            /// bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 4)) };
+            // bool onHold{ ((messageBack == MessageBack::AtAppearance && mode == Mode::Appear) || (messageBack == MessageBack::AtDeprecated && mode == Mode::Disapper) || ((messageBack == MessageBack::AtDisappearance || messageBack == MessageBack::AtDeprecated) && (mode == Mode::Appear || mode == Mode::WaitingForTime || mode == Mode::WaitingForInput))) };
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (mode == Mode::Exist || mode == Mode::Disapper || mode == Mode::Deprecate || mode == Mode::WaitingForInput || mode == Mode::WaitingForTime || mode == Mode::WaitingForChoose)) || (messageBack == MessageBack::AtDisappearance && (mode == Mode::Disapper || mode == Mode::Deprecate))) };
             
             if (setTextPosToMax) textAppearPos = base::GetLengthWONewLinesAndSpaces(textString);
             
@@ -454,31 +456,31 @@ namespace ns
             if (guiSystem) guiSystem->Update(elapsedTime);
             switch (mode)
             {
-                case appearing: gs::requestWindowRefresh = true;
+                case Mode::Appear: gs::requestWindowRefresh = true;
                     if (currentTime < appearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= appearTime) {
-                        alpha = maxAlpha; currentTime = 0.f; mode = waitingForInput;
-                        if (sendMessageBack == atAppearance) novelSystem->SendMessage({"UnHold", this});
+                        alpha = maxAlpha; currentTime = 0.f; mode = Mode::WaitingForInput;
+                        if (messageBack == MessageBack::AtAppearance) novelSystem->SendMessage({"UnHold", this});
                     } else alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
                     button.setAlpha(alpha);
                     break;
                     
-                case disappearing: gs::requestWindowRefresh = true;
+                case Mode::Disapper: gs::requestWindowRefresh = true;
                     if (currentTime < disappearTime) currentTime += elapsedTime.asSeconds();
                     if (currentTime >= disappearTime) {
-                        alpha = 0; currentTime = 0.f; mode = deprecated;
-                        if (sendMessageBack == atDeprecated) novelSystem->SendMessage({"UnHold", this});
+                        alpha = 0; currentTime = 0.f; mode = Mode::Deprecate;
+                        if (messageBack == MessageBack::AtDeprecated) novelSystem->SendMessage({"UnHold", this});
                     } else alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
                     button.setAlpha(alpha);
                     break;
 
-                case deprecated: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
+                case Mode::Deprecate: gs::requestWindowRefresh = true; novelSystem->PopComponent(this); break;
                 default: break;
             }
         }
         void Choose::PollEvent(sf::Event& event)
         {
-            if (mode == waitingForInput)
+            if (mode == Mode::WaitingForInput)
             {
                 if (guiSystem && visible) guiSystem->PollEvent(event);
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) visible = !visible;
@@ -499,8 +501,8 @@ namespace ns
                                 int until = i+1 < choices.size() ? choiceStart[i+1] : actions.size();
                                 for (int j = until - 1; j >= choiceStart[i]; --j)
                                     novelSystem->SendMessage({"Push", actions[j]});
-                                mode = disappearing;
-                                if (sendMessageBack == atDisappearing) novelSystem->SendMessage({"ChooseUnHold", this});
+                                mode = Mode::Disapper;
+                                if (messageBack == MessageBack::AtDisappearance) novelSystem->SendMessage({"ChooseUnHold", this});
                             }
                             
                             yy += button.text.getGlobalBounds().height + 10*gs::scaley;
@@ -532,7 +534,7 @@ namespace ns
             if (choices.size()) button.setString(choices[0]);
             startingYY = (gs::height/2 - (float)((button.text.getGlobalBounds().height + 10) * choices.size())/2) + button.text.getGlobalBounds().height/2;
         }
-        void Choose::SetStateMode(modeEnum newMode) { if (mode != newMode) { currentTime = 0.f; mode = newMode; } }
+        void Choose::SetStateMode(const Mode& newMode) { if (mode != newMode) { currentTime = 0.f; mode = newMode; } }
         void Choose::AddChoice(const std::wstring& line) { choices.push_back(line); choiceStart.push_back(actions.size()); }
         void Choose::AddAction(const std::wstring& line) { actions.push_back(line); }
         void Choose::InitChoose()
@@ -551,7 +553,7 @@ namespace ns
             
             if (choices.size() == 0)
             {
-                if (sendMessageBack != noMessage) novelSystem->SendMessage({"UnHold", this});
+                if (messageBack != MessageBack::No) novelSystem->SendMessage({"UnHold", this});
                 novelSystem->PopComponent(this);
             }
             else
@@ -577,20 +579,20 @@ namespace ns
             for (auto& s : choiceStart) wof << s << endl;
             wof << "e" << endl;
             
-            if (mode != waitingForInput)
+            if (mode != Mode::WaitingForInput)
             {
-                wof << L"mode: " << mode << endl;
-                if (mode == appearing || mode == disappearing) wof << L"currentTime: " << currentTime << endl;
-                if (mode == appearing && ((Skin::self && appearTime != Skin::self->choose.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
+                wof << L"mode: " << (int)mode << endl;
+                if (mode == Mode::Appear || mode == Mode::Disapper) wof << L"currentTime: " << currentTime << endl;
+                if (mode == Mode::Appear && ((Skin::self && appearTime != Skin::self->choose.appearTime) || (!Skin::self && appearTime != 0.6f))) wof << L"appearTime: " << appearTime << endl;
             }
             if ((Skin::self && disappearTime != Skin::self->choose.disappearTime) || (!Skin::self && disappearTime != 0.6f)) wof << L"disappearTime: " << disappearTime << endl;
             if ((Skin::self && maxAlpha != Skin::self->dialogue.maxAlpha) || (!Skin::self && maxAlpha != 255)) wof << L"maxAlpha: " << maxAlpha << endl;
-            if (sendMessageBack != atDisappearing) wof << L"send: " << sendMessageBack << endl;
+            if (messageBack != MessageBack::AtDisappearance) wof << L"send: " << (int)messageBack << endl;
             if (!guiSystem) wof << L"ng" << endl;
         }
         std::pair<std::wstring, bool> Choose::Load(std::wifstream& wif)
         {
-            mode = waitingForInput; bool setTextPosToMax{ true };
+            mode = Mode::WaitingForInput; bool setTextPosToMax{ true };
             std::wstring line; nss::CommandSettings command; bool done{ false };
             while (!done)
             {
@@ -607,10 +609,10 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: mode = modeEnum::appearing; break;
-                        case 2: mode = modeEnum::disappearing; break;
-                        case 3: mode = modeEnum::deprecated; break;
-                        default: mode = modeEnum::waitingForInput; break;
+                        case 0: mode = Mode::Appear; break;
+                        case 1: mode = Mode::Disapper; break;
+                        case 3: mode = Mode::Deprecate; break;
+                        default: mode = Mode::WaitingForInput; break;
                     }
                 }
                 else if (nss::Command(command, L"currenttime: ")) currentTime = nss::ParseAsFloat(command);
@@ -623,20 +625,22 @@ namespace ns
                     int md = nss::ParseAsInt(command);
                     switch (md)
                     {
-                        case 0: sendMessageBack = sendMessageBackEnum::noMessage; break;
-                        case 1: sendMessageBack = sendMessageBackEnum::atAppearance; break;
-                        case 3: sendMessageBack = sendMessageBackEnum::atDeprecated; break;
-                        default: sendMessageBack = sendMessageBackEnum::atDisappearing; break;
+                        case 0: messageBack = MessageBack::No; break;
+                        case 1: messageBack = MessageBack::AtAppearance; break;
+                        case 3: messageBack = MessageBack::AtDeprecated; break;
+                        default: messageBack = MessageBack::AtDisappearance; break;
                     }
                 }
                 //else if (nss::Command(command, L"ng")) noguiSystem = true;
                 if (wif.eof()) done = true;
             }
             
-            if (mode == modeEnum::appearing) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
-            else if (mode == modeEnum::disappearing) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
+            if (mode == Mode::Appear) alpha = (sf::Uint8)(maxAlpha * (currentTime / appearTime));
+            else if (mode == Mode::Disapper) alpha = (sf::Uint8)(maxAlpha - (maxAlpha * (currentTime / disappearTime)));
             else alpha = maxAlpha; button.setAlpha(alpha);
-            bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            /// bool onHold{ !((sendMessageBack == sendMessageBackEnum::noMessage) || (sendMessageBack == sendMessageBackEnum::atAppearance && mode > 0) || (sendMessageBack == sendMessageBackEnum::atDisappearing && mode > 1)) };
+            // bool onHold{ ((messageBack == MessageBack::AtAppearance && mode == Mode::Appear) || (messageBack == MessageBack::AtDeprecated && mode == Mode::Disapper) || (messageBack != MessageBack::No && (mode == Mode::WaitingForInput || mode == Mode::Appear))) };
+            bool onHold{ !((messageBack == MessageBack::No) || (messageBack == MessageBack::AtAppearance && (mode == Mode::Exist || mode == Mode::Disapper || mode == Mode::Deprecate || mode == Mode::WaitingForInput)) || (messageBack == MessageBack::AtDisappearance && (mode == Mode::Disapper || mode == Mode::Deprecate))) };
             
             cout << "choices.size(): " << choices.size() << endl;
             

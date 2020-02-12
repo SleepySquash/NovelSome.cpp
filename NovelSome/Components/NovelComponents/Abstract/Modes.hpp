@@ -11,7 +11,7 @@
 
 namespace ns
 {
-    enum class Mode { Appear, Disapper, Exist, Deprecate };
+    enum class Mode { Appear, Disapper, Exist, Deprecate,  WaitingForTime, WaitingForInput, WaitingForChoose };
     enum class MessageBack { No, AtAppearance, AtDisappearance, AtDeprecated };
     enum class Position { Custom, Left, CLeft, Center, CRight, Right };
 }
