@@ -26,12 +26,8 @@ namespace ns
         Novel::Novel(NovelInfo* nvl, NovelSettings* settings) : nvl(nvl), settings(settings) { }
         void Novel::Init()
         {
-            if (settings)
-            {
-                noGamePause = settings->noGamePause;
-            }
-            
             layers.PrioritizeComponent<EventListener>(-31000, this);
+            gs::PushInterface(this); entity->SortAbove(this);
             
             if ((scenario.length() == 0 || scenario == L"") && nvl)
             {
@@ -64,7 +60,7 @@ namespace ns
             //VariableSystem::localVariables.insert({L"version", new NovelVariable(std::wstring(L"Update 0 build 20"))});
             CharacterLibrary::ScanForCharacters(folder);
             interface.guiChoose.novelSystem = interface.guiPause.novelSystem = interface.guiDialogue.novelSystem = &layers;
-            if (!noGamePause) gamePause = entity->AddComponent<GamePause>(&interface.guiPause);
+            if (!settings || !settings->noGamePause) gamePause = entity->AddComponent<GamePause>(&interface.guiPause);
             
             std::wstring skinPath = L"skin.nskin";
             if (Skin::self) delete Skin::self;
@@ -158,6 +154,7 @@ namespace ns
             if (Skin::self) { delete Skin::self; Skin::self = nullptr; }
             if (destroyNVL && nvl) delete nvl;
             if (settings) delete settings;
+            gs::RemoveInterface(this);
             
             FreeGroup<Background>(backgroundGroup);
             FreeGroup<Character>(characterGroup);
@@ -294,7 +291,8 @@ namespace ns
         }
         void Novel::Draw(sf::RenderWindow* window) { if (fileOpened && !gs::ignoreDraw) layers.Draw(window); }
         void Novel::Resize(const unsigned int& width, const unsigned int& height) { if (fileOpened) layers.Resize(width, height); }
-        void Novel::PollEvent(sf::Event& event) { if (fileOpened && !gs::isPause && !gs::ignoreEvent) layers.PollEvent(event); }
+        void Novel::PollEvent(sf::Event& event) {
+            if (fileOpened && !gs::isPause && (!gs::ignoreEvent || gs::isActiveInterface(this))) layers.PollEvent(event); }
             /*if (fileOpened) {
                 if (!gs::isPause) {
                     layers.PollEvent(event);

@@ -50,6 +50,8 @@
 		DD7A07FC225DDAAE00B770F7 /* GamePause.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7A07F9225DDAAE00B770F7 /* GamePause.cpp */; };
 		DD7A0803225DDDDE00B770F7 /* SavingMechanism.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7A0801225DDDDE00B770F7 /* SavingMechanism.cpp */; };
 		DD7A0804225DDDDE00B770F7 /* SavingMechanism.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7A0801225DDDDE00B770F7 /* SavingMechanism.cpp */; };
+		DD7E7DF523F5BCFA00BC8CDC /* Choice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7E7DF323F5BCFA00BC8CDC /* Choice.cpp */; };
+		DD7E7DF623F5BCFA00BC8CDC /* Choice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DD7E7DF323F5BCFA00BC8CDC /* Choice.cpp */; };
 		DDA1A07F216D463E00A9BE38 /* NekoMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */; };
 		DDA1A080216D463E00A9BE38 /* NekoMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */; };
 		DDAB7472215D88050062F8B6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DDAB7471215D88050062F8B6 /* main.cpp */; };
@@ -171,6 +173,8 @@
 		DD7A07FE225DDBA900B770F7 /* Savable.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Savable.hpp; sourceTree = "<group>"; };
 		DD7A0801225DDDDE00B770F7 /* SavingMechanism.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SavingMechanism.cpp; sourceTree = "<group>"; };
 		DD7A0802225DDDDE00B770F7 /* SavingMechanism.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SavingMechanism.hpp; sourceTree = "<group>"; };
+		DD7E7DF323F5BCFA00BC8CDC /* Choice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Choice.cpp; sourceTree = "<group>"; };
+		DD7E7DF423F5BCFA00BC8CDC /* Choice.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Choice.hpp; sourceTree = "<group>"; };
 		DD87E10F237486B600083FB9 /* NovelSome.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NovelSome.entitlements; sourceTree = "<group>"; };
 		DDA1A07D216D463E00A9BE38 /* NekoMain.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NekoMain.cpp; sourceTree = "<group>"; };
 		DDA1A07E216D463E00A9BE38 /* NekoMain.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = NekoMain.hpp; sourceTree = "<group>"; };
@@ -441,6 +445,8 @@
 				DD3AC02A222FBDA100012A86 /* Character.hpp */,
 				DDBB617F215E9D0B0062CC3D /* Dialogue.cpp */,
 				DD3AC029222FBD8700012A86 /* Dialogue.hpp */,
+				DD7E7DF323F5BCFA00BC8CDC /* Choice.cpp */,
+				DD7E7DF423F5BCFA00BC8CDC /* Choice.hpp */,
 				DDBB6183215E9D200062CC3D /* GUISystem.cpp */,
 				DD3AC027222FBD3C00012A86 /* GUISystem.hpp */,
 				DDBB6186215E9D300062CC3D /* Misc.cpp */,
@@ -607,6 +613,7 @@
 			files = (
 				DD3AC04422318F3000012A86 /* Skin.cpp in Sources */,
 				DDBB617D215E9CFB0062CC3D /* Character.cpp in Sources */,
+				DD7E7DF523F5BCFA00BC8CDC /* Choice.cpp in Sources */,
 				DD12BE3922A46DB400F542D4 /* SaveLoadUI.cpp in Sources */,
 				DD3FBA202212111400E66342 /* MainMenu.cpp in Sources */,
 				DD7A07FB225DDAAE00B770F7 /* GamePause.cpp in Sources */,
@@ -643,6 +650,7 @@
 			files = (
 				DD3C33B922D3E9DE0089D683 /* NovelLoader.cpp in Sources */,
 				DD5648622256A2BC0045EA5F /* NovelMenu.cpp in Sources */,
+				DD7E7DF623F5BCFA00BC8CDC /* Choice.cpp in Sources */,
 				DD3AC0412231282000012A86 /* CharacterLibrary.cpp in Sources */,
 				DD3AC04922318F9400012A86 /* Interface.cpp in Sources */,
 				DDBB6185215E9D200062CC3D /* GUISystem.cpp in Sources */,

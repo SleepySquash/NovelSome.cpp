@@ -48,6 +48,7 @@
 #include "Background.hpp"
 #include "Character.hpp"
 #include "Dialogue.hpp"
+#include "Choice.hpp"
 #include "GUISystem.hpp"
 #include "Misc.hpp"
 
@@ -98,7 +99,6 @@ namespace ns
             float nextAutosave{ gs::autosaveDeltaTime };
             
             bool eof{ false }, fileOpened{ false }, noDestroyMessage{ false };
-            bool noGamePause{ false };
             list<NovelObject*> onHold, onExecute;
             
             NovelInfo* nvl{ nullptr }; bool destroyNVL{ false };

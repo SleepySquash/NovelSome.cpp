@@ -194,6 +194,7 @@ int main()
     
     window.setFramerateLimit(gs::framerateLimit);
     window.setVerticalSyncEnabled(gs::isVerticalSyncEnabled);
+    // window.setFramerateLimit(120);
     
     EntitySystem system;
     

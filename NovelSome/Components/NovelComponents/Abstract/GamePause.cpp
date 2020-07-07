@@ -64,7 +64,7 @@ namespace ns
         void GamePause::PollEvent(sf::Event& event)
         {
             //if (gs::isPause && menuBackButton.PollEvent(event)) { gs::isPause = false; entity->SendMessage({"GamePause :: Return to menu"}); }
-            if (gs::ignoreEvent) return;
+            if (gs::forceIgnoreEvent) return;
             if (guiSystem) guiSystem->PollEvent(event);
             if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
                 || (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Button::Right))

@@ -94,51 +94,6 @@ namespace ns
             void Save(std::wofstream& wof) override;
             std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
         };
-        
-        
-        
-        
-        
-        struct Choose : NovelObject, Savable
-        {
-            sf::Text text;
-            
-            GUISystem* guiSystem{ nullptr };
-            Skins::Dialogue* skin{ nullptr };
-            list<Choose*>::iterator groupPointer;
-            
-            GUI::TextButton button; int startingYY{ 0 };
-            
-            vector<std::wstring> actions, choices;
-            vector<int> choiceStart;
-            
-            bool fontLoaded{ false };
-            sf::Uint8 alpha{ 0 }; int maxAlpha{ 255 };
-            float currentTime{ 0.f }, appearTime{ 0.6f }, disappearTime{ 0.6f };
-            bool visible{ true };
-            
-            Mode mode{ Mode::Appear };
-            MessageBack messageBack{ MessageBack::AtDisappearance };
-            
-            std::wstring fontName{ L"NotoSansCJK-Regular.ttc" };
-            unsigned int characterSize{ 42 };
-            
-            Choose(GUISystem* guiSystem = nullptr);
-            void Init() override;
-            void Update(const sf::Time& elapsedTime) override;
-            void PollEvent(sf::Event& event) override;
-            void Draw(sf::RenderWindow* window) override;
-            void Destroy() override;
-            void Resize(const unsigned int& width, const unsigned int& height) override;
-            void SetStateMode(const Mode& newMode);
-            void AddChoice(const std::wstring& line);
-            void AddAction(const std::wstring& line);
-            void InitChoose();
-            void ReceiveMessage(MessageHolder &message) override;
-            
-            void Save(std::wofstream& wof) override;
-            std::pair<std::wstring, bool> Load(std::wifstream& wof) override;
-        };
     }
 }
 

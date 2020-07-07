@@ -429,6 +429,7 @@ namespace ns
             else if (fc::FontExistsAtPath(folderScope + L"fonts/" + path)) return folderScope + L"fonts/" + path;
             else if (fc::FontExistsAtPath(folderScope + L"GUI/" + path)) return folderScope + L"GUI/" + path;
             else if (fc::FontExistsAtPath(folderScope + L"gui/" + path)) return folderScope + L"gui/" + path;
+            return L"Arial.ttf";
         }
         /*void Skin::LoadFromFile(const std::wstring& fileName, const std::string& scopeName)
         {
